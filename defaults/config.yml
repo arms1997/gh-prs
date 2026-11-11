@@ -2,7 +2,7 @@
 # the default wholesale. Unknown keys are an error.
 #
 # sections.query: GitHub search syntax (https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
-# sections.group_by: any of project, status, repo; nested in the order given
+# sections.group_by: any of project, status, repo, turn (on me / on them); nested in the order given
 # refresh_interval: background refresh, e.g. 2m; 0 turns it off
 project_label_prefix: "proj:"
 refresh_interval: 2m
@@ -13,6 +13,9 @@ sections:
   - title: Review requests
     query: is:pr is:open user-review-requested:@me archived:false sort:updated-desc
     group_by: [repo]
+
+# Linear: issue IDs like AGT-915 in a PR's title or branch link to this workspace (i opens it).
+linear_workspace: go-augment
 
 # Where your clones live: owner/repo is expected at <repos_dir>/repo.
 # New worktrees are created next to the clone as <repo>-<branch-name>.

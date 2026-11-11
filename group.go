@@ -53,6 +53,59 @@ var groupers = map[string]grouper{
 		return "No project", "1"
 	},
 	"repo": func(p PR, _ Config) (string, string) { return p.Repo, p.Repo },
+	"turn": func(p PR, _ Config) (string, string) {
+		if mine, _ := turnOf(p); mine {
+			return "On me", "0"
+		}
+		return "On them", "1"
+	},
+}
+
+// turnOf says whether the next move on a PR is yours, and why. Your PR: a draft, anything
+// that needs action, a thread where someone else spoke last, or ready to merge. Someone
+// else's PR (a review request): yours until you've reviewed it since its latest commit.
+func turnOf(p PR) (onMe bool, why string) {
+	if !p.Mine {
+		if p.ReviewedSincePush {
+			return false, "you reviewed it; waiting for new commits"
+		}
+		return true, "your review is requested"
+	}
+	var reasons []string
+	switch statusOf(p) {
+	case Draft:
+		reasons = append(reasons, "it's a draft")
+	case ReadyToMerge:
+		reasons = append(reasons, "ready to merge")
+	case NeedsAction:
+		if p.ReviewDecision == "CHANGES_REQUESTED" {
+			reasons = append(reasons, "changes requested")
+		}
+		if p.CI == "FAILURE" || p.CI == "ERROR" {
+			reasons = append(reasons, "CI failing")
+		}
+		if p.Mergeable == "CONFLICTING" {
+			reasons = append(reasons, "merge conflict")
+		}
+	}
+	if n := p.UnresolvedNotMine; n > 0 {
+		reasons = append(reasons, plural(n, "thread waiting on your reply", "threads waiting on your reply"))
+	}
+	if len(reasons) == 0 {
+		return false, "waiting for review"
+	}
+	return true, strings.Join(reasons, ", ")
+}
+
+// matches reports whether a PR contains every space-separated term of the filter, ignoring case.
+func matches(p PR, filter string) bool {
+	hay := strings.ToLower(fmt.Sprintf("#%d %s %s %s %s %s", p.Number, p.Title, p.Repo, p.HeadRefName, p.Linear, p.Author))
+	for _, term := range strings.Fields(strings.ToLower(filter)) {
+		if !strings.Contains(hay, term) {
+			return false
+		}
+	}
+	return true
 }
 
 // Row is one line of the list: a group header when PR is nil.
@@ -69,17 +122,25 @@ type Row struct {
 
 func branchKey(repo, branch string) string { return repo + ":" + branch }
 
-func buildRows(data []sectionData, cfg Config, collapsed map[string]bool) []Row {
+// buildRows lays out every section as rows. A non-empty filter keeps only matching PRs.
+func buildRows(data []sectionData, cfg Config, collapsed map[string]bool, filter string) []Row {
 	var rows []Row
 	for _, sd := range data {
-		heads := map[string]int{}
+		heads := map[string]int{} // from every PR, so a filtered-out parent still shows as "(on #N)"
+		prs := sd.PRs
+		if filter != "" {
+			prs = nil
+		}
 		for _, p := range sd.PRs {
 			heads[branchKey(p.Repo, p.HeadRefName)] = p.Number
+			if filter != "" && matches(p, filter) {
+				prs = append(prs, p)
+			}
 		}
 		path := sd.Section.Title
-		rows = append(rows, Row{Title: sd.Section.Title, Count: len(sd.PRs), Path: path})
+		rows = append(rows, Row{Title: sd.Section.Title, Count: len(prs), Path: path})
 		if !collapsed[path] {
-			rows = append(rows, groupRows(sd.PRs, sd.Section.GroupBy, 1, path, cfg, collapsed, heads)...)
+			rows = append(rows, groupRows(prs, sd.Section.GroupBy, 1, path, cfg, collapsed, heads)...)
 		}
 	}
 	return rows

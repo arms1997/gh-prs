@@ -73,6 +73,24 @@ type model struct {
 	jobs        map[string]*jobView // latest agent job per PR (prKey)
 	spin        int
 	ticking     bool
+	filter      string // "/" filter; empty shows everything
+	filtering   bool   // typing into the filter
+	seen        seenStore
+	recentKey   string   // the PR whose changes are listed in recent
+	recent      []string // what changed since you last looked at the selected PR
+	logs        map[string]*failLog
+}
+
+// failLog is the tail of a failing check's log, loaded on demand with f.
+type failLog struct {
+	check   string
+	text    string
+	loading bool
+}
+
+type logMsg struct {
+	key string
+	log failLog
 }
 
 func prepareCmd(cfg Config, c Command, p PR, agentSession string) tea.Cmd {
@@ -127,11 +145,12 @@ func lastLine(s string) string {
 }
 
 func newModel(cfg Config) model {
-	m := model{cfg: cfg, collapsed: map[string]bool{}, loading: true, detail: viewport.New(0, 0), jobs: loadJobs()}
+	m := model{cfg: cfg, collapsed: map[string]bool{}, loading: true, detail: viewport.New(0, 0), jobs: loadJobs(),
+		seen: loadSeen(), logs: map[string]*failLog{}}
 	if data, at, ok := loadCache(cfg); ok {
 		m.data = data
 		m.status = "cached " + at.Format("15:04")
-		m.rows = buildRows(data, cfg, m.collapsed)
+		m.rows = buildRows(data, cfg, m.collapsed, "")
 	}
 	return m
 }
@@ -197,7 +216,7 @@ func (m *model) rebuild() {
 	if r := m.current(); r != nil {
 		keep = r.Path
 	}
-	m.rows = buildRows(m.data, m.cfg, m.collapsed)
+	m.rows = buildRows(m.data, m.cfg, m.collapsed, m.filter)
 	for i, r := range m.rows {
 		if r.Path == keep {
 			m.cursor = i
@@ -218,11 +237,57 @@ func (m *model) clamp() {
 		m.offset = m.cursor - h + 1
 	}
 	m.offset = max(0, min(m.offset, len(m.rows)-h))
+	m.markSeen()
 	m.detail.SetContent(m.renderDetail())
 	if r := m.current(); r != nil && r.Path != m.detailPath {
 		m.detailPath = r.Path
 		m.detail.GotoTop() // only when the selection changes, so background refreshes don't reset your scroll
 	}
+}
+
+// baseline records PRs gh-prs hasn't seen before, so only later changes count as new.
+func (m *model) baseline() {
+	changed := false
+	for _, sd := range m.data {
+		for _, p := range sd.PRs {
+			if k := prKey(p.Repo, p.Number); m.seen != nil {
+				if _, ok := m.seen[k]; !ok {
+					m.seen[k] = snapOf(p)
+					changed = true
+				}
+			}
+		}
+	}
+	if changed {
+		_ = m.seen.save() // shortcut: if it can't be saved, PRs just won't be marked new next run
+	}
+}
+
+// markSeen records the selected PR as seen, keeping the list of what changed to show in the detail pane.
+func (m *model) markSeen() {
+	r := m.current()
+	if r == nil || r.PR == nil || m.seen == nil {
+		return
+	}
+	k, cur := prKey(r.PR.Repo, r.PR.Number), snapOf(*r.PR)
+	if k != m.recentKey {
+		m.recentKey, m.recent = k, nil
+	}
+	prev, ok := m.seen[k]
+	if ok && prev == cur {
+		return
+	}
+	if ok {
+		m.recent = append(m.recent, changes(prev, cur)...)
+	}
+	m.seen[k] = cur
+	_ = m.seen.save()
+}
+
+// isNew reports whether a PR changed since you last selected it.
+func (m model) isNew(p PR) bool {
+	prev, ok := m.seen[prKey(p.Repo, p.Number)]
+	return ok && len(changes(prev, snapOf(p))) > 0
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -240,6 +305,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.data = msg.data
 		m.status, m.isErr = "updated "+msg.at.Format("15:04"), false
+		m.baseline()
 		m.rebuild()
 		return m, m.scheduleRefresh()
 	case refreshMsg:
@@ -249,6 +315,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case statusMsg:
 		m.status, m.isErr = string(msg), false
+	case logMsg:
+		l := msg.log
+		m.logs[msg.key] = &l
+		m.detail.SetContent(m.renderDetail())
 	case preparedMsg:
 		if msg.err != nil {
 			m.status, m.isErr = msg.pp.cmd.Name+" failed: "+msg.err.Error(), true
@@ -348,7 +418,9 @@ func (m model) helpText() string {
 	for _, kv := range [][2]string{
 		{"j k ↑ ↓", "move"}, {"gg G", "top / bottom"}, {"ctrl+d ctrl+u", "half page"},
 		{"enter h l", "fold / collapse / expand"}, {"e", "focus details (esc back)"},
-		{"o", "open in browser"}, {"r", "refresh"}, {"q", "quit"},
+		{"/", "filter (enter keeps it, esc clears)"}, {"f", "load the failing check's log"},
+		{"o", "open in browser"}, {"i", "open the Linear issue"}, {"r", "refresh"}, {"q", "quit"},
+		{"● ○", "your turn / their turn"}, {"◆", "changed since you last looked"},
 	} {
 		fmt.Fprintf(&b, "%-14s %s\n", kv[0], kv[1])
 	}
@@ -363,7 +435,7 @@ func (m model) footer() string {
 	if c := m.confirming; c != nil {
 		return yellow.Bold(true).Render(fmt.Sprintf("%s #%d? y/N", c.cmd.Name, c.pr.Number))
 	}
-	help := "j/k move · enter fold · e details · o browser · cc agent · ct take over · ? keys · q quit"
+	help := "j/k move · / filter · e details · o browser · cc agent · ct take over · ? keys · q quit"
 	overflow := m.detail.TotalLineCount() > m.detail.Height
 	pct := fmt.Sprintf("%d%%", int(m.detail.ScrollPercent()*100))
 	if m.focusDetail {
@@ -373,6 +445,12 @@ func (m model) footer() string {
 		}
 	} else if overflow {
 		help = "e scroll details (" + pct + ") · " + help
+	}
+	if m.filter != "" {
+		help = "filter: " + m.filter + " (/ edit · esc clear) · " + help
+	}
+	if m.filtering {
+		help = "/" + m.filter + "█  enter keep · esc clear"
 	}
 	if m.keySeq != "" {
 		help = m.keySeq + "…"

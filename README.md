@@ -40,7 +40,10 @@ On first run, gh-prs writes a commented default config to `~/.config/gh-prs/conf
 | `gg` `G`, `ctrl+d` `ctrl+u` | top / bottom, half page |
 | `enter` `h` `l` | fold, collapse, expand a group |
 | `e` | focus the detail pane to scroll it (`esc` back) |
+| `/` | filter by title, number, repo, branch, author or Linear ID (`enter` keeps it, `esc` clears) |
+| `f` | load the failing check's log, around its errors |
 | `o` | open the PR in the browser |
+| `i` | open the PR's Linear issue |
 | `r` | refresh now (it also refreshes every 2 minutes in the background) |
 | `?` | every key, including your commands |
 | `q` | quit |
@@ -61,6 +64,16 @@ On first run, gh-prs writes a commented default config to `~/.config/gh-prs/conf
 - `agent`: the PR's background agent.
 
 The reasons a PR needs action show as solid colored badges.
+
+**Whose turn.** Each row starts with ● (your move) or ○ (theirs).
+- **Your PRs are your turn when:** they're drafts, need action, have a thread where someone else spoke last, or are ready to merge.
+- **Review requests are your turn** until you've reviewed them since their latest commit.
+
+The detail pane says why. `turn` also works as a `group_by` key.
+
+**What changed.** ◆ marks a PR that changed since you last selected it. Selecting it lists what changed in the detail pane (new commits, new comments, CI, review state, conflicts) and clears the mark.
+
+**Failing checks and Linear.** The detail pane names each failing check; `f` loads the failure from the GitHub Actions log. Issue IDs like `AGT-915` are found in the title or branch and link to `linear_workspace`.
 
 **Stacking.** A PR whose base branch is another of your PRs' head branch is indented under it with `↳`. If the parent sits in a different group, it's marked `↳ (on #N)`.
 
@@ -133,6 +146,7 @@ project_label_prefix: "proj:"
 refresh_interval: 2m            # 0 turns background refresh off
 repos_dir: ~/augment            # owner/repo is expected at <repos_dir>/repo
 opener: open -na Ghostty.app --args -e
+linear_workspace: go-augment    # Linear links: linear.app/<workspace>/issue/AGT-915
 prompt_context_file: context.md # prepended to every agent prompt
 
 sections:
@@ -218,7 +232,8 @@ go vet ./...
 |---|---|
 | `main.go`, `ui.go` | entry point; the Bubble Tea model, Update and View |
 | `keys.go`, `table.go`, `detail.go`, `styles.go` | keyboard handling, the PR list, the detail pane and agent box, colors |
-| `github.go`, `group.go`, `cache.go` | fetching PRs, grouping and stacking, the disk cache |
+| `github.go`, `group.go`, `cache.go` | fetching PRs, grouping, whose turn, filtering and stacking, the disk cache |
+| `seen.go`, `checks.go` | what changed since you last looked; failing check logs |
 | `config.go`, `commands.go` | config layering and prompt lookup; validating and preparing commands |
 | `launcher.go`, `worktree.go` | launcher scripts, shell quoting and time limits; worktrees |
 | `jobs.go`, `stream.go` | background agent jobs; parsing Claude's stream-json |

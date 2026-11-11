@@ -209,7 +209,37 @@ func (m model) renderDetail() string {
 	if len(p.Labels) > 0 {
 		b.WriteString(dim.Render("labels: "+strings.Join(p.Labels, ", ")) + "\n")
 	}
-	if v := m.jobs[prKey(p.Repo, p.Number)]; v != nil {
+	if mine, why := turnOf(*p); mine {
+		b.WriteString(yellow.Bold(true).Render("● Your turn: "+why) + "\n")
+	} else {
+		b.WriteString(dim.Render("○ Their turn: "+why) + "\n")
+	}
+	k := prKey(p.Repo, p.Number)
+	if k == m.recentKey && len(m.recent) > 0 {
+		b.WriteString(cyan.Render("◆ Since you last looked: "+strings.Join(m.recent, " · ")) + "\n")
+	}
+	if len(p.FailingChecks) > 0 {
+		names := make([]string, len(p.FailingChecks))
+		for i, c := range p.FailingChecks {
+			names[i] = "✗ " + c.Name
+		}
+		b.WriteString(red.Render("Failing: "+strings.Join(names, " · ")) + dim.Render("  (f: log)") + "\n")
+	}
+	if p.Linear != "" {
+		link := ""
+		if linearURL(m.cfg.LinearWorkspace, p.Linear) != "" {
+			link = "  (i: open)"
+		}
+		b.WriteString(dim.Render("Linear: "+p.Linear+link) + "\n")
+	}
+	if l := m.logs[k]; l != nil {
+		if l.loading {
+			b.WriteString("\n" + dim.Render("Loading the "+l.check+" log…") + "\n")
+		} else {
+			b.WriteString("\n" + red.Bold(true).Render("Log · "+l.check) + dim.Render(fmt.Sprintf(" (%d lines around the errors)", logLines)) + "\n" + dim.Render(l.text) + "\n")
+		}
+	}
+	if v := m.jobs[k]; v != nil {
 		b.WriteString("\n" + renderJob(v, w) + "\n")
 	}
 	body := strings.TrimSpace(p.Body)

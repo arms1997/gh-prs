@@ -40,7 +40,7 @@ const defaultJobLimit = 45 * time.Minute
 // builtinKeys can't start a command key sequence.
 var builtinKeys = map[string]bool{
 	"j": true, "k": true, "g": true, "G": true, "h": true, "l": true, "e": true, "o": true,
-	"r": true, "q": true, "?": true, "/": true, "enter": true, " ": true, "tab": true, "esc": true,
+	"r": true, "q": true, "?": true, "/": true, "f": true, "i": true, "enter": true, " ": true, "tab": true, "esc": true,
 	"up": true, "down": true, "left": true, "right": true,
 }
 

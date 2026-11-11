@@ -52,7 +52,7 @@ func TestBuildRowsNestsAndOrders(t *testing.T) {
 		},
 	}}
 
-	got := titles(buildRows(data, cfg, map[string]bool{}))
+	got := titles(buildRows(data, cfg, map[string]bool{}, ""))
 	want := []string{
 		"Mine",
 		"alpha", "Ready to merge", "#3",
@@ -63,7 +63,7 @@ func TestBuildRowsNestsAndOrders(t *testing.T) {
 		t.Fatalf("rows:\n got %v\nwant %v", got, want)
 	}
 
-	got = titles(buildRows(data, cfg, map[string]bool{"Mine/beta": true}))
+	got = titles(buildRows(data, cfg, map[string]bool{"Mine/beta": true}, ""))
 	want = []string{"Mine", "alpha", "Ready to merge", "#3", "beta", "No project", "Waiting for review", "#1"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("collapsed rows:\n got %v\nwant %v", got, want)
@@ -88,7 +88,7 @@ func TestStacking(t *testing.T) {
 
 	type got struct{ num, stack, on int }
 	var rows []got
-	for _, r := range buildRows(data, cfg, map[string]bool{}) {
+	for _, r := range buildRows(data, cfg, map[string]bool{}, "") {
 		if r.PR != nil {
 			rows = append(rows, got{r.PR.Number, r.Stack, r.StackedOn})
 		}

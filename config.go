@@ -30,6 +30,7 @@ type Config struct {
 	ReposDir           string    `yaml:"repos_dir"`
 	Opener             string    `yaml:"opener"`
 	PromptContextFile  string    `yaml:"prompt_context_file"`
+	LinearWorkspace    string    `yaml:"linear_workspace"`
 	Sections           []Section `yaml:"sections"`
 	Commands           []Command `yaml:"commands"`
 
@@ -158,7 +159,7 @@ func parseConfig(data []byte) (Config, error) {
 		}
 		for _, g := range s.GroupBy {
 			if _, ok := groupers[g]; !ok {
-				return cfg, fmt.Errorf("section %q: unknown group_by %q (use project, status, repo)", s.Title, g)
+				return cfg, fmt.Errorf("section %q: unknown group_by %q (use project, status, repo, turn)", s.Title, g)
 			}
 		}
 	}

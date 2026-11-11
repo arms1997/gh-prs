@@ -28,6 +28,30 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 	r := m.current()
 
+	if m.filtering { // typing goes into the filter, never into commands
+		switch msg.Type {
+		case tea.KeyEsc:
+			m.filter, m.filtering = "", false
+		case tea.KeyEnter:
+			m.filtering = false
+		case tea.KeyBackspace:
+			if rs := []rune(m.filter); len(rs) > 0 {
+				m.filter = string(rs[:len(rs)-1])
+			}
+		case tea.KeyCtrlU:
+			m.filter = ""
+		case tea.KeyRunes, tea.KeySpace:
+			m.filter += string(msg.Runes)
+			if msg.Type == tea.KeySpace {
+				m.filter += " "
+			}
+		default:
+			return m, nil
+		}
+		m.rebuild()
+		return m, nil
+	}
+
 	if c := m.confirming; c != nil {
 		m.confirming = nil
 		if k == "y" || k == "Y" {
@@ -95,6 +119,28 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.pendingG = false
 
 	switch k {
+	case "/":
+		m.filtering = true
+		return m, nil
+	case "esc":
+		if m.filter != "" {
+			m.filter = ""
+			m.rebuild()
+		}
+		return m, nil
+	case "f":
+		if r != nil && r.PR != nil {
+			return m, m.loadFailLog(*r.PR)
+		}
+		return m, nil
+	case "i":
+		if r != nil && r.PR != nil {
+			if url := linearURL(m.cfg.LinearWorkspace, r.PR.Linear); url != "" {
+				return m, openCmd(url)
+			}
+			m.status, m.isErr = "no Linear issue found in the title or branch", false
+		}
+		return m, nil
 	case "q":
 		return m, tea.Quit
 	case "j", "down":

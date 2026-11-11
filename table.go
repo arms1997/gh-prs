@@ -116,6 +116,7 @@ func prColumns(p PR, job *jobView, spin int) []seg {
 
 func (m model) renderRow(r Row, isSel, shade bool, w int) string {
 	indent := strings.Repeat("  ", r.Depth)
+	var lead []seg // markers before the PR number: whose turn, and changed since you looked
 	var left seg
 	var right []seg
 
@@ -140,19 +141,32 @@ func (m model) renderRow(r Row, isSel, shade bool, w int) string {
 		} else if r.StackedOn > 0 { // parent is in another group
 			stack, on = "↳ ", fmt.Sprintf("(on #%d) ", r.StackedOn)
 		}
-		left = seg{fmt.Sprintf("%s%s%-7s%s%s", indent, stack, fmt.Sprintf("#%d", p.Number), on, p.Title), plain}
+		turn, ts := "○", dim
+		if mine, _ := turnOf(*p); mine {
+			turn, ts = "●", yellow.Bold(true)
+		}
+		changed := " "
+		if m.isNew(*p) {
+			changed = "◆"
+		}
+		lead = []seg{{indent, plain}, {turn, ts}, {changed, cyan}, {" ", plain}}
+		left = seg{fmt.Sprintf("%s%-7s%s%s", stack, fmt.Sprintf("#%d", p.Number), on, p.Title), plain}
 		if isSel {
 			left.style = bold
 		}
 		right = prColumns(*p, m.jobs[prKey(p.Repo, p.Number)], m.spin)
 	}
 
-	rightW := 0
+	leadW, rightW := 0, 0
+	for _, s := range lead {
+		leadW += lipgloss.Width(s.text)
+	}
 	for _, s := range right {
 		rightW += lipgloss.Width(s.text)
 	}
-	left.text = ansi.Truncate(left.text, max(w-rightW-1, 0), "…")
-	segs := append([]seg{left, {spaces(w - lipgloss.Width(left.text) - rightW), plain}}, right...)
+	left.text = ansi.Truncate(left.text, max(w-leadW-rightW-1, 0), "…")
+	segs := append(lead, left, seg{spaces(w - leadW - lipgloss.Width(left.text) - rightW), plain})
+	segs = append(segs, right...)
 
 	var b strings.Builder
 	for _, s := range segs {
