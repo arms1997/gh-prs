@@ -51,6 +51,7 @@ context when I want help fixing it.
 - Time limits for background jobs (`timeout`, default 45m, `D` 3h): a watchdog in the job's process group stops it and everything it started, even after gh-prs quits, and shows "Stopped: hit the time limit"
 - Pluggable openers: global or per-command `opener` (any script) decides where commands open (Ghostty, tmux, herdr, …); `run` decides which agent
 - Worktree reuse or creation (`<repo>-<branch-name>`), mark ready, merge (y/N), add label, copy URL/branch
+- Organizing (`p…`): pin, snooze until it changes, move to a project, hide, all local in `organize.yml`; `pc` asks Claude (no tools) to reorganize, limited to grouping, previewed as a diff before anything is written
 - `?` key list
 - Awareness: ●/○ whose turn (with the reason in the detail pane, and `turn` as a `group_by`), ◆ changed since you last looked (and what changed), failing check names with `f` to load the error lines from the Actions log, Linear issue links (`i`), `/` filter
 
@@ -62,8 +63,8 @@ context when I want help fixing it.
 | 2 | Actions | Configurable key→command bindings; `cc` opens Claude with prompt templates (fix CI, address comments, rebase, write description); checkout into a worktree; mark ready, merge, label, copy | ✅ Done |
 | 2.5 | Background agents | Headless agent jobs, agent column, live activity, take over with `ct` | ✅ Done |
 | 3 | Awareness | Whose turn it is ("on me" vs "on them"), changes since last viewed, failing check name and logs, Linear link, `/` filter | ✅ Done |
-| 4 | Customization | Pins and overrides kept between sessions, Claude editing the grouping rules with a preview of the change | Next |
-| 5 | Team | Publish as a `gh` extension, README, default config | Planned |
+| 4 | Customization | Pins and overrides kept between sessions, Claude editing the grouping rules with a preview of the change | ✅ Done |
+| 5 | Team | Publish as a `gh` extension, README, default config | Next |
 
 ## Open questions
 
@@ -78,6 +79,7 @@ context when I want help fixing it.
 
 ## Changelog
 
+- **2026-11-11:** Phase 4 shipped: pins, snoozes, local projects, hidden PRs, and Claude reorganizing with a diff preview.
 - **2026-11-11:** Phase 3 shipped: whose turn, what changed, failing check logs, Linear links, filter.
 - **2026-11-11:** Agent box: bounded summary of what an agent changed.
 - **2026-11-11:** Time limits for background jobs.

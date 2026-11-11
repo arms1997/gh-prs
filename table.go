@@ -149,8 +149,18 @@ func (m model) renderRow(r Row, isSel, shade bool, w int) string {
 		if m.isNew(*p) {
 			changed = "◆"
 		}
-		lead = []seg{{indent, plain}, {turn, ts}, {changed, cyan}, {" ", plain}}
-		left = seg{fmt.Sprintf("%s%-7s%s%s", stack, fmt.Sprintf("#%d", p.Number), on, p.Title), plain}
+		mark, ms := " ", yellow // pinned, or why it's normally out of sight (pa shows these)
+		titleStyle := plain
+		switch {
+		case p.Hidden:
+			mark, ms, titleStyle = "⊘", dim, dim
+		case p.Snoozed:
+			mark, ms, titleStyle = "z", dim, dim
+		case p.Pinned:
+			mark = "★"
+		}
+		lead = []seg{{indent, plain}, {mark, ms}, {turn, ts}, {changed, cyan}, {" ", plain}}
+		left = seg{fmt.Sprintf("%s%-7s%s%s", stack, fmt.Sprintf("#%d", p.Number), on, p.Title), titleStyle}
 		if isSel {
 			left.style = bold
 		}

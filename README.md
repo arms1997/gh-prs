@@ -45,6 +45,7 @@ On first run, gh-prs writes a commented default config to `~/.config/gh-prs/conf
 | `o` | open the PR in the browser |
 | `i` | open the PR's Linear issue |
 | `r` | refresh now (it also refreshes every 2 minutes in the background) |
+| `p…` | organize: `pp` pin · `ps` snooze · `pm` move to project · `ph` hide · `pa` show hidden · `pc` ask Claude |
 | `?` | every key, including your commands |
 | `q` | quit |
 
@@ -74,6 +75,17 @@ The detail pane says why. `turn` also works as a `group_by` key.
 **What changed.** ◆ marks a PR that changed since you last selected it. Selecting it lists what changed in the detail pane (new commits, new comments, CI, review state, conflicts) and clears the mark.
 
 **Failing checks and Linear.** The detail pane names each failing check; `f` loads the failure from the GitHub Actions log. Issue IDs like `AGT-915` are found in the title or branch and link to `linear_workspace`.
+
+**Organizing.** Your own arrangement is kept in `~/.config/gh-prs/organize.yml`, keyed by `owner/repo#number`. Nothing in it goes to GitHub, and it works on anyone's PRs.
+- `pp` **pins** a PR to the top of its group (★).
+- `ps` **snoozes** it until something happens on it: a commit, comment, CI change or review. Then it comes back marked ◆.
+- `pm` **moves** it to a project you type, overriding its `proj:` label. Leave the name empty to undo.
+- `ph` **hides** it for good. `pa` shows hidden (⊘) and snoozed (z) PRs, so you can undo either with the same key.
+
+**Asking Claude to reorganize (`pc`).** Type what you want, e.g. "put the tool display name PRs in their own project and group My PRs by turn". Claude proposes new versions of your config and organize file, and the detail pane shows the diff: `y` applies (the old config is kept as `config.yml.bak`), `n` discards.
+- **Text only:** Claude runs with no tools, so it can only propose text.
+- **Grouping only:** a proposal may change sections, project labels, pins, projects and hidden PRs. Anything that touches commands, the opener, `repos_dir` or the prompts is refused, because PR titles in its input are written by other people.
+- **Validated:** a proposal that doesn't load is refused too. A request costs about $0.10.
 
 **Stacking.** A PR whose base branch is another of your PRs' head branch is indented under it with `↳`. If the parent sits in a different group, it's marked `↳ (on #N)`.
 
@@ -234,6 +246,7 @@ go vet ./...
 | `keys.go`, `table.go`, `detail.go`, `styles.go` | keyboard handling, the PR list, the detail pane and agent box, colors |
 | `github.go`, `group.go`, `cache.go` | fetching PRs, grouping, whose turn, filtering and stacking, the disk cache |
 | `seen.go`, `checks.go` | what changed since you last looked; failing check logs |
+| `organize.go`, `reorganize.go` | pins, snoozes, projects and hidden PRs; asking Claude to reorganize |
 | `config.go`, `commands.go` | config layering and prompt lookup; validating and preparing commands |
 | `launcher.go`, `worktree.go` | launcher scripts, shell quoting and time limits; worktrees |
 | `jobs.go`, `stream.go` | background agent jobs; parsing Claude's stream-json |

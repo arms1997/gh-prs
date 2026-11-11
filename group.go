@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -42,6 +43,9 @@ var groupers = map[string]grouper{
 		return s.String(), fmt.Sprint(int(s))
 	},
 	"project": func(p PR, cfg Config) (string, string) {
+		if p.Project != "" { // assigned by you (pm), which wins over labels
+			return p.Project, "0" + p.Project
+		}
 		if cfg.ProjectLabelPrefix != "" {
 			for _, l := range p.Labels {
 				if strings.HasPrefix(l, cfg.ProjectLabelPrefix) {
@@ -122,21 +126,36 @@ type Row struct {
 
 func branchKey(repo, branch string) string { return repo + ":" + branch }
 
-// buildRows lays out every section as rows. A non-empty filter keeps only matching PRs.
-func buildRows(data []sectionData, cfg Config, collapsed map[string]bool, filter string) []Row {
+// view is how the list is being looked at: folds, the / filter, and your organize file.
+type view struct {
+	Collapsed map[string]bool
+	Filter    string
+	Org       *Organize
+	ShowAll   bool // include hidden and snoozed PRs (marked)
+}
+
+// buildRows lays out every section as rows: your project assignments and pins applied,
+// hidden and snoozed PRs left out (unless ShowAll), and only PRs matching the filter.
+func buildRows(data []sectionData, cfg Config, v view) []Row {
+	collapsed, org := v.Collapsed, v.Org
+	if org == nil {
+		org = &Organize{}
+	}
 	var rows []Row
 	for _, sd := range data {
 		heads := map[string]int{} // from every PR, so a filtered-out parent still shows as "(on #N)"
-		prs := sd.PRs
-		if filter != "" {
-			prs = nil
-		}
+		var prs []PR
 		for _, p := range sd.PRs {
 			heads[branchKey(p.Repo, p.HeadRefName)] = p.Number
-			if filter != "" && matches(p, filter) {
-				prs = append(prs, p)
+			k := prKey(p.Repo, p.Number)
+			p.Project, p.Pinned = org.Projects[k], org.pinned(k)
+			p.Hidden, p.Snoozed = org.hidden(k), org.snoozed(k)
+			if (p.Hidden || p.Snoozed) && !v.ShowAll || v.Filter != "" && !matches(p, v.Filter) {
+				continue
 			}
+			prs = append(prs, p)
 		}
+		slices.SortStableFunc(prs, func(a, b PR) int { return btoi(b.Pinned) - btoi(a.Pinned) }) // pinned first, else keep GitHub's order
 		path := sd.Section.Title
 		rows = append(rows, Row{Title: sd.Section.Title, Count: len(prs), Path: path})
 		if !collapsed[path] {

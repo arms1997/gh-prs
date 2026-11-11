@@ -79,6 +79,22 @@ type model struct {
 	recentKey   string   // the PR whose changes are listed in recent
 	recent      []string // what changed since you last looked at the selected PR
 	logs        map[string]*failLog
+	org         *Organize
+	showAll     bool       // pa: show hidden and snoozed PRs too
+	orgKey      bool       // p was pressed; the next key picks an organize action
+	input       *textInput // a one-line prompt in the footer (pm, pc)
+	proposal    *proposal  // Claude's suggested reorganization, waiting for y/n
+}
+
+// textInput is a one-line prompt in the footer; enter submits, esc cancels.
+type textInput struct {
+	label  string
+	value  string
+	submit func(m *model, value string) tea.Cmd
+}
+
+func (m model) view() view {
+	return view{Collapsed: m.collapsed, Filter: m.filter, Org: m.org, ShowAll: m.showAll}
 }
 
 // failLog is the tail of a failing check's log, loaded on demand with f.
@@ -147,10 +163,16 @@ func lastLine(s string) string {
 func newModel(cfg Config) model {
 	m := model{cfg: cfg, collapsed: map[string]bool{}, loading: true, detail: viewport.New(0, 0), jobs: loadJobs(),
 		seen: loadSeen(), logs: map[string]*failLog{}}
+	org, err := loadOrganize()
+	if err != nil {
+		m.status, m.isErr = err.Error(), true
+		org = &Organize{}
+	}
+	m.org = org
 	if data, at, ok := loadCache(cfg); ok {
 		m.data = data
 		m.status = "cached " + at.Format("15:04")
-		m.rows = buildRows(data, cfg, m.collapsed, "")
+		m.rows = buildRows(data, cfg, m.view())
 	}
 	return m
 }
@@ -216,7 +238,7 @@ func (m *model) rebuild() {
 	if r := m.current(); r != nil {
 		keep = r.Path
 	}
-	m.rows = buildRows(m.data, m.cfg, m.collapsed, m.filter)
+	m.rows = buildRows(m.data, m.cfg, m.view())
 	for i, r := range m.rows {
 		if r.Path == keep {
 			m.cursor = i
@@ -306,6 +328,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.data = msg.data
 		m.status, m.isErr = "updated "+msg.at.Format("15:04"), false
 		m.baseline()
+		if m.org.wake(m.data) { // snoozed PRs that changed come back
+			_ = m.org.save()
+		}
 		m.rebuild()
 		return m, m.scheduleRefresh()
 	case refreshMsg:
@@ -315,6 +340,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case statusMsg:
 		m.status, m.isErr = string(msg), false
+	case proposalMsg:
+		if m.proposal == nil { // cancelled while Claude was thinking
+			return m, nil
+		}
+		if msg.err != nil {
+			m.proposal = nil
+			m.status, m.isErr = msg.err.Error(), true
+			m.clamp()
+			return m, nil
+		}
+		m.proposal = msg.p
+		m.detail.SetContent(m.renderDetail())
+		m.detail.GotoTop()
 	case logMsg:
 		l := msg.log
 		m.logs[msg.key] = &l
@@ -420,7 +458,10 @@ func (m model) helpText() string {
 		{"enter h l", "fold / collapse / expand"}, {"e", "focus details (esc back)"},
 		{"/", "filter (enter keeps it, esc clears)"}, {"f", "load the failing check's log"},
 		{"o", "open in browser"}, {"i", "open the Linear issue"}, {"r", "refresh"}, {"q", "quit"},
-		{"● ○", "your turn / their turn"}, {"◆", "changed since you last looked"},
+		{"pp ps ph", "pin, snooze until it changes, hide (again to undo)"},
+		{"pm", "move to a project (empty: back to its label)"},
+		{"pa", "show hidden and snoozed PRs"}, {"pc", "ask Claude to reorganize"},
+		{"★ ● ○ ◆", "pinned · your turn · their turn · changed since you looked"},
 	} {
 		fmt.Fprintf(&b, "%-14s %s\n", kv[0], kv[1])
 	}
@@ -451,6 +492,18 @@ func (m model) footer() string {
 	}
 	if m.filtering {
 		help = "/" + m.filter + "█  enter keep · esc clear"
+	}
+	if m.orgKey {
+		help = "p…  p pin · s snooze · m move to project · h hide · a show all · c ask Claude"
+	}
+	if m.input != nil {
+		help = m.input.label + m.input.value + "█  enter ok · esc cancel"
+	}
+	if m.proposal != nil && !m.proposal.loading {
+		help = "Claude's proposal: y apply · n discard · j/k scroll"
+	}
+	if m.showAll {
+		help = "showing hidden & snoozed (pa to stop) · " + help
 	}
 	if m.keySeq != "" {
 		help = m.keySeq + "…"

@@ -34,6 +34,12 @@ type PR struct {
 	Comments       int    // conversation comments plus reviews, to notice new activity
 	Linear         string // issue ID from the title or branch, e.g. AGT-915
 
+	// From your organize file, set when the list is built.
+	Project string `json:"-"`
+	Pinned  bool   `json:"-"`
+	Hidden  bool   `json:"-"`
+	Snoozed bool   `json:"-"`
+
 	Mine              bool // you opened it
 	UnresolvedNotMine int  // unresolved threads where someone else spoke last
 	ReviewedSincePush bool // you reviewed it after its latest commit

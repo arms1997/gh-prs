@@ -173,7 +173,7 @@ func TestTurnGroupBy(t *testing.T) {
 		t.Fatal(err)
 	}
 	data := []sectionData{{Section: cfg.Sections[0], PRs: []PR{{Number: 1, Mine: true, CI: "SUCCESS", ReviewDecision: "REVIEW_REQUIRED"}, {Number: 2, Mine: true, IsDraft: true}}}}
-	if got := titles(buildRows(data, cfg, map[string]bool{}, "")); strings.Join(got, ",") != "x,On me,#2,On them,#1" {
+	if got := titles(buildRows(data, cfg, view{})); strings.Join(got, ",") != "x,On me,#2,On them,#1" {
 		t.Fatalf("got %v", got)
 	}
 }

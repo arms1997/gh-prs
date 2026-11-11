@@ -186,6 +186,9 @@ func (m model) renderDetail() string {
 	if m.showHelp {
 		return wrap.Render(m.helpText())
 	}
+	if m.proposal != nil {
+		return wrap.Render(renderProposal(m.proposal))
+	}
 	if r == nil {
 		return ""
 	}

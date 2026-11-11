@@ -3,6 +3,7 @@ package main
 // Keyboard handling, including command key sequences and y/N confirmation.
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -27,6 +28,51 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 	r := m.current()
+
+	if in := m.input; in != nil { // typing goes into the prompt, never into commands
+		switch msg.Type {
+		case tea.KeyEsc:
+			m.input = nil
+		case tea.KeyEnter:
+			m.input = nil
+			return m, in.submit(&m, strings.TrimSpace(in.value))
+		case tea.KeyBackspace:
+			if rs := []rune(in.value); len(rs) > 0 {
+				in.value = string(rs[:len(rs)-1])
+			}
+		case tea.KeyRunes:
+			in.value += string(msg.Runes)
+		case tea.KeySpace:
+			in.value += " "
+		}
+		return m, nil
+	}
+
+	if p := m.proposal; p != nil {
+		switch {
+		case p.loading:
+			if k == "esc" {
+				m.proposal = nil
+				m.clamp()
+			}
+			return m, nil
+		case k == "y":
+			return m, m.applyProposal()
+		case k == "n" || k == "esc":
+			m.proposal = nil
+			m.status, m.isErr = "discarded Claude's proposal", false
+			m.clamp()
+			return m, nil
+		}
+		var cmd tea.Cmd
+		m.detail, cmd = m.detail.Update(msg)
+		return m, cmd
+	}
+
+	if m.orgKey {
+		m.orgKey = false
+		return m.organizeKey(k, r)
+	}
 
 	if m.filtering { // typing goes into the filter, never into commands
 		switch msg.Type {
@@ -119,6 +165,9 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.pendingG = false
 
 	switch k {
+	case "p":
+		m.orgKey = true
+		return m, nil
 	case "/":
 		m.filtering = true
 		return m, nil
@@ -194,4 +243,60 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 	m.clamp()
 	return m, nil
+}
+
+// organizeKey runs the action picked after p.
+func (m model) organizeKey(k string, r *Row) (tea.Model, tea.Cmd) {
+	switch k {
+	case "a":
+		m.showAll = !m.showAll
+		m.rebuild()
+		return m, nil
+	case "c":
+		m.input = &textInput{label: "Reorganize: ", submit: func(m *model, ask string) tea.Cmd { return m.askClaude(ask) }}
+		return m, nil
+	}
+	if r == nil || r.PR == nil {
+		if strings.Contains("psmh", k) {
+			m.status, m.isErr = "select a PR first", false
+		}
+		return m, nil
+	}
+	p := *r.PR
+	key := prKey(p.Repo, p.Number)
+	var note string
+	switch k {
+	case "p":
+		note = map[bool]string{true: "pinned", false: "unpinned"}[toggle(&m.org.Pinned, key)]
+	case "h":
+		note = map[bool]string{true: "hidden (pa shows hidden PRs)", false: "unhidden"}[toggle(&m.org.Hidden, key)]
+	case "s":
+		if m.org.snoozed(key) {
+			delete(m.org.Snoozed, key)
+			note = "unsnoozed"
+		} else {
+			m.org.snooze(p)
+			note = "snoozed until something changes on it"
+		}
+	case "m":
+		m.input = &textInput{label: "Move to project: ", value: m.org.Projects[key], submit: func(m *model, name string) tea.Cmd {
+			m.org.setProject(key, name)
+			m.saveOrganize(fmt.Sprintf("#%d moved to %s", p.Number, map[bool]string{true: name, false: "its label's project"}[name != ""]))
+			return nil
+		}}
+		return m, nil
+	default:
+		return m, nil
+	}
+	m.saveOrganize(fmt.Sprintf("#%d %s", p.Number, note))
+	return m, nil
+}
+
+func (m *model) saveOrganize(note string) {
+	if err := m.org.save(); err != nil {
+		m.status, m.isErr = "couldn't save "+organizePath()+": "+err.Error(), true
+	} else {
+		m.status, m.isErr = note, false
+	}
+	m.rebuild()
 }
