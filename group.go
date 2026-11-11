@@ -1,5 +1,7 @@
 package main
 
+// Grouping: status buckets, group_by keys, stacking, and the rows the list shows.
+
 import (
 	"fmt"
 	"sort"

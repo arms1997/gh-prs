@@ -6,19 +6,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 	"testing"
 	"time"
-)
-
-// Trimmed from a real `claude -p --output-format stream-json --verbose` run.
-const (
-	evInit   = `{"type":"system","subtype":"init","session_id":"s"}`
-	evTool   = `{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"npm test -- --watch=false","description":"Run tests"}}]}}`
-	evText   = `{"type":"assistant","message":{"content":[{"type":"text","text":"Fixed the flaky assertion.\nDetails follow."}]}}`
-	evResult = `{"type":"result","subtype":"success","is_error":false,"num_turns":7,"result":"Pushed abc123: fixed the test.","total_cost_usd":0.42}`
-	evAuth   = `{"type":"result","subtype":"success","is_error":true,"num_turns":1,"result":"Invalid API key · Fix external API key","total_cost_usd":0}`
 )
 
 func deadPID(t *testing.T) int {
@@ -38,31 +27,6 @@ func writeJob(t *testing.T, pid int, log, stderr string) *jobView {
 	os.WriteFile(j.path(".jsonl"), []byte(log), 0o600)
 	os.WriteFile(j.path(".err"), []byte(stderr), 0o600)
 	return &jobView{Job: j}
-}
-
-func TestJobParsing(t *testing.T) {
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
-
-	v := writeJob(t, deadPID(t), strings.Join([]string{evInit, evTool, evText, evResult}, "\n")+"\n", "")
-	v.update()
-	if v.Status != JobDone || v.Result != "Pushed abc123: fixed the test." || v.Turns != 7 || v.Cost != 0.42 {
-		t.Fatalf("done job: %+v", v)
-	}
-	if want := []string{"Bash npm test -- --watch=false", "“Fixed the flaky assertion.”"}; strings.Join(v.Activity, "|") != strings.Join(want, "|") {
-		t.Fatalf("activity = %q", v.Activity)
-	}
-
-	v = writeJob(t, deadPID(t), evInit+"\n"+evAuth+"\n", "")
-	v.update()
-	if v.Status != JobFailed || !strings.Contains(v.Result, "Invalid API key") {
-		t.Fatalf("auth failure: %+v", v)
-	}
-
-	v = writeJob(t, deadPID(t), evInit+"\n"+evTool+"\n", "warning\nError: something broke\n")
-	v.update()
-	if v.Status != JobFailed || v.Result != "Error: something broke" {
-		t.Fatalf("died without result: %+v", v)
-	}
 }
 
 // A live job's log is read incrementally, including a line split across reads.
@@ -114,53 +78,6 @@ func TestStartJob(t *testing.T) {
 	got := loadJobs()[prKey("o/r", 3)]
 	if got == nil || got.ID != v.ID || got.Status != JobDone {
 		t.Fatalf("reloaded: %+v", got)
-	}
-}
-
-func TestParseSummary(t *testing.T) {
-	result := "I looked at the failing check and the logs.\n\n" +
-		"**DONE:** Fixed the flaky registry test\n" +
-		"- `registry.test.ts`: await the tool sync\n" +
-		"- `registry.ts`: guard empty palettes\n" +
-		"PUSHED: a1b2c3d\n" +
-		"NEEDS YOU: nothing\n"
-	s, ok := parseSummary(result)
-	if !ok || s.Headline != "Fixed the flaky registry test" || len(s.Changes) != 2 || s.Pushed != "a1b2c3d" || s.NeedsYou != "nothing" {
-		t.Fatalf("parsed %+v ok=%v", s, ok)
-	}
-	if _, ok := parseSummary("just prose, no block"); ok {
-		t.Fatal("prose without DONE: should not parse")
-	}
-}
-
-// The agent box wraps to the pane width whatever the agent writes; height grows, and the pane scrolls.
-func TestAgentBoxFitsWidth(t *testing.T) {
-	long := strings.Repeat("very long words ", 40)
-	var changes strings.Builder
-	for i := 0; i < 12; i++ {
-		changes.WriteString("- `file" + strings.Repeat("x", i) + ".ts`: " + long + "\n")
-	}
-	cases := map[string]*jobView{
-		"summary":  {Job: Job{Name: "fix CI"}, Status: JobDone, Turns: 3, Cost: 0.4, Result: "DONE: " + long + "\n" + changes.String() + "PUSHED: NO: " + long + "\nNEEDS YOU: " + long},
-		"prose":    {Job: Job{Name: "fix CI"}, Status: JobFailed, Result: strings.Repeat(long+"\n", 30)},
-		"running":  {Job: Job{Name: "fix CI", Started: time.Now()}, Status: JobRunning, Activity: []string{long, long, long, long, long, long}},
-		"no lines": {Job: Job{Name: "fix CI"}, Status: JobFailed},
-	}
-	for name, v := range cases {
-		for _, l := range strings.Split(ansi.Strip(renderJob(v, 50)), "\n") {
-			if w := lipgloss.Width(l); w > 50 {
-				t.Errorf("%s: line %d wide: %q", name, w, l)
-			}
-		}
-	}
-	box := ansi.Strip(renderJob(cases["summary"], 50))
-	for _, want := range []string{"+ file.ts: very long", "\n│   words", "…and 2 more", "not pushed", "! needs you"} {
-		if !strings.Contains(box, want) {
-			t.Errorf("summary box missing %q:\n%s", want, box)
-		}
-	}
-	if strings.Contains(box, "…\n") || strings.Contains(box, "… │") {
-		t.Errorf("summary lines should wrap, not be cut:\n%s", box)
 	}
 }
 

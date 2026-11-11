@@ -1,0 +1,19 @@
+# Merge, deploy the title's service(s) to prod with "Deploy Services", then Datadog health
+# checks at +5/+10/+15/+20m. Refuses (before merging) outside the prod deploy window or if
+# anything looks off. Put DEPLOY_DRY_RUN=1 in front to check and plan without merging.
+- key: D
+  name: merge + deploy prod
+  background: true
+  timeout: 3h # backstop: the script itself gives up after 1h merging or 1h deploying
+  confirm: true
+  refresh: true
+  run: '"$GH_PRS_DIR/scripts/deploy-monitor.sh"'
+# GitHub's own "Revert" (the revertPullRequest mutation), then open the new PR.
+- key: V
+  name: open revert PR
+  confirm: true
+  refresh: true
+  run: >-
+    url=$(gh api graphql -f query='mutation($id: ID!) { revertPullRequest(input: {pullRequestId: $id}) { revertPullRequest { url } } }'
+    -f id="$(gh pr view "$PR_URL" --json id --jq .id)" --jq .data.revertPullRequest.revertPullRequest.url)
+    && gh pr view "$url" --web && echo "$url"

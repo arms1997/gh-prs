@@ -1,0 +1,38 @@
+# gh-prs config. Anything you leave out falls back to the defaults; a key you set replaces
+# the default wholesale. Unknown keys are an error.
+#
+# sections.query: GitHub search syntax (https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
+# sections.group_by: any of project, status, repo; nested in the order given
+# refresh_interval: background refresh, e.g. 2m; 0 turns it off
+project_label_prefix: "proj:"
+refresh_interval: 2m
+sections:
+  - title: My PRs
+    query: is:pr is:open author:@me archived:false sort:updated-desc
+    group_by: [project, status]
+  - title: Review requests
+    query: is:pr is:open user-review-requested:@me archived:false sort:updated-desc
+    group_by: [repo]
+
+# Where your clones live: owner/repo is expected at <repos_dir>/repo.
+# New worktrees are created next to the clone as <repo>-<branch-name>.
+repos_dir: ~/augment
+
+# opener: how commands with terminal: true get opened (a new window, a multiplexer tab,
+# your own script). It runs as <opener> "$1" where $1 (also $PR_LAUNCH) is a launcher
+# script that cd's into the worktree, runs the command's 'run', then leaves a shell open.
+# The opener also gets every $PR_* var, so a script can name things after the PR.
+#   Ghostty: open -na Ghostty.app --args -e
+#   tmux:    tmux new-window -n "pr-$PR_NUMBER"
+#   Herdr:   <gh-prs repo>/openers/herdr.sh   (a space per PR, a tab per command)
+#   custom:  ~/bin/my-opener          (any executable)
+# A command can set its own 'opener:' to override this one.
+opener: open -na Ghostty.app --args -e
+
+# Prompts are files. A name like context.md is looked up in ~/.config/gh-prs/prompts/
+# first, then in the built-in defaults, so you can replace one prompt by adding a file
+# with its name. Absolute and ~/ paths work too.
+prompt_context_file: context.md
+
+# commands: the built-in commands live in the gh-prs repo under defaults/commands/.
+# Set commands: here to replace all of them; see the README for every option.

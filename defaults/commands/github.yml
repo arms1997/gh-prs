@@ -1,0 +1,26 @@
+# Everyday PR actions. PR data arrives as env vars ($PR_URL, $PR_HEAD, ...), never templated.
+- key: w
+  name: shell in worktree
+  worktree: true
+  terminal: true
+- key: R
+  name: mark ready
+  run: gh pr ready "$PR_URL"
+  refresh: true
+- key: M
+  name: merge
+  run: gh pr merge "$PR_URL"
+  interactive: true
+  confirm: true
+  refresh: true
+- key: L
+  name: add label
+  run: printf 'label to add> ' && read -r l && gh pr edit "$PR_URL" --add-label "$l"
+  interactive: true
+  refresh: true
+- key: y
+  name: copy URL
+  run: printf %s "$PR_URL" | pbcopy
+- key: Y
+  name: copy branch
+  run: printf %s "$PR_HEAD" | pbcopy

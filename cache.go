@@ -1,5 +1,7 @@
 package main
 
+// Disk cache of the last fetch, for an instant start.
+
 import (
 	"encoding/json"
 	"os"

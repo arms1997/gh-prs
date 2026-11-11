@@ -126,13 +126,14 @@ Each health check costs about $1.20.
 
 ## Configuration
 
-`~/.config/gh-prs/config.yml` is layered over the defaults: any key you set replaces the default, and unknown keys are an error. The generated file documents every option. The main ones:
+`~/.config/gh-prs/config.yml` is layered over the built-in defaults in [`defaults/`](defaults): any key you set replaces the default, and unknown keys are an error. The generated file documents every option. The main ones:
 
 ```yaml
 project_label_prefix: "proj:"
 refresh_interval: 2m            # 0 turns background refresh off
 repos_dir: ~/augment            # owner/repo is expected at <repos_dir>/repo
 opener: open -na Ghostty.app --args -e
+prompt_context_file: context.md # prepended to every agent prompt
 
 sections:
   - title: My PRs
@@ -145,6 +146,8 @@ sections:
 
 ### Commands
 
+The built-in commands live in [`defaults/commands/`](defaults/commands), grouped as `agents.yml`, `github.yml` and `deploy.yml`. Setting `commands:` in your config replaces all of them.
+
 ```yaml
 commands:
   - key: cf
@@ -153,14 +156,14 @@ commands:
     background: true    # detached agent job; stdout must be claude stream-json
     timeout: 45m
     run: env -u ANTHROPIC_API_KEY claude -p "$(cat "$PR_PROMPT_FILE")" --session-id "$PR_SESSION_ID" ...
-    prompt: |           # Go template, appended to prompt_context
-      Find the failing checks and fix them.
+    prompt_file: fix-ci.md   # or prompt: with the text inline
 ```
 
 Command options:
 
 | Option | Meaning |
 |---|---|
+| `prompt_file`, `prompt` | the agent's task, from a file or inline (a Go template, after the prompt context) |
 | `worktree` | run in the PR branch's worktree, creating it if needed |
 | `background` | run as a detached agent job |
 | `terminal` | hand the command to the opener |
@@ -182,7 +185,11 @@ Commands receive PR data only as environment variables. Use `"$PR_URL"` in `run`
 | `PR_AGENT_SESSION` | `agent_session: true` |
 | `PR_LAUNCH` | `terminal: true` (opener only) |
 
-Prompt templates can use `{{.Number}} {{.Repo}} {{.URL}} {{.Head}} {{.Base}}`. The PR title is left out on purpose, so a PR author's text never becomes agent instructions.
+### Prompts
+
+Agent prompts are Markdown files in [`defaults/prompts/`](defaults/prompts): `context.md`, which every agent gets first, then one per command (`fix-ci.md`, `address-comments.md`, …). A prompt name is looked up in `~/.config/gh-prs/prompts/` before the built-ins, so you can replace any prompt by adding a file with its name. Absolute and `~/` paths work too.
+
+Prompts can use `{{.Number}} {{.Repo}} {{.URL}} {{.Head}} {{.Base}}`. The PR title is left out on purpose, so a PR author's text never becomes agent instructions.
 
 ### Openers
 
@@ -206,6 +213,17 @@ opener: /path/to/gh-prs/openers/herdr.sh        # a Herdr space per PR, a tab pe
 go test ./...        # unit tests, plus end-to-end tests of jobs, worktrees and launchers
 go vet ./...
 ```
+
+| Path | What's in it |
+|---|---|
+| `main.go`, `ui.go` | entry point; the Bubble Tea model, Update and View |
+| `keys.go`, `table.go`, `detail.go`, `styles.go` | keyboard handling, the PR list, the detail pane and agent box, colors |
+| `github.go`, `group.go`, `cache.go` | fetching PRs, grouping and stacking, the disk cache |
+| `config.go`, `commands.go` | config layering and prompt lookup; validating and preparing commands |
+| `launcher.go`, `worktree.go` | launcher scripts, shell quoting and time limits; worktrees |
+| `jobs.go`, `stream.go` | background agent jobs; parsing Claude's stream-json |
+| `defaults/` | built-in config, commands and prompts, embedded in the binary |
+| `openers/`, `scripts/` | the Herdr opener; the deploy-and-monitor script |
 
 `VISION.md` holds the product vision, roadmap and open questions.
 

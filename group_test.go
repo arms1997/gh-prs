@@ -110,7 +110,7 @@ func TestSanitizeStripsEscapes(t *testing.T) {
 }
 
 func TestDefaultConfigParses(t *testing.T) {
-	if _, err := parseConfig([]byte(defaultConfigYAML)); err != nil {
+	if _, err := parseConfig(mustRead("defaults/config.yml")); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := parseConfig([]byte("sections:\n  - title: x\n    query: is:pr\n    group_by: [nope]\n")); err == nil {

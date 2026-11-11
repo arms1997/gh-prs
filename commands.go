@@ -1,13 +1,12 @@
 package main
 
+// Commands: config validation, prompts, and preparing a command for a PR.
+
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -20,7 +19,8 @@ type Command struct {
 	Key         string `yaml:"key"`
 	Name        string `yaml:"name"`
 	Run         string `yaml:"run"`           // sh command; may be empty for terminal commands (just opens a shell)
-	Prompt      string `yaml:"prompt"`        // Go template, written to $PR_PROMPT_FILE
+	Prompt      string `yaml:"prompt"`        // Go template, written to $PR_PROMPT_FILE after the prompt context
+	PromptFile  string `yaml:"prompt_file"`   // or the same, read from a file (see readPrompt)
 	Worktree    bool   `yaml:"worktree"`      // run inside the PR branch's worktree, creating it if needed
 	Terminal    bool   `yaml:"terminal"`      // hand the command to an opener instead of running it here
 	Opener      string `yaml:"opener"`        // overrides Config.Opener for this command
@@ -91,8 +91,18 @@ func validateCommands(cfg *Config) error {
 				c.limit = d
 			}
 		}
+		if c.Prompt != "" && c.PromptFile != "" {
+			return fmt.Errorf("command %q: set prompt or prompt_file, not both", c.Name)
+		}
+		if c.PromptFile != "" {
+			p, err := readPrompt(c.PromptFile)
+			if err != nil {
+				return fmt.Errorf("command %q: %w", c.Name, err)
+			}
+			c.Prompt = p
+		}
 		if c.Prompt != "" {
-			t, err := template.New(c.Name).Option("missingkey=error").Parse(cfg.PromptContext + c.Prompt)
+			t, err := template.New(c.Name).Option("missingkey=error").Parse(cfg.promptContext + c.Prompt)
 			if err != nil {
 				return fmt.Errorf("command %q prompt: %w", c.Name, err)
 			}
@@ -215,142 +225,4 @@ func promptFile(jobID string) (*os.File, error) {
 		return nil, err
 	}
 	return os.OpenFile(filepath.Join(jobsDir(), jobID+".prompt.md"), os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o600)
-}
-
-// shQuote single-quotes s for POSIX sh.
-func shQuote(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
-
-// launcherScript is run by whatever the opener starts (a terminal app, a multiplexer), which won't
-// inherit our environment, so values are baked in quoted.
-func launcherScript(vars [][2]string, dir, run string) string {
-	var b strings.Builder
-	b.WriteString("#!/bin/sh\nrm -f -- \"$0\"\n")
-	for _, v := range vars {
-		fmt.Fprintf(&b, "export %s=%s\n", v[0], shQuote(v[1]))
-	}
-	if dir != "" {
-		fmt.Fprintf(&b, "cd %s || exit 1\n", shQuote(dir))
-	}
-	if run != "" {
-		b.WriteString(run + "\n")
-	}
-	b.WriteString("[ -n \"$PR_PROMPT_FILE\" ] && rm -f -- \"$PR_PROMPT_FILE\"\n")
-	b.WriteString("exec \"${SHELL:-/bin/sh}\" -l\n") // leave a shell open in the worktree when the command exits
-	return b.String()
-}
-
-func writeLauncher(vars [][2]string, dir, run string) (string, error) {
-	f, err := os.CreateTemp("", "gh-prs-launch-*.sh")
-	if err != nil {
-		return "", err
-	}
-	_, err = f.WriteString(launcherScript(vars, dir, run))
-	if cerr := f.Close(); err == nil {
-		err = cerr
-	}
-	if err == nil {
-		err = os.Chmod(f.Name(), 0o700)
-	}
-	return f.Name(), err
-}
-
-// execCmd builds the process for a prepared command.
-func (pp prepared) execCmd() *exec.Cmd {
-	var c *exec.Cmd
-	if pp.cmd.Terminal {
-		// The script path goes in as $1 (and $PR_LAUNCH), so nothing is interpolated into the opener.
-		c = exec.Command("sh", "-c", pp.cmd.Opener+` "$1"`, "sh", pp.script)
-		c.Dir = pp.dir
-	} else if pp.cmd.Background && pp.cmd.limit > 0 {
-		c = exec.Command("sh", "-c", withTimeLimit(pp.cmd.Run, pp.cmd.limit))
-		c.Dir = pp.dir
-	} else {
-		c = exec.Command("sh", "-c", pp.cmd.Run)
-		c.Dir = pp.dir
-	}
-	c.Env = append(os.Environ(), pp.env...)
-	return c
-}
-
-// withTimeLimit wraps a background job's command. The job leads its own process group (Setsid),
-// so a watchdog in the group can stop everything the job started, even after gh-prs has quit.
-// It writes a result event first so gh-prs shows why the job ended. When the command finishes
-// on its own, the whole group is killed: the watchdog (which ignores TERM, as does its sleep)
-// and anything the job left running. The exit code doesn't matter: status comes from the log.
-func withTimeLimit(run string, limit time.Duration) string {
-	result, _ := json.Marshal(map[string]any{
-		"type": "result", "subtype": "error_timeout", "is_error": true,
-		"result": "Stopped: hit the " + shortDuration(limit) + " time limit.",
-	})
-	return fmt.Sprintf(`(
-%s
-) &
-job=$!
-( trap '' TERM; sleep %d; printf '\n%%s\n' %s; kill -TERM -$$
-  i=0; while kill -0 $job 2>/dev/null && [ $i -lt 10 ]; do sleep 1; i=$((i+1)); done
-  kill -KILL -$$ ) &
-wait $job
-kill -KILL -$$`, run, int(limit.Seconds()), shQuote(string(result)))
-}
-
-var unsafePathChars = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
-
-func expandHome(p string) string {
-	if p == "~" || strings.HasPrefix(p, "~/") {
-		home, _ := os.UserHomeDir()
-		return filepath.Join(home, p[1:])
-	}
-	return p
-}
-
-func git(dir string, args ...string) (string, error) {
-	out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("git %s: %s", args[0], strings.TrimSpace(string(out)))
-	}
-	return strings.TrimSpace(string(out)), nil
-}
-
-// ensureWorktree returns the worktree that has the PR branch checked out, creating
-// <clone>-<branch-name> next to the main clone if none does.
-func ensureWorktree(cfg Config, p PR) (string, error) {
-	clone := filepath.Join(expandHome(cfg.ReposDir), filepath.Base(p.Repo))
-	if _, err := os.Stat(filepath.Join(clone, ".git")); err != nil {
-		return "", fmt.Errorf("no local clone of %s at %s (set repos_dir)", p.Repo, clone)
-	}
-	branch := p.HeadRefName
-	list, err := git(clone, "worktree", "list", "--porcelain")
-	if err != nil {
-		return "", err
-	}
-	var path string
-	for _, line := range strings.Split(list, "\n") {
-		if v, ok := strings.CutPrefix(line, "worktree "); ok {
-			path = v
-		} else if line == "branch refs/heads/"+branch {
-			return path, nil
-		}
-	}
-
-	if _, err := git(clone, "fetch", "origin", branch); err != nil {
-		return "", fmt.Errorf("%w (PRs from forks aren't supported yet)", err)
-	}
-	name := branch[strings.LastIndex(branch, "/")+1:]
-	name = strings.Trim(unsafePathChars.ReplaceAllString(name, "-"), "-.")
-	if name == "" {
-		name = fmt.Sprintf("pr-%d", p.Number)
-	}
-	dir := clone + "-" + name
-	if _, err := os.Stat(dir); err == nil { // taken by another branch with the same last segment
-		dir = fmt.Sprintf("%s-pr%d", dir, p.Number)
-		if _, err := os.Stat(dir); err == nil {
-			return "", fmt.Errorf("%s already exists but isn't a worktree for %s", dir, branch)
-		}
-	}
-	if _, err := git(clone, "rev-parse", "--verify", "--quiet", "refs/heads/"+branch); err == nil {
-		_, err = git(clone, "worktree", "add", dir, branch)
-		return dir, err
-	}
-	_, err = git(clone, "worktree", "add", "--track", "-b", branch, dir, "origin/"+branch)
-	return dir, err
 }

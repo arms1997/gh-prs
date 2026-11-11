@@ -1,5 +1,7 @@
 package main
 
+// Entry point: load the config and run the TUI.
+
 import (
 	"fmt"
 	"os"

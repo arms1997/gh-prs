@@ -1,5 +1,7 @@
 package main
 
+// GitHub: one GraphQL search per section, mapped to PRs.
+
 import (
 	"fmt"
 	"strings"

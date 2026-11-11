@@ -1,0 +1,40 @@
+# Background Claude agents. They run headless in the PR's worktree, outlive gh-prs, and
+# push when done. Their stdout must be claude's stream-json (shown in the agent column).
+#
+# They run unattended with the tools in --allowedTools (plus your Claude settings' allow
+# rules). env -u drops any ANTHROPIC_API_KEY so they use your claude.ai login; remove it to
+# bill an API key instead. Prompts: prompts/context.md, then the command's prompt_file.
+- key: cc
+  name: get it mergeable
+  worktree: true
+  background: true
+  run: &agent >-
+    env -u ANTHROPIC_API_KEY claude -p "$(cat "$PR_PROMPT_FILE")" --session-id "$PR_SESSION_ID"
+    --output-format stream-json --verbose --permission-mode acceptEdits
+    --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(npm:*),Bash(npx:*),Bash(pnpm:*),Bash(yarn:*),Bash(node:*),Bash(go:*),Bash(make:*),Bash(python3:*),Bash(pytest:*),Bash(uv:*),Bash(ls:*)"
+  prompt_file: get-mergeable.md
+- key: cf
+  name: fix CI
+  worktree: true
+  background: true
+  run: *agent
+  prompt_file: fix-ci.md
+- key: ca
+  name: address comments
+  worktree: true
+  background: true
+  run: *agent
+  prompt_file: address-comments.md
+- key: cr
+  name: rebase
+  worktree: true
+  background: true
+  run: *agent
+  prompt_file: rebase.md
+# Open the PR's last agent session in your opener to take over from it.
+- key: ct
+  name: take over agent
+  worktree: true
+  terminal: true
+  agent_session: true
+  run: claude --resume "$PR_AGENT_SESSION"
