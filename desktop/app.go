@@ -283,13 +283,9 @@ func (a *App) Run(cmdKey, prKey, input string) (string, error) {
 		}
 		c = c.WithInput(strings.TrimSpace(input))
 	}
-	replaces := false
-	if job != nil && job.Active() && (c.Background || c.Session) {
-		if !(c.Background && c.Session) {
-			// One agent per PR: they'd share the worktree, and a session can't be resumed while it runs.
-			return "", fmt.Errorf("an agent is still running on #%d (%s)", p.Number, job.Name)
-		}
-		replaces = true // a reply: the running agent stops and its session carries on in the new run
+	session, replaces, err := core.AgentFor(c, job)
+	if err != nil {
+		return "", err
 	}
 	if c.Confirm {
 		answer, err := runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{Type: runtime.QuestionDialog,
@@ -306,14 +302,10 @@ func (a *App) Run(cmdKey, prKey, input string) (string, error) {
 	if c.Interactive { // there's no terminal to hand over here: open it in your opener instead
 		c.Interactive, c.Terminal = false, true
 	}
-	if replaces {
-		if err := job.StopAndWait(5 * time.Second); err != nil {
+	if replaces != nil {
+		if err := replaces.StopAndWait(5 * time.Second); err != nil {
 			return "", err
 		}
-	}
-	session := ""
-	if job != nil {
-		session = job.SessionID()
 	}
 	pp, err := core.Prepare(cfg, c, p, session)
 	if err != nil {

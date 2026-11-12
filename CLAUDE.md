@@ -35,6 +35,9 @@ README.md says how to use it.
 
 - Go tests sit next to the code (`go test ./...`); agent tests run real processes through fake
   commands, not Claude.
+- `core/e2e_test.go` runs the built-in agent commands end to end (ask, manage, reply, stop)
+  against `core/testdata/fake-claude`, which records how it was called. Change an agent flow,
+  extend it.
 - Front-end logic in `lib/` has Vitest tests beside it (`npm test` in `desktop/frontend`), with
   fixtures in `src/test/fixtures.ts`.
 - To see a UI change, run `wails dev -browser=false` in `desktop/` and open http://localhost:34115.
