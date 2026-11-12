@@ -224,7 +224,19 @@ func (v *JobView) Stop() error {
 	if err := os.WriteFile(v.Path(".stopped"), nil, 0o600); err != nil {
 		return err
 	}
-	return syscall.Kill(-v.PID, syscall.SIGTERM)
+	if err := syscall.Kill(-v.PID, syscall.SIGTERM); err != nil {
+		return err
+	}
+	// The time-limit watchdog ignores TERM (see withTimeLimit). Left alone it would wake hours later
+	// and signal this process group id, by then maybe someone else's. Once the job has had a moment
+	// to exit, kill what's left of its group.
+	go func() {
+		for i := 0; i < 50 && v.alive(); i++ {
+			time.Sleep(100 * time.Millisecond)
+		}
+		_ = syscall.Kill(-v.PID, syscall.SIGKILL) // ESRCH when nothing is left
+	}()
+	return nil
 }
 
 // StopAndWait stops the job and waits up to d for it to exit, so its session can be resumed.
@@ -238,6 +250,23 @@ func (v *JobView) StopAndWait(d time.Duration) error {
 		}
 	}
 	return fmt.Errorf("%s on #%d didn't stop in time", v.Name, v.Number)
+}
+
+// AgentFor checks a command against the PR's current agent job (nil if none) and returns the Claude
+// session it would resume. One agent per PR: they'd share the worktree, and a session can't be
+// resumed while it runs. The exception is a background command that resumes the session (a
+// reply): the running agent must stop first, so it comes back as replaces.
+func AgentFor(c Command, job *JobView) (session string, replaces *JobView, err error) {
+	if job == nil {
+		return "", nil, nil
+	}
+	if job.Active() && (c.Background || c.Session) {
+		if !(c.Background && c.Session) {
+			return "", nil, fmt.Errorf("an agent is still running on #%d (%s)", job.Number, job.Name)
+		}
+		replaces = job
+	}
+	return job.SessionID(), replaces, nil
 }
 
 // StopAgent stops the agent running on a PR and says what it stopped.

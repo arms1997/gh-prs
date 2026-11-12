@@ -1,0 +1,29 @@
+#!/bin/sh
+# A stand-in for `claude -p` in end-to-end tests. It records each call (working directory, whether
+# an API key reached it, then its arguments, NUL-separated, one record per call) in
+# $FAKE_CLAUDE_LOG, and answers with stream-json like the real CLI:
+#   a /loop prompt  → reports a question with options, then stays alive like a loop between rounds
+#   anything else   → one step, then a result, and exits
+{
+	printf 'cwd=%s\0apikey=%s\0' "$PWD" "${ANTHROPIC_API_KEY:+set}"
+	printf '%s\0' "$@"
+	printf '\036'
+} >>"$FAKE_CLAUDE_LOG"
+
+prompt=""
+while [ $# -gt 0 ]; do
+	if [ "$1" = "-p" ]; then prompt=$2; fi
+	shift
+done
+
+printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"gh pr view 7"}}]}}'
+case "$prompt" in
+/loop*)
+	printf '%s\n' '{"type":"result","subtype":"success","is_error":false,"num_turns":3,"total_cost_usd":0.1,"result":"DONE: found a conflict\nPUSHED: NO: waiting on you\nNEEDS YOU: Rebase onto main?\nOPTIONS: Rebase | Leave it"}'
+	sleep 60 &
+	wait
+	;;
+*)
+	printf '%s\n' '{"type":"result","subtype":"success","is_error":false,"num_turns":2,"total_cost_usd":0.05,"result":"DONE: did what you asked\nPUSHED: abc1234\nNEEDS YOU: nothing"}'
+	;;
+esac

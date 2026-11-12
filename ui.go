@@ -149,19 +149,10 @@ func (m *model) startCommand(c core.Command, p core.PR) tea.Cmd {
 }
 
 func (m *model) launch(c core.Command, p core.PR) tea.Cmd {
-	job := m.jobs[core.PrKey(p.Repo, p.Number)]
-	var replaces *core.JobView
-	if job != nil && job.Active() && (c.Background || c.Session) {
-		if !(c.Background && c.Session) {
-			// One agent per PR: they'd share the worktree, and a session can't be resumed while it runs.
-			m.status, m.isErr = fmt.Sprintf("an agent is still running on #%d (%s)", p.Number, job.Name), true
-			return nil
-		}
-		replaces = job // a reply: the running agent stops and its session carries on in the new run
-	}
-	session := ""
-	if job != nil {
-		session = job.SessionID()
+	session, replaces, err := core.AgentFor(c, m.jobs[core.PrKey(p.Repo, p.Number)])
+	if err != nil {
+		m.status, m.isErr = err.Error(), true
+		return nil
 	}
 	m.status, m.isErr = c.Name+" #"+fmt.Sprint(p.Number)+"…", false
 	return prepareCmd(m.cfg, c, p, session, replaces)
