@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
+	"time"
 )
 
 type streamEvent struct {
@@ -33,6 +34,9 @@ func (v *jobView) apply(line []byte) {
 	}
 	switch ev.Type {
 	case "assistant":
+		if v.Status != JobRunning { // a /loop job starting its next round
+			v.Status, v.Finished = JobRunning, time.Time{}
+		}
 		for _, c := range ev.Message.Content {
 			switch c.Type {
 			case "tool_use":

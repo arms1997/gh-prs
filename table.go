@@ -60,6 +60,9 @@ func agentCell(v *jobView, spin int) (string, lipgloss.Style) {
 	case JobRunning:
 		return fmt.Sprintf(" %s %s %s", spinner[spin%len(spinner)], v.Name, shortDuration(v.elapsed())), yellow
 	case JobDone:
+		if v.Waiting {
+			return fmt.Sprintf(" ◷ %s %s", v.Name, shortDuration(v.elapsed())), cyan
+		}
 		return " ✓ " + v.Name, green
 	}
 	return " ✗ " + v.Name + " ", badgeFail

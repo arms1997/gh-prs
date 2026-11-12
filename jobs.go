@@ -47,7 +47,9 @@ type jobView struct {
 	Cost     float64
 	Turns    int
 	Finished time.Time
+	Waiting  bool // a /loop job between rounds: it reported a result but is still running
 
+	over    bool // the process exited and its log is fully read
 	offset  int64
 	partial []byte
 }
@@ -135,7 +137,7 @@ func (v *jobView) alive() bool {
 // update reads new log lines. Liveness is checked before reading so a run that ends between
 // the two isn't mistaken for one that died without a result.
 func (v *jobView) update() {
-	if v.Status != JobRunning {
+	if v.over {
 		return
 	}
 	dead := !v.alive()
@@ -168,13 +170,17 @@ func (v *jobView) update() {
 			}
 		}
 	}
-	if v.Status != JobRunning && v.Finished.IsZero() {
+	v.Waiting, v.over = !dead && v.Status != JobRunning, dead
+	if v.Status != JobRunning && !v.Waiting && v.Finished.IsZero() {
 		v.Finished = time.Now()
 		if info, err := os.Stat(v.path(".jsonl")); err == nil && dead {
 			v.Finished = info.ModTime()
 		}
 	}
 }
+
+// active reports whether the job still runs, mid-round or waiting for its next one.
+func (v *jobView) active() bool { return v.Status == JobRunning || v.Waiting }
 
 func (v *jobView) elapsed() time.Duration {
 	end := v.Finished

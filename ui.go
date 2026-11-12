@@ -120,7 +120,7 @@ func prepareCmd(cfg Config, c Command, p PR, agentSession string) tea.Cmd {
 
 func (m *model) startCommand(c Command, p PR) tea.Cmd {
 	job := m.jobs[prKey(p.Repo, p.Number)]
-	if job != nil && job.Status == JobRunning && (c.Background || c.Session) {
+	if job != nil && job.active() && (c.Background || c.Session) {
 		// One agent per PR: they'd share the worktree, and a session can't be resumed while it runs.
 		m.status, m.isErr = fmt.Sprintf("an agent is still running on #%d (%s)", p.Number, job.Name), true
 		return nil
@@ -138,7 +138,7 @@ func (m *model) ensureTicking() tea.Cmd {
 		return nil
 	}
 	for _, v := range m.jobs {
-		if v.Status == JobRunning {
+		if v.active() {
 			m.ticking = true
 			return jobTick()
 		}
@@ -229,7 +229,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) anyRunning() bool {
 	for _, v := range m.jobs {
-		if v.Status == JobRunning {
+		if v.active() {
 			return true
 		}
 	}

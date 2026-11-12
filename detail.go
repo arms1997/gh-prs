@@ -133,7 +133,10 @@ func renderJob(v *jobView, width int) string {
 			add("starting…", dim)
 		}
 	case JobDone, JobFailed:
-		if v.Status == JobDone {
+		if v.Waiting {
+			add(title+" · last round ✓ · waiting for the next", cyan.Bold(true))
+			border = lipgloss.Color("6")
+		} else if v.Status == JobDone {
 			add(title+" ✓", green.Bold(true))
 			border = lipgloss.Color("2")
 		} else {
@@ -164,7 +167,9 @@ func renderJob(v *jobView, width int) string {
 			}
 		}
 		meta := "after " + shortDuration(v.elapsed())
-		if v.Status == JobDone {
+		if v.Waiting {
+			meta = "running " + shortDuration(v.elapsed())
+		} else if v.Status == JobDone {
 			meta = "done in " + shortDuration(v.elapsed())
 		}
 		if v.Turns > 0 {

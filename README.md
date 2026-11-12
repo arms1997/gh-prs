@@ -115,6 +115,7 @@ Commands are key sequences defined in the config. The defaults:
 | `cf` | fix CI | background agent: find and fix failing checks |
 | `ca` | address comments | background agent: address unresolved review threads |
 | `cr` | rebase | background agent: rebase onto the base branch, push with `--force-with-lease` |
+| `cm` | manage | background agent on `/loop`: every 15m resolves conflicts, rebases when behind and addresses new review comments, until the PR merges (◷ between rounds; stops after 8h or $10) |
 | `ct` | take over agent | open the PR's last agent session in your opener (`claude --resume`) |
 | `w` | shell in worktree | open a shell in the PR's worktree |
 | `D` | merge + deploy prod | merge, deploy, then health-check prod (see below) |
@@ -134,7 +135,7 @@ Commands marked y/N in the config ask before running (`D`, `V`, `M`).
 
 What to know before using them:
 - **They push to your PRs only.** When done, an agent commits and pushes to the PR's head branch. On someone else's PR (a review request) it commits but doesn't push: `git push` is blocked for that job, and the agent box says `PUSHED: NO`. Review the commit in the worktree and push it yourself.
-- **Allowed tools:** they run with `--permission-mode dontAsk`, so anything outside `--allowedTools` (file edits, `git`, `gh`, common package managers and test runners) and your Claude settings' allow rules is refused, not asked. Claude Code may still allow read-only commands like `cat`.
+- **Allowed tools:** `--allowedTools` pre-approves file edits, `git`, `gh` and common package managers and test runners. Anything else follows your own Claude Code permission mode and allow rules (`defaultMode` in `~/.claude/settings.json`): in `auto` mode Claude Code decides, in `default` mode a headless run refuses it.
 - **Clean worktrees only:** an agent won't start in a worktree with uncommitted or untracked files, since it commits and pushes when done.
 - **Your Claude login:** they run as `env -u ANTHROPIC_API_KEY claude …`, so they use your claude.ai login even if an API key is set in your environment.
 - **Sonnet:** they run with `--model sonnet`, as do `pc` and the deploy health checks. Override a command in your config to use another model.

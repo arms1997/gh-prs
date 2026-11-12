@@ -10,7 +10,7 @@
   background: true
   run: &agent >-
     env -u ANTHROPIC_API_KEY claude -p "$(cat "$PR_PROMPT_FILE")" --session-id "$PR_SESSION_ID" --model sonnet
-    --output-format stream-json --verbose --permission-mode dontAsk
+    --output-format stream-json --verbose
     --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(npm:*),Bash(npx:*),Bash(pnpm:*),Bash(yarn:*),Bash(node:*),Bash(go:*),Bash(make:*),Bash(python3:*),Bash(pytest:*),Bash(uv:*),Bash(ls:*)"
   prompt_file: get-mergeable.md
 - key: cf
@@ -31,6 +31,19 @@
   background: true
   run: *agent
   prompt_file: rebase.md
+# Manage a PR until it merges: every 15 minutes, resolve conflicts, rebase when behind and
+# address new review comments. It runs Claude's /loop, so it stays alive between rounds
+# (◷ in the agent column). It stops when the PR merges or closes, after 8h, or at $10.
+- key: cm
+  name: manage
+  worktree: true
+  background: true
+  timeout: 8h
+  run: >-
+    env -u ANTHROPIC_API_KEY claude -p "/loop $(cat "$PR_PROMPT_FILE")" --session-id "$PR_SESSION_ID" --model sonnet
+    --output-format stream-json --verbose --max-budget-usd 10
+    --allowedTools "ScheduleWakeup,Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(npm:*),Bash(npx:*),Bash(pnpm:*),Bash(yarn:*),Bash(node:*),Bash(go:*),Bash(make:*),Bash(python3:*),Bash(pytest:*),Bash(uv:*),Bash(ls:*)"
+  prompt_file: manage.md
 # Open the PR's last agent session in your opener to take over from it.
 - key: ct
   name: take over agent

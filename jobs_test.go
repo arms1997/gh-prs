@@ -81,6 +81,37 @@ func TestStartJob(t *testing.T) {
 	}
 }
 
+// A /loop job reports a result per round and keeps running: it waits between rounds, and
+// counts as active the whole time, so no second agent can start on the PR.
+func TestLoopJobWaitsBetweenRounds(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	ev := `{"type":"assistant","message":{"content":[{"type":"text","text":"round"}]}}`
+	c := Command{Key: "z", Name: "manage", Background: true,
+		Run: "echo '" + evResult + "'; sleep 1; echo '" + ev + "'; sleep 1; echo '" + evResult + "'; sleep 1"}
+	v, err := startJob(prepared{cmd: c, pr: PR{Repo: "o/r", Number: 4}, jobID: newJobID()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var seen []string
+	for end := time.Now().Add(5 * time.Second); !v.over && time.Now().Before(end); {
+		time.Sleep(50 * time.Millisecond)
+		v.update()
+		s := map[bool]string{true: "waiting", false: map[JobStatus]string{JobRunning: "running", JobDone: "done", JobFailed: "failed"}[v.Status]}[v.Waiting]
+		if len(seen) == 0 || seen[len(seen)-1] != s {
+			seen = append(seen, s)
+		}
+		if s != "done" && !v.active() {
+			t.Fatalf("%s but not active", s)
+		}
+	}
+	if got := strings.Join(seen, ","); got != "waiting,running,waiting,done" {
+		t.Fatalf("states: %s", got)
+	}
+	if v.active() || v.Finished.IsZero() {
+		t.Fatalf("finished job: %+v", v)
+	}
+}
+
 // groupGone waits for every process in the job's group to exit.
 func groupGone(pid int) bool {
 	for i := 0; i < 100; i++ { // up to 5s: killed processes linger briefly as zombies until reaped
@@ -166,7 +197,11 @@ func TestTimeoutConfig(t *testing.T) {
 // When an agent finishes, PR data is refetched so the detail pane shows what it changed.
 func TestRefreshWhenAgentFinishes(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
-	v := writeJob(t, os.Getpid(), evInit+"\n", "")
+	exited := exec.Command("true")
+	if err := exited.Run(); err != nil {
+		t.Fatal(err)
+	}
+	v := writeJob(t, exited.Process.Pid, evInit+"\n", "") // a live process would be a /loop job waiting for its next round
 	v.Status = JobRunning
 	m := model{jobs: map[string]*jobView{prKey(v.Repo, v.Number): v}, ticking: true, spin: 6}
 
