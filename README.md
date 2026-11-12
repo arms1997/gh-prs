@@ -21,7 +21,21 @@ The detail pane on the right shows the selected PR's description, branches, stat
 
 ## Install
 
-### With Claude (recommended)
+The repo is private: ask its owner for read access first. Everything below uses your `gh` login.
+
+### From a release
+
+Requires [`gh`](https://cli.github.com), logged in. Background agents need [`claude`](https://claude.com/claude-code); the Herdr opener and the deploy command also need `jq`.
+
+```sh
+gh extension install arms1997/gh-prs   # the latest release, built for your machine
+gh prs                                 # launch it
+gh extension upgrade prs               # later: update to the newest release
+```
+
+On first run, gh-prs writes a commented default config to `~/.config/gh-prs/config.yml`. To have Claude set it up for how you work instead, see below.
+
+### With Claude
 
 In Claude Code:
 
@@ -33,9 +47,9 @@ In Claude Code:
 
 Then say **"set up gh-prs for me"**. Claude checks the prerequisites, clones and builds gh-prs, and interviews you: where your repos are cloned, how to group your PRs, which terminal commands open in, which commands and agents to keep, and your repos' conventions for agents to follow. It writes `~/.config/gh-prs/` and checks it with `gh prs check`. Say it again any time to change your setup.
 
-### By hand
+### From source
 
-Requires [`gh`](https://cli.github.com) (logged in) and Go 1.26+. Background agents need [`claude`](https://claude.com/claude-code). The Herdr opener and the deploy command also need `jq`.
+Requires Go 1.26+ as well, for working on gh-prs itself.
 
 ```sh
 git clone git@github.com:arms1997/gh-prs.git && cd gh-prs
@@ -172,15 +186,25 @@ Each health check costs about $1.20.
 
 `desktop/` is the same gh-prs as a macOS app ([Wails](https://wails.io): a web UI on the same Go code). It reads the same config, cache, organize.yml and agent jobs, so you can use it alongside the terminal UI.
 
+Each release carries the app for Intel and Apple silicon Macs:
+
+```sh
+gh release download -R arms1997/gh-prs -p gh-prs-macos.zip   # the latest release
+unzip gh-prs-macos.zip
+xattr -dr com.apple.quarantine gh-prs.app   # it isn't signed with an Apple Developer ID
+open gh-prs.app                             # or drag it into /Applications first
+```
+
+Without the `xattr` line, macOS refuses to open a downloaded copy (right-click → Open also works).
+To build it yourself instead:
+
 ```sh
 go install github.com/wailsapp/wails/v2/cmd/wails@latest   # once; needs Node.js too
-cd desktop && wails build                                    # → desktop/build/bin/gh-prs.app
-open build/bin/gh-prs.app
+cd desktop/frontend && npm ci && cd ..
+wails build && open build/bin/gh-prs.app
 ```
 
 It has the grouped list with quick filters and a "next step" per PR, a detail pane with Overview (what's left before merge, the PR checklist, the description), Claude, Checks and Files tabs, a ⌘K command palette, and the same keys (`j`/`k`, `o`, `r`, `/`, `p…`, command keys; `[` `]` switch tabs). The Claude tab shows what the PR's agent did and its open question with suggested answers; answering or typing in the message box (`i`) runs `cy`, or `ci` when no agent has run yet. `ga` lists every agent session across your PRs. Commands that need a terminal (`interactive: true`) open in your opener instead. Not there yet: `pc`, failing-check logs (`f`), "changed since you looked", and notifications.
-
-The app is self-signed, so a teammate opening a copy you built gets a macOS warning; build it yourself.
 
 ## Configuration
 

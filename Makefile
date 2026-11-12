@@ -34,9 +34,11 @@ app:
 bindings:
 	cd desktop && $(WAILS) generate module && git checkout -- frontend/wailsjs/runtime
 
-# Attach the macOS app to a release CI made (it needs a Mac to build): make app-release TAG=v0.2.0
-app-release: app
+# Attach the macOS app to a release (it needs a Mac to build): make app-release TAG=v0.2.0
+# Universal, so it runs on Intel and Apple silicon Macs.
+app-release:
 	@test -n "$(TAG)" || (echo "usage: make app-release TAG=vX.Y.Z"; exit 1)
+	cd desktop && $(WAILS) build -clean=false -platform darwin/universal
 	cd desktop/build/bin && rm -f gh-prs-macos.zip && ditto -c -k --keepParent gh-prs.app gh-prs-macos.zip
 	gh release upload $(TAG) desktop/build/bin/gh-prs-macos.zip --clobber
 
