@@ -1,0 +1,50 @@
+@import "./tokens.css";
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+    background: var(--background);
+    color: var(--foreground);
+    font: 14px/1.45 var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+}
+
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre { font-family: var(--font-mono); font-size: 12px; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--sel-ring); outline-offset: 1px; }
+
+.mono { font-family: var(--font-mono); }
+.dim { color: var(--text-dim); }
+.ok { color: var(--ok-fg); }
+.bad { color: var(--bad-fg); }
+.warn { color: var(--warn-fg); }
+.info { color: var(--info-fg); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ---- scrollbars ----
+   Thin rounded thumbs on a faint track, tinted per region so it's clear which area scrolls:
+   gray for the PR list, accent for the detail pane, the agent's state color inside its box. */
+.scroll-list { --thumb: var(--text-faint); }
+.scroll-detail { --thumb: var(--primary); }
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track {
+    background-color: color-mix(in srgb, var(--thumb, var(--text-faint)) 7%, transparent);
+    border-radius: 8px;
+    margin: 4px 0;
+}
+::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--thumb, var(--text-faint)) 45%, transparent);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 8px;
+    min-height: 36px;
+}
+::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--thumb, var(--text-faint)) 75%, transparent); }
+::-webkit-scrollbar-thumb:active { background-color: var(--thumb, var(--text-faint)); }
+::-webkit-scrollbar-corner { background: transparent; }

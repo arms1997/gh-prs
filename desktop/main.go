@@ -40,9 +40,9 @@ func main() {
 		os.Exit(1)
 	}
 	app := NewApp(cfg)
-	bg := &options.RGBA{R: 255, G: 255, B: 255, A: 1} // shown until the page loads; matches style.css --bg
+	bg := &options.RGBA{R: 255, G: 255, B: 255, A: 1} // shown until the page loads; matches --background in styles/tokens.css
 	if out, _ := exec.Command("defaults", "read", "-g", "AppleInterfaceStyle").Output(); strings.TrimSpace(string(out)) == "Dark" {
-		bg = &options.RGBA{R: 22, G: 24, B: 29, A: 1}
+		bg = &options.RGBA{R: 9, G: 9, B: 11, A: 1}
 	}
 	err = wails.Run(&options.App{
 		Title:            "gh-prs",

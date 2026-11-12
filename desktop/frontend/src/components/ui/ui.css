@@ -1,0 +1,38 @@
+.badge {
+    display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 8px;
+    border-radius: var(--radius-full); font-size: 12px; font-weight: 500; line-height: 1; white-space: nowrap;
+}
+.badge.ok { background: var(--ok-bg); color: var(--ok-fg); }
+.badge.bad { background: var(--bad-bg); color: var(--bad-fg); }
+.badge.warn { background: var(--warn-bg); color: var(--warn-fg); }
+.badge.info { background: var(--info-bg); color: var(--info-fg); }
+.badge.neutral { background: var(--neutral-bg); color: var(--neutral-fg); }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.kbds { display: inline-flex; gap: 2px; }
+kbd {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px;
+    border: 1px solid var(--border-200); border-bottom-width: 2px; border-radius: var(--radius-sm);
+    background: var(--background); color: var(--neutral-fg); font: 11px/1 var(--font-mono);
+}
+
+.btn {
+    display: inline-flex; align-items: center; gap: 8px; border-radius: var(--radius-md);
+    font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.btn.md { height: 32px; padding: 0 12px; font-size: 13px; }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12px; gap: 6px; }
+.btn.primary { background: var(--primary); color: var(--primary-foreground); border: 0; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.secondary { background: var(--background); color: var(--foreground); border: 1px solid var(--border-200); }
+.btn.secondary:hover { background: var(--muted); }
+.btn.primary kbd { background: transparent; color: inherit; border-color: color-mix(in srgb, currentColor 40%, transparent); }
+
+.overlay { position: fixed; inset: 0; background: var(--shade); display: grid; place-items: center; z-index: 50; }
+.overlay.top { align-items: start; padding-top: 12vh; }
+.modal {
+    background: var(--background); border-radius: var(--radius-xl); box-shadow: var(--shadow-pop);
+    min-width: 420px; max-height: 76vh; overflow-y: auto; --thumb: var(--text-faint);
+}

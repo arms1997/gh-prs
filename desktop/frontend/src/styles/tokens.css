@@ -1,0 +1,109 @@
+/* Augment Web design system colors (primitives copied from its tokens.generated.css), plus the
+   app's own semantic tokens. Light follows the design system; dark is ours, since its dark
+   badge backgrounds are light tints that don't work on a dark ground. */
+:root {
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f4f4f5;
+    --color-zinc-200: #e4e4e7;
+    --color-zinc-300: #d4d4d8;
+    --color-zinc-400: #a1a1aa;
+    --color-zinc-500: #71717a;
+    --color-zinc-600: #52525b;
+    --color-zinc-700: #3f3f46;
+    --color-zinc-800: #27272a;
+    --color-zinc-900: #18181b;
+    --color-zinc-950: #09090b;
+    --color-viridian-50: #edfbf6;
+    --color-viridian-300: #7dd8ba;
+    --color-viridian-400: #46c09c;
+    --color-viridian-500: #25a583;
+    --color-viridian-600: #168569;
+    --color-viridian-700: #136a57;
+    --color-viridian-950: #072721;
+    --color-green-50: #f1faeb;
+    --color-green-400: #81c853;
+    --color-green-600: #4b8828;
+    --color-green-700: #3a6922;
+    --color-red-50: #fef3f2;
+    --color-red-400: #f67e75;
+    --color-red-600: #d7382b;
+    --color-red-700: #b52c20;
+    --color-orange-50: #fff9ed;
+    --color-orange-300: #fbca76;
+    --color-orange-800: #984514;
+    --color-blue-50: #f2f7fd;
+    --color-blue-300: #8fbbea;
+    --color-blue-700: #1a4c8a;
+
+    --font-sans: "Suisse Intl", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+    --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-full: 9999px;
+
+    --background: #ffffff;
+    --foreground: var(--color-zinc-900);
+    --text-dim: var(--color-zinc-600);
+    --text-faint: var(--color-zinc-500);
+    --border-100: var(--color-zinc-200);
+    --border-200: var(--color-zinc-300);
+    --input: var(--color-zinc-200);
+    --muted: var(--color-zinc-100);
+    --bar: var(--color-zinc-50);
+    --primary: var(--color-viridian-600);
+    --primary-foreground: #fafafa;
+    --link: var(--color-viridian-700);
+    --sel-bg: var(--color-viridian-50);
+    --sel-ring: var(--color-viridian-600);
+    --ok-fg: var(--color-green-700);
+    --ok-bg: var(--color-green-50);
+    --bad-fg: var(--color-red-700);
+    --bad-bg: var(--color-red-50);
+    --warn-fg: var(--color-orange-800);
+    --warn-bg: var(--color-orange-50);
+    --info-fg: var(--color-blue-700);
+    --info-bg: var(--color-blue-50);
+    --neutral-fg: var(--color-zinc-700);
+    --neutral-bg: var(--color-zinc-100);
+    --dot-ok: var(--color-green-600);
+    --dot-bad: var(--color-red-600);
+    --shadow-pop: 0 0 0 1px rgba(9, 9, 11, 0.08), 0 16px 40px rgba(9, 9, 11, 0.16);
+    --shade: rgba(9, 9, 11, 0.25);
+    color-scheme: light;
+}
+
+/* Follows the macOS appearance setting. */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: var(--color-zinc-950);
+        --foreground: var(--color-zinc-50);
+        --text-dim: var(--color-zinc-400);
+        --text-faint: var(--color-zinc-500);
+        --border-100: var(--color-zinc-800);
+        --border-200: var(--color-zinc-700);
+        --input: var(--color-zinc-800);
+        --muted: var(--color-zinc-800);
+        --bar: var(--color-zinc-900);
+        --primary: var(--color-viridian-500);
+        --link: var(--color-viridian-400);
+        --sel-bg: color-mix(in srgb, var(--color-viridian-500) 14%, transparent);
+        --sel-ring: var(--color-viridian-500);
+        --ok-fg: var(--color-green-400);
+        --ok-bg: color-mix(in srgb, var(--color-green-400) 14%, transparent);
+        --bad-fg: var(--color-red-400);
+        --bad-bg: color-mix(in srgb, var(--color-red-400) 14%, transparent);
+        --warn-fg: var(--color-orange-300);
+        --warn-bg: color-mix(in srgb, var(--color-orange-300) 14%, transparent);
+        --info-fg: var(--color-blue-300);
+        --info-bg: color-mix(in srgb, var(--color-blue-300) 14%, transparent);
+        --neutral-fg: var(--color-zinc-300);
+        --neutral-bg: var(--color-zinc-800);
+        --dot-ok: var(--color-green-400);
+        --dot-bad: var(--color-red-400);
+        --shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.5);
+        --shade: rgba(0, 0, 0, 0.5);
+        color-scheme: dark;
+    }
+}

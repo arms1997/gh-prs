@@ -1,0 +1,10 @@
+.dialog { padding: 18px 22px; display: grid; gap: 8px; }
+.dialog h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.dialog input {
+    height: 36px; padding: 0 10px; border: 1px solid var(--input); border-radius: var(--radius-md);
+    background: var(--background); outline: none;
+}
+.dialog input:focus { border-color: var(--sel-ring); }
+.dialog .small { font-size: 12px; }
+.helprow { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; font-size: 13px; }
+.helprow > kbd { justify-self: start; }
