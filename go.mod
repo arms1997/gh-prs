@@ -2,6 +2,8 @@ module gh-prs
 
 go 1.26.7
 
+toolchain go1.26.11
+
 require (
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
