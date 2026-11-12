@@ -7,10 +7,12 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"gh-prs/core"
 )
 
 // commandFor matches a key sequence: the command if complete, or partial=true if it's a prefix of one.
-func (m model) commandFor(seq string) (cmd *Command, partial bool) {
+func (m model) commandFor(seq string) (cmd *core.Command, partial bool) {
 	for i, c := range m.cfg.Commands {
 		if c.Key == seq {
 			return &m.cfg.Commands[i], false
@@ -50,7 +52,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	if p := m.proposal; p != nil {
 		switch {
-		case p.loading:
+		case p.Loading:
 			if k == "esc" {
 				m.proposal = nil
 				m.clamp()
@@ -107,7 +109,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	if seq := m.keySeq + k; m.keySeq != "" || !builtinKeys[k] {
+	if seq := m.keySeq + k; m.keySeq != "" || !core.BuiltinKeys[k] {
 		cmd, partial := m.commandFor(seq)
 		switch {
 		case cmd != nil:
@@ -184,7 +186,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case "i":
 		if r != nil && r.PR != nil {
-			if url := linearURL(m.cfg.LinearWorkspace, r.PR.Linear); url != "" {
+			if url := core.LinearURL(m.cfg.LinearWorkspace, r.PR.Linear); url != "" {
 				return m, openCmd(url)
 			}
 			m.status, m.isErr = "no Linear issue found in the title or branch", false
@@ -246,7 +248,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // organizeKey runs the action picked after p.
-func (m model) organizeKey(k string, r *Row) (tea.Model, tea.Cmd) {
+func (m model) organizeKey(k string, r *core.Row) (tea.Model, tea.Cmd) {
 	switch k {
 	case "a":
 		m.showAll = !m.showAll
@@ -263,24 +265,24 @@ func (m model) organizeKey(k string, r *Row) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	p := *r.PR
-	key := prKey(p.Repo, p.Number)
+	key := core.PrKey(p.Repo, p.Number)
 	var note string
 	switch k {
 	case "p":
-		note = map[bool]string{true: "pinned", false: "unpinned"}[toggle(&m.org.Pinned, key)]
+		note = map[bool]string{true: "pinned", false: "unpinned"}[core.Toggle(&m.org.Pinned, key)]
 	case "h":
-		note = map[bool]string{true: "hidden (pa shows hidden PRs)", false: "unhidden"}[toggle(&m.org.Hidden, key)]
+		note = map[bool]string{true: "hidden (pa shows hidden PRs)", false: "unhidden"}[core.Toggle(&m.org.Hidden, key)]
 	case "s":
-		if m.org.snoozed(key) {
+		if m.org.IsSnoozed(key) {
 			delete(m.org.Snoozed, key)
 			note = "unsnoozed"
 		} else {
-			m.org.snooze(p)
+			m.org.Snooze(p)
 			note = "snoozed until something changes on it"
 		}
 	case "m":
 		m.input = &textInput{label: "Move to project: ", value: m.org.Projects[key], submit: func(m *model, name string) tea.Cmd {
-			m.org.setProject(key, name)
+			m.org.SetProject(key, name)
 			m.saveOrganize(fmt.Sprintf("#%d moved to %s", p.Number, map[bool]string{true: name, false: "its label's project"}[name != ""]))
 			return nil
 		}}
@@ -293,8 +295,8 @@ func (m model) organizeKey(k string, r *Row) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) saveOrganize(note string) {
-	if err := m.org.save(); err != nil {
-		m.status, m.isErr = "couldn't save "+organizePath()+": "+err.Error(), true
+	if err := m.org.Save(); err != nil {
+		m.status, m.isErr = "couldn't save "+core.OrganizePath()+": "+err.Error(), true
 	} else {
 		m.status, m.isErr = note, false
 	}

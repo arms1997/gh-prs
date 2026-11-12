@@ -1,4 +1,4 @@
-package main
+package core
 
 // Running commands: launcher scripts for openers, shell quoting, job time limits.
 
@@ -49,20 +49,20 @@ func writeLauncher(vars [][2]string, dir, run string) (string, error) {
 }
 
 // execCmd builds the process for a prepared command.
-func (pp prepared) execCmd() *exec.Cmd {
+func (pp Prepared) ExecCmd() *exec.Cmd {
 	var c *exec.Cmd
-	if pp.cmd.Terminal {
+	if pp.Cmd.Terminal {
 		// The script path goes in as $1 (and $PR_LAUNCH), so nothing is interpolated into the opener.
-		c = exec.Command("sh", "-c", pp.cmd.Opener+` "$1"`, "sh", pp.script)
+		c = exec.Command("sh", "-c", pp.Cmd.Opener+` "$1"`, "sh", pp.script)
 		c.Dir = pp.dir
-	} else if pp.cmd.Background && pp.cmd.limit > 0 {
-		c = exec.Command("sh", "-c", withTimeLimit(pp.cmd.Run, pp.cmd.limit))
+	} else if pp.Cmd.Background && pp.Cmd.limit > 0 {
+		c = exec.Command("sh", "-c", withTimeLimit(pp.Cmd.Run, pp.Cmd.limit))
 		c.Dir = pp.dir
 	} else {
-		c = exec.Command("sh", "-c", pp.cmd.Run)
+		c = exec.Command("sh", "-c", pp.Cmd.Run)
 		c.Dir = pp.dir
 	}
-	c.Env = append(os.Environ(), pp.env...)
+	c.Env = append(os.Environ(), pp.Env...)
 	return c
 }
 
@@ -74,7 +74,7 @@ func (pp prepared) execCmd() *exec.Cmd {
 func withTimeLimit(run string, limit time.Duration) string {
 	result, _ := json.Marshal(map[string]any{
 		"type": "result", "subtype": "error_timeout", "is_error": true,
-		"result": "Stopped: hit the " + shortDuration(limit) + " time limit.",
+		"result": "Stopped: hit the " + ShortDuration(limit) + " time limit.",
 	})
 	return fmt.Sprintf(`(
 %s

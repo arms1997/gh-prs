@@ -1,4 +1,4 @@
-package main
+package core
 
 // Your local arrangement of PRs: pins, project assignments, snoozes and hidden PRs.
 // Kept in ~/.config/gh-prs/organize.yml, keyed by owner/repo#number; nothing goes to GitHub.
@@ -21,10 +21,10 @@ type Organize struct {
 
 const organizeHeader = "# gh-prs: your local PR arrangement (pp pin · ps snooze · pm move · ph hide · pc ask Claude).\n# Keys are owner/repo#number. Nothing here is sent to GitHub.\n"
 
-func organizePath() string { return filepath.Join(filepath.Dir(configPath()), "organize.yml") }
+func OrganizePath() string { return filepath.Join(filepath.Dir(ConfigPath()), "organize.yml") }
 
-func loadOrganize() (*Organize, error) {
-	b, err := os.ReadFile(organizePath())
+func LoadOrganize() (*Organize, error) {
+	b, err := os.ReadFile(OrganizePath())
 	if os.IsNotExist(err) {
 		return &Organize{}, nil
 	}
@@ -33,7 +33,7 @@ func loadOrganize() (*Organize, error) {
 	}
 	o, err := parseOrganize(b)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", organizePath(), err)
+		return nil, fmt.Errorf("%s: %w", OrganizePath(), err)
 	}
 	return o, nil
 }
@@ -46,7 +46,7 @@ func parseOrganize(b []byte) (*Organize, error) {
 	return o, nil
 }
 
-func (o *Organize) marshal() ([]byte, error) {
+func (o *Organize) Marshal() ([]byte, error) {
 	b, err := yaml.Marshal(o)
 	if err != nil {
 		return nil, err
@@ -57,27 +57,27 @@ func (o *Organize) marshal() ([]byte, error) {
 	return append([]byte(organizeHeader), b...), nil
 }
 
-func (o *Organize) save() error {
-	b, err := o.marshal()
+func (o *Organize) Save() error {
+	b, err := o.Marshal()
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(organizePath()), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(OrganizePath()), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(organizePath(), b, 0o644)
+	return os.WriteFile(OrganizePath(), b, 0o644)
 }
 
-func (o *Organize) pinned(k string) bool { return slices.Contains(o.Pinned, k) }
-func (o *Organize) hidden(k string) bool { return slices.Contains(o.Hidden, k) }
+func (o *Organize) IsPinned(k string) bool { return slices.Contains(o.Pinned, k) }
+func (o *Organize) hidden(k string) bool   { return slices.Contains(o.Hidden, k) }
 
-func (o *Organize) snoozed(k string) bool {
+func (o *Organize) IsSnoozed(k string) bool {
 	_, ok := o.Snoozed[k]
 	return ok
 }
 
 // toggle adds k to list, or removes it if present; it reports whether k is now in the list.
-func toggle(list *[]string, k string) bool {
+func Toggle(list *[]string, k string) bool {
 	if i := slices.Index(*list, k); i >= 0 {
 		*list = slices.Delete(*list, i, i+1)
 		return false
@@ -86,7 +86,7 @@ func toggle(list *[]string, k string) bool {
 	return true
 }
 
-func (o *Organize) setProject(k, name string) {
+func (o *Organize) SetProject(k, name string) {
 	if name == "" {
 		delete(o.Projects, k)
 		return
@@ -97,20 +97,20 @@ func (o *Organize) setProject(k, name string) {
 	o.Projects[k] = name
 }
 
-func (o *Organize) snooze(p PR) {
+func (o *Organize) Snooze(p PR) {
 	if o.Snoozed == nil {
 		o.Snoozed = map[string]snapshot{}
 	}
-	o.Snoozed[prKey(p.Repo, p.Number)] = snapOf(p)
+	o.Snoozed[PrKey(p.Repo, p.Number)] = SnapOf(p)
 }
 
 // wake un-snoozes every PR that changed since it was snoozed, and reports whether any did.
-func (o *Organize) wake(data []sectionData) bool {
+func (o *Organize) Wake(data []SectionData) bool {
 	woke := false
 	for _, sd := range data {
 		for _, p := range sd.PRs {
-			k := prKey(p.Repo, p.Number)
-			if s, ok := o.Snoozed[k]; ok && len(changes(s, snapOf(p))) > 0 {
+			k := PrKey(p.Repo, p.Number)
+			if s, ok := o.Snoozed[k]; ok && len(Changes(s, SnapOf(p))) > 0 {
 				delete(o.Snoozed, k)
 				woke = true
 			}

@@ -1,4 +1,4 @@
-package main
+package core
 
 // Disk cache of the last fetch, for an instant start.
 
@@ -32,7 +32,7 @@ func cacheDir() string {
 func cachePath() string { return filepath.Join(cacheDir(), "prs.json") }
 
 // loadCache returns cached data only if every configured section is present, so a config edit forces a fresh view.
-func loadCache(cfg Config) ([]sectionData, time.Time, bool) {
+func LoadCache(cfg Config) ([]SectionData, time.Time, bool) {
 	raw, err := os.ReadFile(cachePath())
 	if err != nil {
 		return nil, time.Time{}, false
@@ -41,12 +41,12 @@ func loadCache(cfg Config) ([]sectionData, time.Time, bool) {
 	if json.Unmarshal(raw, &c) != nil {
 		return nil, time.Time{}, false
 	}
-	var out []sectionData
+	var out []SectionData
 	for _, s := range cfg.Sections {
 		found := false
 		for _, cs := range c.Sections {
 			if cs.Title == s.Title && cs.Query == s.Query {
-				out = append(out, sectionData{Section: s, PRs: cs.PRs})
+				out = append(out, SectionData{Section: s, PRs: cs.PRs})
 				found = true
 				break
 			}
@@ -59,7 +59,7 @@ func loadCache(cfg Config) ([]sectionData, time.Time, bool) {
 }
 
 // saveCache writes atomically with owner-only permissions, since it holds private PR descriptions.
-func saveCache(data []sectionData, at time.Time) error {
+func SaveCache(data []SectionData, at time.Time) error {
 	c := cacheFile{FetchedAt: at}
 	for _, sd := range data {
 		c.Sections = append(c.Sections, cachedSection{Title: sd.Section.Title, Query: sd.Section.Query, PRs: sd.PRs})

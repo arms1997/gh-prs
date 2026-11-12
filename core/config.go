@@ -1,10 +1,9 @@
-package main
+package core
 
 // Config: the user file layered over the embedded defaults/, and prompt file lookup.
 
 import (
 	"bytes"
-	"embed"
 	"fmt"
 	"io"
 	"io/fs"
@@ -34,12 +33,12 @@ type Config struct {
 	Sections           []Section `yaml:"sections"`
 	Commands           []Command `yaml:"commands"`
 
-	refresh       time.Duration // parsed RefreshInterval; 0 disables auto-refresh
+	Refresh       time.Duration `yaml:"-"` // parsed RefreshInterval; 0 disables auto-refresh
 	promptContext string        // contents of PromptContextFile, prepended to every prompt
 }
 
-//go:embed defaults
-var defaultsFS embed.FS
+// Defaults holds the built-in defaults/ directory. The front end embeds it and sets it before loading config.
+var Defaults fs.FS
 
 // defaultConfig assembles the built-in defaults: defaults/config.yml plus every file in
 // defaults/commands/, in file-name order.
@@ -48,7 +47,7 @@ func defaultConfig() (Config, error) {
 	if err := decodeStrict(mustRead("defaults/config.yml"), &cfg); err != nil {
 		return cfg, fmt.Errorf("defaults/config.yml: %w", err)
 	}
-	files, _ := fs.Glob(defaultsFS, "defaults/commands/*.yml")
+	files, _ := fs.Glob(Defaults, "defaults/commands/*.yml")
 	sort.Strings(files)
 	for _, f := range files {
 		var cmds []Command
@@ -61,7 +60,7 @@ func defaultConfig() (Config, error) {
 }
 
 func mustRead(name string) []byte {
-	b, err := defaultsFS.ReadFile(name)
+	b, err := fs.ReadFile(Defaults, name)
 	if err != nil {
 		panic(err) // embedded at build time
 	}
@@ -85,16 +84,16 @@ func readPrompt(name string) (string, error) {
 		b, err := os.ReadFile(expandHome(name))
 		return string(b), err
 	}
-	if b, err := os.ReadFile(filepath.Join(filepath.Dir(configPath()), "prompts", name)); err == nil {
+	if b, err := os.ReadFile(filepath.Join(filepath.Dir(ConfigPath()), "prompts", name)); err == nil {
 		return string(b), nil
 	}
-	if b, err := defaultsFS.ReadFile(path.Join("defaults/prompts", name)); err == nil {
+	if b, err := fs.ReadFile(Defaults, path.Join("defaults/prompts", name)); err == nil {
 		return string(b), nil
 	}
-	return "", fmt.Errorf("prompt %q not found in %s or the built-in prompts", name, filepath.Join(filepath.Dir(configPath()), "prompts"))
+	return "", fmt.Errorf("prompt %q not found in %s or the built-in prompts", name, filepath.Join(filepath.Dir(ConfigPath()), "prompts"))
 }
 
-func configPath() string {
+func ConfigPath() string {
 	dir := os.Getenv("XDG_CONFIG_HOME")
 	if dir == "" {
 		home, _ := os.UserHomeDir()
@@ -104,8 +103,8 @@ func configPath() string {
 }
 
 // loadConfig reads the config, writing the default on first run so it is easy to find and edit.
-func loadConfig() (Config, error) {
-	path := configPath()
+func LoadConfig() (Config, error) {
+	path := ConfigPath()
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
 		data = mustRead("defaults/config.yml")
@@ -118,7 +117,7 @@ func loadConfig() (Config, error) {
 	} else if err != nil {
 		return Config{}, err
 	}
-	cfg, err := parseConfig(data)
+	cfg, err := ParseConfig(data)
 	if err != nil {
 		return cfg, fmt.Errorf("%s: %w", path, err)
 	}
@@ -126,7 +125,7 @@ func loadConfig() (Config, error) {
 }
 
 // parseConfig layers the user's file over the defaults: keys they set replace the default wholesale.
-func parseConfig(data []byte) (Config, error) {
+func ParseConfig(data []byte) (Config, error) {
 	cfg, err := defaultConfig()
 	if err != nil {
 		return cfg, err
@@ -139,7 +138,7 @@ func parseConfig(data []byte) (Config, error) {
 			return cfg, err
 		}
 	}
-	cfg.refresh = 2 * time.Minute
+	cfg.Refresh = 2 * time.Minute
 	if cfg.RefreshInterval != "" {
 		d, err := time.ParseDuration(cfg.RefreshInterval)
 		if cfg.RefreshInterval == "0" {
@@ -148,7 +147,7 @@ func parseConfig(data []byte) (Config, error) {
 		if err != nil || d < 0 || (d > 0 && d < 30*time.Second) {
 			return cfg, fmt.Errorf("refresh_interval %q: use a duration of at least 30s, or 0 to disable", cfg.RefreshInterval)
 		}
-		cfg.refresh = d
+		cfg.Refresh = d
 	}
 	if len(cfg.Sections) == 0 {
 		return cfg, fmt.Errorf("no sections defined")

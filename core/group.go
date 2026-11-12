@@ -1,4 +1,4 @@
-package main
+package core
 
 // Grouping: status buckets, group_by keys, stacking, and the rows the list shows.
 
@@ -22,7 +22,7 @@ var statusNames = [...]string{"Needs action", "Waiting for review", "Ready to me
 
 func (s Status) String() string { return statusNames[s] }
 
-func statusOf(p PR) Status {
+func StatusOf(p PR) Status {
 	switch {
 	case p.IsDraft:
 		return Draft
@@ -39,7 +39,7 @@ type grouper func(p PR, cfg Config) (name, rank string)
 
 var groupers = map[string]grouper{
 	"status": func(p PR, _ Config) (string, string) {
-		s := statusOf(p)
+		s := StatusOf(p)
 		return s.String(), fmt.Sprint(int(s))
 	},
 	"project": func(p PR, cfg Config) (string, string) {
@@ -58,7 +58,7 @@ var groupers = map[string]grouper{
 	},
 	"repo": func(p PR, _ Config) (string, string) { return p.Repo, p.Repo },
 	"turn": func(p PR, _ Config) (string, string) {
-		if mine, _ := turnOf(p); mine {
+		if mine, _ := TurnOf(p); mine {
 			return "On me", "0"
 		}
 		return "On them", "1"
@@ -68,7 +68,7 @@ var groupers = map[string]grouper{
 // turnOf says whether the next move on a PR is yours, and why. Your PR: a draft, anything
 // that needs action, a thread where someone else spoke last, or ready to merge. Someone
 // else's PR (a review request): yours until you've reviewed it since its latest commit.
-func turnOf(p PR) (onMe bool, why string) {
+func TurnOf(p PR) (onMe bool, why string) {
 	if !p.Mine {
 		if p.ReviewedSincePush {
 			return false, "you reviewed it; waiting for new commits"
@@ -76,7 +76,7 @@ func turnOf(p PR) (onMe bool, why string) {
 		return true, "your review is requested"
 	}
 	var reasons []string
-	switch statusOf(p) {
+	switch StatusOf(p) {
 	case Draft:
 		reasons = append(reasons, "it's a draft")
 	case ReadyToMerge:
@@ -127,7 +127,7 @@ type Row struct {
 func branchKey(repo, branch string) string { return repo + ":" + branch }
 
 // view is how the list is being looked at: folds, the / filter, and your organize file.
-type view struct {
+type View struct {
 	Collapsed map[string]bool
 	Filter    string
 	Org       *Organize
@@ -136,7 +136,7 @@ type view struct {
 
 // buildRows lays out every section as rows: your project assignments and pins applied,
 // hidden and snoozed PRs left out (unless ShowAll), and only PRs matching the filter.
-func buildRows(data []sectionData, cfg Config, v view) []Row {
+func BuildRows(data []SectionData, cfg Config, v View) []Row {
 	collapsed, org := v.Collapsed, v.Org
 	if org == nil {
 		org = &Organize{}
@@ -147,9 +147,9 @@ func buildRows(data []sectionData, cfg Config, v view) []Row {
 		var prs []PR
 		for _, p := range sd.PRs {
 			heads[branchKey(p.Repo, p.HeadRefName)] = p.Number
-			k := prKey(p.Repo, p.Number)
-			p.Project, p.Pinned = org.Projects[k], org.pinned(k)
-			p.Hidden, p.Snoozed = org.hidden(k), org.snoozed(k)
+			k := PrKey(p.Repo, p.Number)
+			p.Project, p.Pinned = org.Projects[k], org.IsPinned(k)
+			p.Hidden, p.Snoozed = org.hidden(k), org.IsSnoozed(k)
 			if (p.Hidden || p.Snoozed) && !v.ShowAll || v.Filter != "" && !matches(p, v.Filter) {
 				continue
 			}

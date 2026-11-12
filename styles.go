@@ -2,7 +2,11 @@ package main
 
 // Colors and badge styles.
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+
+	"gh-prs/core"
+)
 
 var (
 	plain        = lipgloss.NewStyle()
@@ -22,9 +26,9 @@ var (
 	badgeConflict = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("15")).Background(lipgloss.Color("5"))
 
 	statusStyles = map[string]lipgloss.Style{
-		NeedsAction.String():   bold.Foreground(lipgloss.Color("1")),
-		WaitingReview.String(): bold.Foreground(lipgloss.Color("3")),
-		ReadyToMerge.String():  bold.Foreground(lipgloss.Color("2")),
-		Draft.String():         bold.Foreground(lipgloss.Color("8")),
+		core.NeedsAction.String():   bold.Foreground(lipgloss.Color("1")),
+		core.WaitingReview.String(): bold.Foreground(lipgloss.Color("3")),
+		core.ReadyToMerge.String():  bold.Foreground(lipgloss.Color("2")),
+		core.Draft.String():         bold.Foreground(lipgloss.Color("8")),
 	}
 )

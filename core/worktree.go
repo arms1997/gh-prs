@@ -1,4 +1,4 @@
-package main
+package core
 
 // Finding or creating the git worktree for a PR branch.
 

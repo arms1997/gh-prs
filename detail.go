@@ -9,26 +9,9 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+
+	"gh-prs/core"
 )
-
-func ciText(state string) string {
-	if state == "" {
-		return "no checks"
-	}
-	return strings.ToLower(state)
-}
-
-func reviewText(d string) string {
-	switch d {
-	case "APPROVED":
-		return "approved"
-	case "CHANGES_REQUESTED":
-		return "changes requested"
-	case "REVIEW_REQUIRED":
-		return "review required"
-	}
-	return "none required"
-}
 
 // agentSummary is the block agents are asked to end with (see prompt_context).
 type agentSummary struct {
@@ -112,7 +95,7 @@ const maxChanges = 10
 
 // renderJob draws the agent box: what the agent did, wrapped to the pane width. It can grow
 // taller than the pane, which scrolls (e, then j/k).
-func renderJob(v *jobView, width int) string {
+func renderJob(v *core.JobView, width int) string {
 	inner := max(width-4, 10) // border + padding on each side
 	var lines []string
 	add := func(s string, st lipgloss.Style) { lines = append(lines, fit(s, inner, st)) }
@@ -120,8 +103,8 @@ func renderJob(v *jobView, width int) string {
 
 	title, border := "Agent · "+v.Name, lipgloss.Color("3")
 	switch v.Status {
-	case JobRunning:
-		add(title+" · running "+shortDuration(v.elapsed()), yellow.Bold(true))
+	case core.JobRunning:
+		add(title+" · running "+core.ShortDuration(v.Elapsed()), yellow.Bold(true))
 		acts := v.Activity
 		if len(acts) > 4 {
 			acts = acts[len(acts)-4:]
@@ -132,11 +115,11 @@ func renderJob(v *jobView, width int) string {
 		if len(acts) == 0 {
 			add("starting…", dim)
 		}
-	case JobDone, JobFailed:
+	case core.JobDone, core.JobFailed:
 		if v.Waiting {
 			add(title+" · last round ✓ · waiting for the next", cyan.Bold(true))
 			border = lipgloss.Color("6")
-		} else if v.Status == JobDone {
+		} else if v.Status == core.JobDone {
 			add(title+" ✓", green.Bold(true))
 			border = lipgloss.Color("2")
 		} else {
@@ -166,11 +149,11 @@ func renderJob(v *jobView, width int) string {
 				wrap("", l, plain)
 			}
 		}
-		meta := "after " + shortDuration(v.elapsed())
+		meta := "after " + core.ShortDuration(v.Elapsed())
 		if v.Waiting {
-			meta = "running " + shortDuration(v.elapsed())
-		} else if v.Status == JobDone {
-			meta = "done in " + shortDuration(v.elapsed())
+			meta = "running " + core.ShortDuration(v.Elapsed())
+		} else if v.Status == core.JobDone {
+			meta = "done in " + core.ShortDuration(v.Elapsed())
 		}
 		if v.Turns > 0 {
 			meta += fmt.Sprintf(" · %d turns", v.Turns)
@@ -210,19 +193,19 @@ func (m model) renderDetail() string {
 	}
 	b.WriteString(dim.Render(branches) + "\n\n")
 	fmt.Fprintf(&b, "%s %s  %d files\n", green.Render(fmt.Sprintf("+%d", p.Additions)), red.Render(fmt.Sprintf("−%d", p.Deletions)), p.ChangedFiles)
-	fmt.Fprintf(&b, "%s · CI %s · review %s · %d unresolved\n", bold.Render(statusOf(*p).String()), ciText(p.CI), reviewText(p.ReviewDecision), p.Unresolved)
+	fmt.Fprintf(&b, "%s · CI %s · review %s · %d unresolved\n", bold.Render(core.StatusOf(*p).String()), core.CIText(p.CI), core.ReviewText(p.ReviewDecision), p.Unresolved)
 	if p.Mergeable == "CONFLICTING" {
 		b.WriteString(red.Render("Merge conflict") + "\n")
 	}
 	if len(p.Labels) > 0 {
 		b.WriteString(dim.Render("labels: "+strings.Join(p.Labels, ", ")) + "\n")
 	}
-	if mine, why := turnOf(*p); mine {
+	if mine, why := core.TurnOf(*p); mine {
 		b.WriteString(yellow.Bold(true).Render("● Your turn: "+why) + "\n")
 	} else {
 		b.WriteString(dim.Render("○ Their turn: "+why) + "\n")
 	}
-	k := prKey(p.Repo, p.Number)
+	k := core.PrKey(p.Repo, p.Number)
 	if k == m.recentKey && len(m.recent) > 0 {
 		b.WriteString(cyan.Render("◆ Since you last looked: "+strings.Join(m.recent, " · ")) + "\n")
 	}
@@ -235,7 +218,7 @@ func (m model) renderDetail() string {
 	}
 	if p.Linear != "" {
 		link := ""
-		if linearURL(m.cfg.LinearWorkspace, p.Linear) != "" {
+		if core.LinearURL(m.cfg.LinearWorkspace, p.Linear) != "" {
 			link = "  (i: open)"
 		}
 		b.WriteString(dim.Render("Linear: "+p.Linear+link) + "\n")
@@ -244,7 +227,7 @@ func (m model) renderDetail() string {
 		if l.loading {
 			b.WriteString("\n" + dim.Render("Loading the "+l.check+" log…") + "\n")
 		} else {
-			b.WriteString("\n" + red.Bold(true).Render("Log · "+l.check) + dim.Render(fmt.Sprintf(" (%d lines around the errors)", logLines)) + "\n" + dim.Render(l.text) + "\n")
+			b.WriteString("\n" + red.Bold(true).Render("Log · "+l.check) + dim.Render(fmt.Sprintf(" (%d lines around the errors)", core.LogLines)) + "\n" + dim.Render(l.text) + "\n")
 		}
 	}
 	if v := m.jobs[k]; v != nil {

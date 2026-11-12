@@ -1,4 +1,4 @@
-package main
+package core
 
 // Commands: config validation, prompts, and preparing a command for a PR.
 
@@ -38,7 +38,7 @@ type Command struct {
 const defaultJobLimit = 45 * time.Minute
 
 // builtinKeys can't start a command key sequence.
-var builtinKeys = map[string]bool{
+var BuiltinKeys = map[string]bool{
 	"j": true, "k": true, "g": true, "G": true, "h": true, "l": true, "e": true, "o": true,
 	"r": true, "q": true, "?": true, "/": true, "f": true, "i": true, "p": true, "enter": true, " ": true, "tab": true, "esc": true,
 	"up": true, "down": true, "left": true, "right": true,
@@ -53,7 +53,7 @@ func validateCommands(cfg *Config) error {
 		if c.Name == "" {
 			c.Name = c.Key
 		}
-		if builtinKeys[string(c.Key[0])] {
+		if BuiltinKeys[string(c.Key[0])] {
 			return fmt.Errorf("command %q: key %q starts with a built-in key", c.Name, c.Key)
 		}
 		for _, o := range cfg.Commands[:i] {
@@ -142,20 +142,20 @@ func btoi(b bool) int {
 }
 
 // prepared is a command ready to execute: env and working directory resolved, files written.
-type prepared struct {
-	cmd    Command
-	pr     PR
-	env    []string
+type Prepared struct {
+	Cmd    Command
+	Pr     PR
+	Env    []string
 	dir    string
 	script string // launcher script for terminal commands
 	jobID  string // background commands: the job and Claude session id
 }
 
 // prepare resolves a command for a PR. agentSession is the PR's last agent job, for agent_session commands.
-func prepare(cfg Config, c Command, p PR, agentSession string) (prepared, error) {
-	pp := prepared{cmd: c, pr: p}
+func Prepare(cfg Config, c Command, p PR, agentSession string) (Prepared, error) {
+	pp := Prepared{Cmd: c, Pr: p}
 	if c.Background {
-		pp.jobID = newJobID()
+		pp.jobID = NewJobID()
 	}
 	vars := [][2]string{
 		{"PR_NUMBER", fmt.Sprint(p.Number)},
@@ -221,7 +221,7 @@ func prepare(cfg Config, c Command, p PR, agentSession string) (prepared, error)
 		vars = append(vars, [2]string{"PR_LAUNCH", s})
 	}
 	for _, v := range vars {
-		pp.env = append(pp.env, v[0]+"="+v[1])
+		pp.Env = append(pp.Env, v[0]+"="+v[1])
 	}
 	return pp, nil
 }
@@ -243,8 +243,8 @@ func promptFile(jobID string) (*os.File, error) {
 	if jobID == "" {
 		return os.CreateTemp("", "gh-prs-prompt-*.md") // 0600
 	}
-	if err := os.MkdirAll(jobsDir(), 0o700); err != nil {
+	if err := os.MkdirAll(JobsDir(), 0o700); err != nil {
 		return nil, err
 	}
-	return os.OpenFile(filepath.Join(jobsDir(), jobID+".prompt.md"), os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o600)
+	return os.OpenFile(filepath.Join(JobsDir(), jobID+".prompt.md"), os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o600)
 }

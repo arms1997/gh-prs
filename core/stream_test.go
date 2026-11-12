@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"strings"
@@ -18,7 +18,7 @@ func TestJobParsing(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 
 	v := writeJob(t, deadPID(t), strings.Join([]string{evInit, evTool, evText, evResult}, "\n")+"\n", "")
-	v.update()
+	v.Update()
 	if v.Status != JobDone || v.Result != "Pushed abc123: fixed the test." || v.Turns != 7 || v.Cost != 0.42 {
 		t.Fatalf("done job: %+v", v)
 	}
@@ -27,13 +27,13 @@ func TestJobParsing(t *testing.T) {
 	}
 
 	v = writeJob(t, deadPID(t), evInit+"\n"+evAuth+"\n", "")
-	v.update()
+	v.Update()
 	if v.Status != JobFailed || !strings.Contains(v.Result, "Invalid API key") {
 		t.Fatalf("auth failure: %+v", v)
 	}
 
 	v = writeJob(t, deadPID(t), evInit+"\n"+evTool+"\n", "warning\nError: something broke\n")
-	v.update()
+	v.Update()
 	if v.Status != JobFailed || v.Result != "Error: something broke" {
 		t.Fatalf("died without result: %+v", v)
 	}

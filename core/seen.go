@@ -1,4 +1,4 @@
-package main
+package core
 
 // What changed since you last looked: a snapshot of each PR as of the last time you selected it.
 
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type snapshot struct {
@@ -18,24 +19,24 @@ type snapshot struct {
 	Unresolved     int
 }
 
-func snapOf(p PR) snapshot {
+func SnapOf(p PR) snapshot {
 	return snapshot{p.HeadOID, p.CI, p.ReviewDecision, p.Mergeable, p.Comments, p.Unresolved}
 }
 
 // seenStore maps prKey → the PR as you last saw it.
-type seenStore map[string]snapshot
+type SeenStore map[string]snapshot
 
 func seenPath() string { return filepath.Join(cacheDir(), "seen.json") }
 
-func loadSeen() seenStore {
-	s := seenStore{}
+func LoadSeen() SeenStore {
+	s := SeenStore{}
 	if b, err := os.ReadFile(seenPath()); err == nil {
 		_ = json.Unmarshal(b, &s) // a corrupt file just means everything looks unchanged
 	}
 	return s
 }
 
-func (s seenStore) save() error {
+func (s SeenStore) Save() error {
 	b, err := json.Marshal(s)
 	if err != nil {
 		return err
@@ -47,7 +48,7 @@ func (s seenStore) save() error {
 }
 
 // changes lists, in plain words, how a PR moved from prev to cur.
-func changes(prev, cur snapshot) []string {
+func Changes(prev, cur snapshot) []string {
 	var out []string
 	if cur.HeadOID != prev.HeadOID && prev.HeadOID != "" {
 		out = append(out, "new commits")
@@ -56,10 +57,10 @@ func changes(prev, cur snapshot) []string {
 		out = append(out, plural(n, "new comment", "new comments"))
 	}
 	if cur.CI != prev.CI && cur.CI != "" {
-		out = append(out, "CI "+ciText(cur.CI))
+		out = append(out, "CI "+CIText(cur.CI))
 	}
 	if cur.ReviewDecision != prev.ReviewDecision && cur.ReviewDecision != "" {
-		out = append(out, reviewText(cur.ReviewDecision))
+		out = append(out, ReviewText(cur.ReviewDecision))
 	}
 	if cur.Mergeable != prev.Mergeable {
 		switch {
@@ -80,4 +81,23 @@ func plural(n int, one, many string) string {
 		return "1 " + one
 	}
 	return fmt.Sprintf("%d %s", n, many)
+}
+
+func CIText(state string) string {
+	if state == "" {
+		return "no checks"
+	}
+	return strings.ToLower(state)
+}
+
+func ReviewText(d string) string {
+	switch d {
+	case "APPROVED":
+		return "approved"
+	case "CHANGES_REQUESTED":
+		return "changes requested"
+	case "REVIEW_REQUIRED":
+		return "review required"
+	}
+	return "none required"
 }

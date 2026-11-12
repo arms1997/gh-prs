@@ -7,6 +7,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+
+	"gh-prs/core"
 )
 
 func TestParseSummary(t *testing.T) {
@@ -32,11 +34,11 @@ func TestAgentBoxFitsWidth(t *testing.T) {
 	for i := 0; i < 12; i++ {
 		changes.WriteString("- `file" + strings.Repeat("x", i) + ".ts`: " + long + "\n")
 	}
-	cases := map[string]*jobView{
-		"summary":  {Job: Job{Name: "fix CI"}, Status: JobDone, Turns: 3, Cost: 0.4, Result: "DONE: " + long + "\n" + changes.String() + "PUSHED: NO: " + long + "\nNEEDS YOU: " + long},
-		"prose":    {Job: Job{Name: "fix CI"}, Status: JobFailed, Result: strings.Repeat(long+"\n", 30)},
-		"running":  {Job: Job{Name: "fix CI", Started: time.Now()}, Status: JobRunning, Activity: []string{long, long, long, long, long, long}},
-		"no lines": {Job: Job{Name: "fix CI"}, Status: JobFailed},
+	cases := map[string]*core.JobView{
+		"summary":  {Job: core.Job{Name: "fix CI"}, Status: core.JobDone, Turns: 3, Cost: 0.4, Result: "DONE: " + long + "\n" + changes.String() + "PUSHED: NO: " + long + "\nNEEDS YOU: " + long},
+		"prose":    {Job: core.Job{Name: "fix CI"}, Status: core.JobFailed, Result: strings.Repeat(long+"\n", 30)},
+		"running":  {Job: core.Job{Name: "fix CI", Started: time.Now()}, Status: core.JobRunning, Activity: []string{long, long, long, long, long, long}},
+		"no lines": {Job: core.Job{Name: "fix CI"}, Status: core.JobFailed},
 	}
 	for name, v := range cases {
 		for _, l := range strings.Split(ansi.Strip(renderJob(v, 50)), "\n") {

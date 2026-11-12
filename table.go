@@ -8,6 +8,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+
+	"gh-prs/core"
 )
 
 // Widths of the right-aligned table columns.
@@ -52,16 +54,16 @@ func columnHeader(w int) string {
 }
 
 // agentCell is the agent column: a spinner while running, then the outcome.
-func agentCell(v *jobView, spin int) (string, lipgloss.Style) {
+func agentCell(v *core.JobView, spin int) (string, lipgloss.Style) {
 	if v == nil {
 		return "", dim
 	}
 	switch v.Status {
-	case JobRunning:
-		return fmt.Sprintf(" %s %s %s", spinner[spin%len(spinner)], v.Name, shortDuration(v.elapsed())), yellow
-	case JobDone:
+	case core.JobRunning:
+		return fmt.Sprintf(" %s %s %s", spinner[spin%len(spinner)], v.Name, core.ShortDuration(v.Elapsed())), yellow
+	case core.JobDone:
 		if v.Waiting {
-			return fmt.Sprintf(" ◷ %s %s", v.Name, shortDuration(v.elapsed())), cyan
+			return fmt.Sprintf(" ◷ %s %s", v.Name, core.ShortDuration(v.Elapsed())), cyan
 		}
 		return " ✓ " + v.Name, green
 	}
@@ -69,7 +71,7 @@ func agentCell(v *jobView, spin int) (string, lipgloss.Style) {
 }
 
 // prColumns renders the right-aligned table cells for a PR.
-func prColumns(p PR, job *jobView, spin int) []seg {
+func prColumns(p core.PR, job *core.JobView, spin int) []seg {
 	var out []seg
 	col := func(text string, st lipgloss.Style, w int) {
 		out = append(out, seg{" ", plain}, seg{text, st}, seg{spaces(w - lipgloss.Width(text)), plain})
@@ -117,7 +119,7 @@ func prColumns(p PR, job *jobView, spin int) []seg {
 	return out
 }
 
-func (m model) renderRow(r Row, isSel, shade bool, w int) string {
+func (m model) renderRow(r core.Row, isSel, shade bool, w int) string {
 	indent := strings.Repeat("  ", r.Depth)
 	var lead []seg // markers before the PR number: whose turn, and changed since you looked
 	var left seg
@@ -145,7 +147,7 @@ func (m model) renderRow(r Row, isSel, shade bool, w int) string {
 			stack, on = "↳ ", fmt.Sprintf("(on #%d) ", r.StackedOn)
 		}
 		turn, ts := "○", dim
-		if mine, _ := turnOf(*p); mine {
+		if mine, _ := core.TurnOf(*p); mine {
 			turn, ts = "●", yellow.Bold(true)
 		}
 		changed := " "
@@ -167,7 +169,7 @@ func (m model) renderRow(r Row, isSel, shade bool, w int) string {
 		if isSel {
 			left.style = bold
 		}
-		right = prColumns(*p, m.jobs[prKey(p.Repo, p.Number)], m.spin)
+		right = prColumns(*p, m.jobs[core.PrKey(p.Repo, p.Number)], m.spin)
 	}
 
 	leadW, rightW := 0, 0

@@ -1,4 +1,4 @@
-package main
+package core
 
 // Parsing Claude's stream-json output into a job's status and activity.
 
@@ -27,7 +27,7 @@ type streamEvent struct {
 	} `json:"message"`
 }
 
-func (v *jobView) apply(line []byte) {
+func (v *JobView) apply(line []byte) {
 	var ev streamEvent
 	if len(bytes.TrimSpace(line)) == 0 || json.Unmarshal(line, &ev) != nil {
 		return
@@ -50,7 +50,7 @@ func (v *jobView) apply(line []byte) {
 		if ev.IsError || ev.Subtype != "success" {
 			v.Status = JobFailed
 		}
-		v.Result = strings.TrimSpace(sanitize(ev.Result))
+		v.Result = strings.TrimSpace(Sanitize(ev.Result))
 		if v.Result == "" && v.Status == JobFailed {
 			v.Result = ev.Subtype
 		}
@@ -58,8 +58,8 @@ func (v *jobView) apply(line []byte) {
 	}
 }
 
-func (v *jobView) addActivity(s string) {
-	if s = sanitize(s); s == "" {
+func (v *JobView) addActivity(s string) {
+	if s = Sanitize(s); s == "" {
 		return
 	}
 	v.Activity = append(v.Activity, s)

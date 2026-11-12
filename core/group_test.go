@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"reflect"
@@ -8,7 +8,7 @@ import (
 func TestStatusOf(t *testing.T) {
 	cases := []struct {
 		name string
-		pr   PR
+		Pr   PR
 		want Status
 	}{
 		{"draft wins over everything", PR{IsDraft: true, CI: "FAILURE", ReviewDecision: "APPROVED"}, Draft},
@@ -22,7 +22,7 @@ func TestStatusOf(t *testing.T) {
 		{"review required", PR{ReviewDecision: "REVIEW_REQUIRED", CI: "SUCCESS"}, WaitingReview},
 	}
 	for _, c := range cases {
-		if got := statusOf(c.pr); got != c.want {
+		if got := StatusOf(c.Pr); got != c.want {
 			t.Errorf("%s: got %v, want %v", c.name, got, c.want)
 		}
 	}
@@ -42,7 +42,7 @@ func titles(rows []Row) []string {
 
 func TestBuildRowsNestsAndOrders(t *testing.T) {
 	cfg := Config{ProjectLabelPrefix: "proj:"}
-	data := []sectionData{{
+	data := []SectionData{{
 		Section: Section{Title: "Mine", GroupBy: []string{"project", "status"}},
 		PRs: []PR{
 			{Number: 1, Labels: []string{"bug"}},
@@ -52,7 +52,7 @@ func TestBuildRowsNestsAndOrders(t *testing.T) {
 		},
 	}}
 
-	got := titles(buildRows(data, cfg, view{}))
+	got := titles(BuildRows(data, cfg, View{}))
 	want := []string{
 		"Mine",
 		"alpha", "Ready to merge", "#3",
@@ -63,7 +63,7 @@ func TestBuildRowsNestsAndOrders(t *testing.T) {
 		t.Fatalf("rows:\n got %v\nwant %v", got, want)
 	}
 
-	got = titles(buildRows(data, cfg, view{Collapsed: map[string]bool{"Mine/beta": true}}))
+	got = titles(BuildRows(data, cfg, View{Collapsed: map[string]bool{"Mine/beta": true}}))
 	want = []string{"Mine", "alpha", "Ready to merge", "#3", "beta", "No project", "Waiting for review", "#1"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("collapsed rows:\n got %v\nwant %v", got, want)
@@ -75,7 +75,7 @@ func TestStacking(t *testing.T) {
 	pr := func(n int, head, base string, draft bool) PR {
 		return PR{Number: n, Repo: "o/r", HeadRefName: head, BaseRefName: base, IsDraft: draft}
 	}
-	data := []sectionData{{
+	data := []SectionData{{
 		Section: Section{Title: "Mine", GroupBy: []string{"status"}},
 		PRs: []PR{
 			pr(3, "c", "b", false), // stacked on #2, listed before it
@@ -88,7 +88,7 @@ func TestStacking(t *testing.T) {
 
 	type got struct{ num, stack, on int }
 	var rows []got
-	for _, r := range buildRows(data, cfg, view{}) {
+	for _, r := range BuildRows(data, cfg, View{}) {
 		if r.PR != nil {
 			rows = append(rows, got{r.PR.Number, r.Stack, r.StackedOn})
 		}
@@ -104,16 +104,16 @@ func TestStacking(t *testing.T) {
 }
 
 func TestSanitizeStripsEscapes(t *testing.T) {
-	if got := sanitize("ok\x1b]0;pwned\x07\r\nnext\u009b"); got != "ok]0;pwned\nnext" {
+	if got := Sanitize("ok\x1b]0;pwned\x07\r\nnext\u009b"); got != "ok]0;pwned\nnext" {
 		t.Fatalf("got %q", got)
 	}
 }
 
 func TestDefaultConfigParses(t *testing.T) {
-	if _, err := parseConfig(mustRead("defaults/config.yml")); err != nil {
+	if _, err := ParseConfig(mustRead("defaults/config.yml")); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := parseConfig([]byte("sections:\n  - title: x\n    query: is:pr\n    group_by: [nope]\n")); err == nil {
+	if _, err := ParseConfig([]byte("sections:\n  - title: x\n    query: is:pr\n    group_by: [nope]\n")); err == nil {
 		t.Fatal("expected unknown group_by to fail")
 	}
 }

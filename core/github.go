@@ -1,4 +1,4 @@
-package main
+package core
 
 // GitHub: one GraphQL search per section, mapped to PRs.
 
@@ -50,7 +50,7 @@ type Check struct {
 	URL  string
 }
 
-type sectionData struct {
+type SectionData struct {
 	Section Section
 	PRs     []PR
 }
@@ -87,14 +87,14 @@ const searchQuery = `query($q: String!, $n: Int!) {
 type login struct{ Login string }
 
 // rateLimit is what's left of the GraphQL budget (5,000 points an hour, shared by everything using your token).
-type rateLimit struct {
+type RateLimit struct {
 	Remaining int
 	ResetAt   time.Time
 }
 
 type searchResp struct {
 	Viewer    login
-	RateLimit rateLimit
+	RateLimit RateLimit
 	Search    struct {
 		Nodes []struct {
 			Number         int
@@ -157,7 +157,7 @@ var failedConclusions = map[string]bool{"FAILURE": true, "TIMED_OUT": true, "STA
 
 // pageSize asks for a little more than the section had last time, since cost follows the page size.
 // A section not seen before gets the maximum.
-func pageSize(prev []sectionData, title string) int {
+func pageSize(prev []SectionData, title string) int {
 	for _, sd := range prev {
 		if sd.Section.Title == title {
 			return min(max(len(sd.PRs)+10, 10), 100)
@@ -166,13 +166,13 @@ func pageSize(prev []sectionData, title string) int {
 	return 100
 }
 
-func fetchAll(cfg Config, prev []sectionData) ([]sectionData, rateLimit, error) {
-	var rate rateLimit
+func FetchAll(cfg Config, prev []SectionData) ([]SectionData, RateLimit, error) {
+	var rate RateLimit
 	client, err := api.DefaultGraphQLClient()
 	if err != nil {
 		return nil, rate, err
 	}
-	out := make([]sectionData, 0, len(cfg.Sections))
+	out := make([]SectionData, 0, len(cfg.Sections))
 	for _, s := range cfg.Sections {
 		var resp searchResp
 		for n := pageSize(prev, s.Title); ; n = 100 {
@@ -186,22 +186,22 @@ func fetchAll(cfg Config, prev []sectionData) ([]sectionData, rateLimit, error) 
 		}
 		rate = resp.RateLimit
 		me := resp.Viewer.Login
-		sd := sectionData{Section: s}
+		sd := SectionData{Section: s}
 		for _, n := range resp.Search.Nodes {
 			if n.Number == 0 { // non-PR search hit
 				continue
 			}
 			p := PR{
 				Number:         n.Number,
-				Title:          sanitize(n.Title),
+				Title:          Sanitize(n.Title),
 				URL:            n.URL,
-				Body:           sanitize(n.Body),
+				Body:           Sanitize(n.Body),
 				IsDraft:        n.IsDraft,
 				Additions:      n.Additions,
 				Deletions:      n.Deletions,
 				ChangedFiles:   n.ChangedFiles,
-				HeadRefName:    sanitize(n.HeadRefName),
-				BaseRefName:    sanitize(n.BaseRefName),
+				HeadRefName:    Sanitize(n.HeadRefName),
+				BaseRefName:    Sanitize(n.BaseRefName),
 				HeadOID:        n.HeadRefOid,
 				ReviewDecision: n.ReviewDecision,
 				Mergeable:      n.Mergeable,
@@ -213,7 +213,7 @@ func fetchAll(cfg Config, prev []sectionData) ([]sectionData, rateLimit, error) 
 				p.Mine = p.Author == me
 			}
 			for _, l := range n.Labels.Nodes {
-				p.Labels = append(p.Labels, sanitize(l.Name))
+				p.Labels = append(p.Labels, Sanitize(l.Name))
 			}
 			for _, t := range n.ReviewThreads.Nodes {
 				if t.IsResolved {
@@ -233,9 +233,9 @@ func fetchAll(cfg Config, prev []sectionData) ([]sectionData, rateLimit, error) 
 					for _, ctx := range r.Contexts.Nodes {
 						switch {
 						case ctx.Typename == "CheckRun" && failedConclusions[ctx.Conclusion]:
-							p.FailingChecks = append(p.FailingChecks, Check{sanitize(ctx.Name), ctx.DetailsURL})
+							p.FailingChecks = append(p.FailingChecks, Check{Sanitize(ctx.Name), ctx.DetailsURL})
 						case ctx.Typename == "StatusContext" && failedConclusions[ctx.State]:
-							p.FailingChecks = append(p.FailingChecks, Check{sanitize(ctx.Context), ctx.TargetURL})
+							p.FailingChecks = append(p.FailingChecks, Check{Sanitize(ctx.Context), ctx.TargetURL})
 						}
 					}
 				}
@@ -268,7 +268,7 @@ func linearID(title, branch string) string {
 }
 
 // linearURL links an issue ID into your Linear workspace, or returns "" if either is unknown.
-func linearURL(workspace, id string) string {
+func LinearURL(workspace, id string) string {
 	if workspace == "" || id == "" {
 		return ""
 	}
@@ -276,7 +276,7 @@ func linearURL(workspace, id string) string {
 }
 
 // sanitize strips control characters so PR text written by others can't inject terminal escape sequences.
-func sanitize(s string) string {
+func Sanitize(s string) string {
 	return strings.Map(func(r rune) rune {
 		if r == '\n' || r == '\t' {
 			return r

@@ -14,6 +14,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/cli/go-gh/v2/pkg/browser"
+
+	"gh-prs/core"
 )
 
 // jobTickMsg animates spinners and, every few ticks, reads new agent log lines.
@@ -24,9 +26,9 @@ func jobTick() tea.Cmd {
 }
 
 type fetchedMsg struct {
-	data []sectionData
+	data []core.SectionData
 	at   time.Time
-	rate rateLimit
+	rate core.RateLimit
 	err  error
 }
 
@@ -34,28 +36,28 @@ type fetchedMsg struct {
 type refreshMsg int
 
 type preparedMsg struct {
-	pp  prepared
+	pp  core.Prepared
 	err error
 }
 
 type doneMsg struct {
-	pp  prepared
+	pp  core.Prepared
 	err error
 	out string
 }
 
 type confirmation struct {
-	cmd Command
-	pr  PR
+	cmd core.Command
+	pr  core.PR
 }
 
 type statusMsg string
 
 type model struct {
-	cfg         Config
-	data        []sectionData
-	rate        rateLimit // GraphQL budget left after the last fetch
-	rows        []Row
+	cfg         core.Config
+	data        []core.SectionData
+	rate        core.RateLimit // GraphQL budget left after the last fetch
+	rows        []core.Row
 	collapsed   map[string]bool
 	cursor      int
 	offset      int
@@ -72,20 +74,20 @@ type model struct {
 	keySeq      string // partial command key sequence, e.g. "c" while waiting for "cc"
 	confirming  *confirmation
 	showHelp    bool
-	jobs        map[string]*jobView // latest agent job per PR (prKey)
+	jobs        map[string]*core.JobView // latest agent job per PR (prKey)
 	spin        int
 	ticking     bool
 	filter      string // "/" filter; empty shows everything
 	filtering   bool   // typing into the filter
-	seen        seenStore
+	seen        core.SeenStore
 	recentKey   string   // the PR whose changes are listed in recent
 	recent      []string // what changed since you last looked at the selected PR
 	logs        map[string]*failLog
-	org         *Organize
-	showAll     bool       // pa: show hidden and snoozed PRs too
-	orgKey      bool       // p was pressed; the next key picks an organize action
-	input       *textInput // a one-line prompt in the footer (pm, pc)
-	proposal    *proposal  // Claude's suggested reorganization, waiting for y/n
+	org         *core.Organize
+	showAll     bool           // pa: show hidden and snoozed PRs too
+	orgKey      bool           // p was pressed; the next key picks an organize action
+	input       *textInput     // a one-line prompt in the footer (pm, pc)
+	proposal    *core.Proposal // Claude's suggested reorganization, waiting for y/n
 }
 
 // textInput is a one-line prompt in the footer; enter submits, esc cancels.
@@ -95,8 +97,8 @@ type textInput struct {
 	submit func(m *model, value string) tea.Cmd
 }
 
-func (m model) view() view {
-	return view{Collapsed: m.collapsed, Filter: m.filter, Org: m.org, ShowAll: m.showAll}
+func (m model) view() core.View {
+	return core.View{Collapsed: m.collapsed, Filter: m.filter, Org: m.org, ShowAll: m.showAll}
 }
 
 // failLog is the tail of a failing check's log, loaded on demand with f.
@@ -111,16 +113,16 @@ type logMsg struct {
 	log failLog
 }
 
-func prepareCmd(cfg Config, c Command, p PR, agentSession string) tea.Cmd {
+func prepareCmd(cfg core.Config, c core.Command, p core.PR, agentSession string) tea.Cmd {
 	return func() tea.Msg {
-		pp, err := prepare(cfg, c, p, agentSession)
+		pp, err := core.Prepare(cfg, c, p, agentSession)
 		return preparedMsg{pp, err}
 	}
 }
 
-func (m *model) startCommand(c Command, p PR) tea.Cmd {
-	job := m.jobs[prKey(p.Repo, p.Number)]
-	if job != nil && job.active() && (c.Background || c.Session) {
+func (m *model) startCommand(c core.Command, p core.PR) tea.Cmd {
+	job := m.jobs[core.PrKey(p.Repo, p.Number)]
+	if job != nil && job.Active() && (c.Background || c.Session) {
 		// One agent per PR: they'd share the worktree, and a session can't be resumed while it runs.
 		m.status, m.isErr = fmt.Sprintf("an agent is still running on #%d (%s)", p.Number, job.Name), true
 		return nil
@@ -138,7 +140,7 @@ func (m *model) ensureTicking() tea.Cmd {
 		return nil
 	}
 	for _, v := range m.jobs {
-		if v.active() {
+		if v.Active() {
 			m.ticking = true
 			return jobTick()
 		}
@@ -146,9 +148,9 @@ func (m *model) ensureTicking() tea.Cmd {
 	return nil
 }
 
-func (m model) runPrepared(pp prepared) tea.Cmd {
-	c := pp.execCmd()
-	if pp.cmd.Interactive {
+func (m model) runPrepared(pp core.Prepared) tea.Cmd {
+	c := pp.ExecCmd()
+	if pp.Cmd.Interactive {
 		return tea.ExecProcess(c, func(err error) tea.Msg { return doneMsg{pp: pp, err: err} })
 	}
 	return func() tea.Msg {
@@ -157,34 +159,29 @@ func (m model) runPrepared(pp prepared) tea.Cmd {
 	}
 }
 
-func lastLine(s string) string {
-	lines := strings.Split(strings.TrimSpace(sanitize(s)), "\n")
-	return lines[len(lines)-1]
-}
-
-func newModel(cfg Config) model {
-	m := model{cfg: cfg, collapsed: map[string]bool{}, loading: true, detail: viewport.New(0, 0), jobs: loadJobs(),
-		seen: loadSeen(), logs: map[string]*failLog{}}
-	org, err := loadOrganize()
+func newModel(cfg core.Config) model {
+	m := model{cfg: cfg, collapsed: map[string]bool{}, loading: true, detail: viewport.New(0, 0), jobs: core.LoadJobs(),
+		seen: core.LoadSeen(), logs: map[string]*failLog{}}
+	org, err := core.LoadOrganize()
 	if err != nil {
 		m.status, m.isErr = err.Error(), true
-		org = &Organize{}
+		org = &core.Organize{}
 	}
 	m.org = org
-	if data, at, ok := loadCache(cfg); ok {
+	if data, at, ok := core.LoadCache(cfg); ok {
 		m.data = data
 		m.status = "cached " + at.Format("15:04")
-		m.rows = buildRows(data, cfg, m.view())
+		m.rows = core.BuildRows(data, cfg, m.view())
 	}
 	return m
 }
 
-func fetchCmd(cfg Config, prev []sectionData) tea.Cmd {
+func fetchCmd(cfg core.Config, prev []core.SectionData) tea.Cmd {
 	return func() tea.Msg {
-		d, rate, err := fetchAll(cfg, prev)
+		d, rate, err := core.FetchAll(cfg, prev)
 		at := time.Now()
 		if err == nil {
-			_ = saveCache(d, at) // shortcut: a failed cache write only costs a slower next start
+			_ = core.SaveCache(d, at) // shortcut: a failed cache write only costs a slower next start
 		}
 		return fetchedMsg{d, at, rate, err}
 	}
@@ -195,7 +192,7 @@ func fetchCmd(cfg Config, prev []sectionData) tea.Cmd {
 const lowRate = 500
 
 // refreshDelay is how long until the next auto-refresh: the interval, or until the budget resets when it's low.
-func refreshDelay(every time.Duration, rate rateLimit, now time.Time) time.Duration {
+func refreshDelay(every time.Duration, rate core.RateLimit, now time.Time) time.Duration {
 	if rate.ResetAt.After(now) && rate.Remaining < lowRate {
 		return max(rate.ResetAt.Sub(now), every)
 	}
@@ -204,11 +201,11 @@ func refreshDelay(every time.Duration, rate rateLimit, now time.Time) time.Durat
 
 func (m *model) scheduleRefresh() tea.Cmd {
 	m.gen++
-	if m.cfg.refresh == 0 {
+	if m.cfg.Refresh == 0 {
 		return nil
 	}
 	gen := m.gen
-	return tea.Tick(refreshDelay(m.cfg.refresh, m.rate, time.Now()), func(time.Time) tea.Msg { return refreshMsg(gen) })
+	return tea.Tick(refreshDelay(m.cfg.Refresh, m.rate, time.Now()), func(time.Time) tea.Msg { return refreshMsg(gen) })
 }
 
 func openCmd(url string) tea.Cmd {
@@ -229,7 +226,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) anyRunning() bool {
 	for _, v := range m.jobs {
-		if v.active() {
+		if v.Active() {
 			return true
 		}
 	}
@@ -240,7 +237,7 @@ func (m model) listWidth() int  { return m.width * 66 / 100 }
 func (m model) bodyHeight() int { return max(m.height-1, 1) }
 func (m model) listRows() int   { return max(m.bodyHeight()-1, 1) } // minus the column header
 
-func (m model) current() *Row {
+func (m model) current() *core.Row {
 	if m.cursor < len(m.rows) {
 		return &m.rows[m.cursor]
 	}
@@ -252,7 +249,7 @@ func (m *model) rebuild() {
 	if r := m.current(); r != nil {
 		keep = r.Path
 	}
-	m.rows = buildRows(m.data, m.cfg, m.view())
+	m.rows = core.BuildRows(m.data, m.cfg, m.view())
 	for i, r := range m.rows {
 		if r.Path == keep {
 			m.cursor = i
@@ -286,16 +283,16 @@ func (m *model) baseline() {
 	changed := false
 	for _, sd := range m.data {
 		for _, p := range sd.PRs {
-			if k := prKey(p.Repo, p.Number); m.seen != nil {
+			if k := core.PrKey(p.Repo, p.Number); m.seen != nil {
 				if _, ok := m.seen[k]; !ok {
-					m.seen[k] = snapOf(p)
+					m.seen[k] = core.SnapOf(p)
 					changed = true
 				}
 			}
 		}
 	}
 	if changed {
-		_ = m.seen.save() // shortcut: if it can't be saved, PRs just won't be marked new next run
+		_ = m.seen.Save() // shortcut: if it can't be saved, PRs just won't be marked new next run
 	}
 }
 
@@ -305,7 +302,7 @@ func (m *model) markSeen() {
 	if r == nil || r.PR == nil || m.seen == nil {
 		return
 	}
-	k, cur := prKey(r.PR.Repo, r.PR.Number), snapOf(*r.PR)
+	k, cur := core.PrKey(r.PR.Repo, r.PR.Number), core.SnapOf(*r.PR)
 	if k != m.recentKey {
 		m.recentKey, m.recent = k, nil
 	}
@@ -314,16 +311,16 @@ func (m *model) markSeen() {
 		return
 	}
 	if ok {
-		m.recent = append(m.recent, changes(prev, cur)...)
+		m.recent = append(m.recent, core.Changes(prev, cur)...)
 	}
 	m.seen[k] = cur
-	_ = m.seen.save()
+	_ = m.seen.Save()
 }
 
 // isNew reports whether a PR changed since you last selected it.
-func (m model) isNew(p PR) bool {
-	prev, ok := m.seen[prKey(p.Repo, p.Number)]
-	return ok && len(changes(prev, snapOf(p))) > 0
+func (m model) isNew(p core.PR) bool {
+	prev, ok := m.seen[core.PrKey(p.Repo, p.Number)]
+	return ok && len(core.Changes(prev, core.SnapOf(p))) > 0
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -341,13 +338,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.data, m.rate = msg.data, msg.rate
 		m.status, m.isErr = fmt.Sprintf("updated %s · %d API points left", msg.at.Format("15:04"), m.rate.Remaining), false
-		if d := refreshDelay(m.cfg.refresh, m.rate, msg.at); m.cfg.refresh > 0 && d > m.cfg.refresh {
+		if d := refreshDelay(m.cfg.Refresh, m.rate, msg.at); m.cfg.Refresh > 0 && d > m.cfg.Refresh {
 			m.status, m.isErr = fmt.Sprintf("auto-refresh paused: %d GitHub API points left this hour, resumes %s (r refreshes now)",
 				m.rate.Remaining, m.rate.ResetAt.Local().Format("15:04")), true
 		}
 		m.baseline()
-		if m.org.wake(m.data) { // snoozed PRs that changed come back
-			_ = m.org.save()
+		if m.org.Wake(m.data) { // snoozed PRs that changed come back
+			_ = m.org.Save()
 		}
 		m.rebuild()
 		return m, m.scheduleRefresh()
@@ -377,16 +374,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.detail.SetContent(m.renderDetail())
 	case preparedMsg:
 		if msg.err != nil {
-			m.status, m.isErr = msg.pp.cmd.Name+" failed: "+msg.err.Error(), true
+			m.status, m.isErr = msg.pp.Cmd.Name+" failed: "+msg.err.Error(), true
 			return m, nil
 		}
-		if msg.pp.cmd.Background {
-			v, err := startJob(msg.pp)
+		if msg.pp.Cmd.Background {
+			v, err := core.StartJob(msg.pp)
 			if err != nil {
-				m.status, m.isErr = msg.pp.cmd.Name+" failed to start: "+err.Error(), true
+				m.status, m.isErr = msg.pp.Cmd.Name+" failed to start: "+err.Error(), true
 				return m, nil
 			}
-			m.jobs[prKey(v.Repo, v.Number)] = v
+			m.jobs[core.PrKey(v.Repo, v.Number)] = v
 			m.status, m.isErr = fmt.Sprintf("agent started: %s #%d", v.Name, v.Number), false
 			m.clamp()
 			return m, m.ensureTicking()
@@ -399,8 +396,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			finished := false
 			for _, v := range m.jobs {
 				was := v.Status
-				v.update()
-				finished = finished || (was == JobRunning && v.Status != JobRunning)
+				v.Update()
+				finished = finished || (was == core.JobRunning && v.Status != core.JobRunning)
 			}
 			m.detail.SetContent(m.renderDetail())
 			if finished && !m.loading { // the agent may have pushed or edited the PR: show it now
@@ -415,16 +412,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Batch(cmds...)
 	case doneMsg:
-		if msg.pp.cmd.Prompt != "" && !msg.pp.cmd.Terminal { // terminal launchers delete their own prompt file
-			for _, e := range msg.pp.env {
+		if msg.pp.Cmd.Prompt != "" && !msg.pp.Cmd.Terminal { // terminal launchers delete their own prompt file
+			for _, e := range msg.pp.Env {
 				if f, ok := strings.CutPrefix(e, "PR_PROMPT_FILE="); ok {
 					os.Remove(f)
 				}
 			}
 		}
-		label := fmt.Sprintf("%s #%d", msg.pp.cmd.Name, msg.pp.pr.Number)
+		label := fmt.Sprintf("%s #%d", msg.pp.Cmd.Name, msg.pp.Pr.Number)
 		if msg.err != nil {
-			detail := lastLine(msg.out)
+			detail := core.LastLine(msg.out)
 			if detail == "" {
 				detail = msg.err.Error()
 			}
@@ -432,7 +429,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.status, m.isErr = "✓ "+label, false
-		if msg.pp.cmd.Refresh && !m.loading {
+		if msg.pp.Cmd.Refresh && !m.loading {
 			m.loading = true
 			return m, fetchCmd(m.cfg, m.data)
 		}
@@ -483,7 +480,7 @@ func (m model) helpText() string {
 	} {
 		fmt.Fprintf(&b, "%-14s %s\n", kv[0], kv[1])
 	}
-	b.WriteString("\n" + bold.Render("Commands") + "  " + dim.Render(configPath()) + "\n\n")
+	b.WriteString("\n" + bold.Render("Commands") + "  " + dim.Render(core.ConfigPath()) + "\n\n")
 	for _, c := range m.cfg.Commands {
 		fmt.Fprintf(&b, "%-14s %s\n", c.Key, c.Name)
 	}
@@ -517,7 +514,7 @@ func (m model) footer() string {
 	if m.input != nil {
 		help = m.input.label + m.input.value + "█  enter ok · esc cancel"
 	}
-	if m.proposal != nil && !m.proposal.loading {
+	if m.proposal != nil && !m.proposal.Loading {
 		help = "Claude's proposal: y apply · n discard · j/k scroll"
 	}
 	if m.showAll {

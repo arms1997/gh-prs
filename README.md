@@ -256,16 +256,19 @@ go test ./...        # unit tests, plus end-to-end tests of jobs, worktrees and 
 go vet ./...
 ```
 
+The terminal UI is package `main` in the root; everything it shows and does lives in package `core/`, which has no UI code, so another front end can reuse it.
+
 | Path | What's in it |
 |---|---|
 | `main.go`, `ui.go` | entry point; the Bubble Tea model, Update and View |
 | `keys.go`, `table.go`, `detail.go`, `styles.go` | keyboard handling, the PR list, the detail pane and agent box, colors |
-| `github.go`, `group.go`, `cache.go` | fetching PRs, grouping, whose turn, filtering and stacking, the disk cache |
-| `seen.go`, `checks.go` | what changed since you last looked; failing check logs |
-| `organize.go`, `reorganize.go` | pins, snoozes, projects and hidden PRs; asking Claude to reorganize |
-| `config.go`, `commands.go` | config layering and prompt lookup; validating and preparing commands |
-| `launcher.go`, `worktree.go` | launcher scripts, shell quoting and time limits; worktrees |
-| `jobs.go`, `stream.go` | background agent jobs; parsing Claude's stream-json |
+| `checks.go`, `reorganize.go` | UI wrappers for failing-check logs and `pc` |
+| `core/github.go`, `core/group.go`, `core/cache.go` | fetching PRs and the rate limit, grouping, whose turn, filtering and stacking, the disk cache |
+| `core/seen.go`, `core/checks.go` | what changed since you last looked; failing check logs |
+| `core/organize.go`, `core/reorganize.go` | pins, snoozes, projects and hidden PRs; asking Claude to reorganize |
+| `core/config.go`, `core/commands.go` | config layering and prompt lookup; validating and preparing commands |
+| `core/launcher.go`, `core/worktree.go` | launcher scripts, shell quoting and time limits; worktrees |
+| `core/jobs.go`, `core/stream.go` | background agent jobs; parsing Claude's stream-json |
 | `defaults/` | built-in config, commands and prompts, embedded in the binary |
 | `openers/`, `scripts/` | the Herdr opener; the deploy-and-monitor script |
 

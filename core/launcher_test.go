@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"os"
@@ -16,11 +16,11 @@ func TestPRDataIsNotInterpolated(t *testing.T) {
 
 	// Background command: env vars.
 	cfg := Config{}
-	pp, err := prepare(cfg, Command{Name: "t", Run: `printf %s "$PR_HEAD"`}, p, "")
+	pp, err := Prepare(cfg, Command{Name: "t", Run: `printf %s "$PR_HEAD"`}, p, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := pp.execCmd().Output()
+	out, err := pp.ExecCmd().Output()
 	if err != nil || string(out) != hostile {
 		t.Fatalf("background: got %q, %v", out, err)
 	}
@@ -31,11 +31,11 @@ func TestPRDataIsNotInterpolated(t *testing.T) {
 	if err := validateCommands(&tcfg); err != nil {
 		t.Fatal(err)
 	}
-	pp, err = prepare(tcfg, tcfg.Commands[0], p, "")
+	pp, err = Prepare(tcfg, tcfg.Commands[0], p, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if b, err := pp.execCmd().CombinedOutput(); err != nil {
+	if b, err := pp.ExecCmd().CombinedOutput(); err != nil {
 		t.Fatalf("launcher: %v %s", err, b)
 	}
 	if got, _ := os.ReadFile(filepath.Join(dir, "out")); string(got) != hostile {
@@ -64,18 +64,18 @@ func TestCustomOpener(t *testing.T) {
 	if err := validateCommands(&cfg); err != nil {
 		t.Fatal(err)
 	}
-	pp, err := prepare(cfg, cfg.Commands[0], PR{Number: 42}, "")
+	pp, err := Prepare(cfg, cfg.Commands[0], PR{Number: 42}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if b, err := pp.execCmd().CombinedOutput(); err != nil {
+	if b, err := pp.ExecCmd().CombinedOutput(); err != nil {
 		t.Fatalf("opener: %v %s", err, b)
 	}
 	if got, _ := os.ReadFile(out); string(got) != "42|z|claude|" {
 		t.Fatalf("opener env = %q", got)
 	}
 
-	if _, err := parseConfig([]byte("terminal: x\n")); err == nil {
+	if _, err := ParseConfig([]byte("terminal: x\n")); err == nil {
 		t.Error("unknown config keys should be rejected")
 	}
 }
