@@ -164,7 +164,7 @@ Use Datadog, prod only (env:prod). For each service, compare the time since the 
 error logs, APM error rate and latency, and any monitors for the service that are alerting. Service tags may differ
 slightly from these names; find the right ones. Don't change anything in Datadog.
 Reply with a first line that is exactly HEALTHY or UNHEALTHY, then at most 5 short lines of evidence with numbers."
-  out=$(env -u ANTHROPIC_API_KEY claude -p "$prompt" --output-format json --permission-mode dontAsk --allowedTools "$tools" 2>/dev/null)
+  out=$(env -u ANTHROPIC_API_KEY claude -p "$prompt" --model sonnet --output-format json --permission-mode dontAsk --allowedTools "$tools" 2>/dev/null)
   COST=$(awk -v a="$COST" -v b="$(printf %s "$out" | jq -r '.total_cost_usd // 0' 2>/dev/null)" 'BEGIN { print a + b }')
   result=$(printf %s "$out" | jq -r '.result // ""' 2>/dev/null)
   verdict=$(printf '%s\n' "$result" | head -1 | tr -d '*`# ')

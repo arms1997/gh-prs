@@ -51,7 +51,7 @@ func (m *model) askClaude(ask string) tea.Cmd {
 	m.detail.SetContent(m.renderDetail())
 	m.detail.GotoTop()
 	return func() tea.Msg {
-		c := exec.Command("env", "-u", "ANTHROPIC_API_KEY", "claude", "-p", "--output-format", "json",
+		c := exec.Command("env", "-u", "ANTHROPIC_API_KEY", "claude", "-p", "--model", "sonnet", "--output-format", "json",
 			"--tools", "", "--strict-mcp-config", "--permission-mode", "dontAsk")
 		c.Stdin = strings.NewReader(prompt)
 		out, err := c.Output()

@@ -169,6 +169,13 @@ func prepare(cfg Config, c Command, p PR, agentSession string) (prepared, error)
 		if err != nil {
 			return pp, err
 		}
+		if c.Background { // agents commit and push; they mustn't sweep up your own unfinished work
+			if n, err := uncommitted(dir); err != nil {
+				return pp, err
+			} else if n > 0 {
+				return pp, fmt.Errorf("%s has %s; commit or stash them first", dir, plural(n, "uncommitted change", "uncommitted changes"))
+			}
+		}
 		pp.dir = dir
 		vars = append(vars, [2]string{"PR_WORKTREE", dir})
 	}

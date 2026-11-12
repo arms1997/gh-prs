@@ -72,3 +72,12 @@ func ensureWorktree(cfg Config, p PR) (string, error) {
 	_, err = git(clone, "worktree", "add", "--track", "-b", branch, dir, "origin/"+branch)
 	return dir, err
 }
+
+// uncommitted counts changed, staged and untracked files in a worktree.
+func uncommitted(dir string) (int, error) {
+	out, err := git(dir, "status", "--porcelain")
+	if err != nil || out == "" {
+		return 0, err
+	}
+	return len(strings.Split(out, "\n")), nil
+}

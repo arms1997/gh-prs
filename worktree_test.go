@@ -1,8 +1,10 @@
 package main
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -56,5 +58,19 @@ func TestEnsureWorktree(t *testing.T) {
 	}
 	if _, err := ensureWorktree(cfg, PR{Repo: "o/missing", HeadRefName: "x"}); err == nil {
 		t.Fatal("missing clone should fail")
+	}
+
+	// Agents refuse a worktree with your uncommitted work in it; terminal commands don't care.
+	agent := Command{Key: "z", Name: "agent", Background: true, Worktree: true, Run: "true"}
+	if _, err := prepare(cfg, agent, p, ""); err != nil {
+		t.Fatalf("clean worktree: %v", err)
+	}
+	os.WriteFile(filepath.Join(dir, "notes.txt"), []byte("mine"), 0o644)
+	if _, err := prepare(cfg, agent, p, ""); err == nil || !strings.Contains(err.Error(), "1 uncommitted change") {
+		t.Fatalf("dirty worktree should be refused: %v", err)
+	}
+	shell := Command{Key: "w", Name: "shell", Terminal: true, Worktree: true, Opener: "true"}
+	if _, err := prepare(cfg, shell, p, ""); err != nil {
+		t.Fatalf("terminal commands should still open: %v", err)
 	}
 }

@@ -120,11 +120,12 @@ Commands marked y/N in the config ask before running (`D`, `V`, `M`).
 
 What to know before using them:
 - **They push.** When done, an agent commits and pushes to the PR's head branch. That includes other people's PRs from your review requests.
-- **Allowed tools:** they work within `--allowedTools` (file edits, `git`, `gh`, common package managers and test runners) plus your Claude settings' allow rules. If your settings use `defaultMode: auto`, other commands judged safe may also run. Switching the agents to `--permission-mode dontAsk` makes the list a hard limit; the deploy health checks already use it.
+- **Allowed tools:** they run with `--permission-mode dontAsk`, so anything outside `--allowedTools` (file edits, `git`, `gh`, common package managers and test runners) and your Claude settings' allow rules is refused, not asked. Claude Code may still allow read-only commands like `cat`.
+- **Clean worktrees only:** an agent won't start in a worktree with uncommitted or untracked files, since it commits and pushes when done.
 - **Your Claude login:** they run as `env -u ANTHROPIC_API_KEY claude …`, so they use your claude.ai login even if an API key is set in your environment.
+- **Sonnet:** they run with `--model sonnet`, as do `pc` and the deploy health checks. Override a command in your config to use another model.
 - **One per PR:** only one agent runs on a PR at a time, since they'd share its worktree. There's no global limit.
 - **Time limit:** each job stops after 45 minutes (set `timeout` per command, `"0"` for none). A watchdog inside the job stops it and everything it started, even if gh-prs isn't running.
-- **Worktree changes:** an agent's commit can pick up uncommitted changes already in the worktree.
 
 ### Deploy and monitor (`D`)
 
