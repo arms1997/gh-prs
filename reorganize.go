@@ -187,7 +187,7 @@ func (m *model) applyProposal() tea.Cmd {
 	m.saveOrganize("applied Claude's reorganization" + map[bool]string{true: " (old config in config.yml.bak)", false: ""}[p.config != nil])
 	if p.config != nil && !m.loading { // sections may have new queries
 		m.loading = true
-		return fetchCmd(m.cfg)
+		return fetchCmd(m.cfg, m.data)
 	}
 	return nil
 }

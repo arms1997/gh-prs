@@ -55,10 +55,12 @@ type sectionData struct {
 	PRs     []PR
 }
 
-// shortcut: first 100 results per section, 100 review threads and 50 checks per PR, no pagination; add it if anyone hits the cap.
-const searchQuery = `query($q: String!) {
+// shortcut: at most 100 results per section, 100 review threads and 50 checks per PR, no pagination; add it if anyone hits the cap.
+// GitHub charges by the page sizes asked for, not the results: about 1 point per result asked for.
+const searchQuery = `query($q: String!, $n: Int!) {
   viewer { login }
-  search(query: $q, type: ISSUE, first: 100) {
+  rateLimit { remaining resetAt }
+  search(query: $q, type: ISSUE, first: $n) {
     nodes {
       ... on PullRequest {
         number title url body isDraft additions deletions changedFiles
@@ -84,9 +86,16 @@ const searchQuery = `query($q: String!) {
 
 type login struct{ Login string }
 
+// rateLimit is what's left of the GraphQL budget (5,000 points an hour, shared by everything using your token).
+type rateLimit struct {
+	Remaining int
+	ResetAt   time.Time
+}
+
 type searchResp struct {
-	Viewer login
-	Search struct {
+	Viewer    login
+	RateLimit rateLimit
+	Search    struct {
 		Nodes []struct {
 			Number         int
 			Title          string
@@ -146,17 +155,36 @@ type searchResp struct {
 // failedConclusions are check outcomes that count as a failure.
 var failedConclusions = map[string]bool{"FAILURE": true, "TIMED_OUT": true, "STARTUP_FAILURE": true, "ACTION_REQUIRED": true, "ERROR": true}
 
-func fetchAll(cfg Config) ([]sectionData, error) {
+// pageSize asks for a little more than the section had last time, since cost follows the page size.
+// A section not seen before gets the maximum.
+func pageSize(prev []sectionData, title string) int {
+	for _, sd := range prev {
+		if sd.Section.Title == title {
+			return min(max(len(sd.PRs)+10, 10), 100)
+		}
+	}
+	return 100
+}
+
+func fetchAll(cfg Config, prev []sectionData) ([]sectionData, rateLimit, error) {
+	var rate rateLimit
 	client, err := api.DefaultGraphQLClient()
 	if err != nil {
-		return nil, err
+		return nil, rate, err
 	}
 	out := make([]sectionData, 0, len(cfg.Sections))
 	for _, s := range cfg.Sections {
 		var resp searchResp
-		if err := client.Do(searchQuery, map[string]interface{}{"q": s.Query}, &resp); err != nil {
-			return nil, fmt.Errorf("%s: %w", s.Title, err)
+		for n := pageSize(prev, s.Title); ; n = 100 {
+			resp = searchResp{}
+			if err := client.Do(searchQuery, map[string]interface{}{"q": s.Query, "n": n}, &resp); err != nil {
+				return nil, rate, fmt.Errorf("%s: %w", s.Title, err)
+			}
+			if len(resp.Search.Nodes) < n || n == 100 { // a full page may have been cut off
+				break
+			}
 		}
+		rate = resp.RateLimit
 		me := resp.Viewer.Login
 		sd := sectionData{Section: s}
 		for _, n := range resp.Search.Nodes {
@@ -222,7 +250,7 @@ func fetchAll(cfg Config) ([]sectionData, error) {
 		}
 		out = append(out, sd)
 	}
-	return out, nil
+	return out, rate, nil
 }
 
 var linearRe = regexp.MustCompile(`\b([A-Z][A-Z0-9]{1,9}-[0-9]{1,6})\b`)

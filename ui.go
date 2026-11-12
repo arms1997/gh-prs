@@ -26,6 +26,7 @@ func jobTick() tea.Cmd {
 type fetchedMsg struct {
 	data []sectionData
 	at   time.Time
+	rate rateLimit
 	err  error
 }
 
@@ -53,6 +54,7 @@ type statusMsg string
 type model struct {
 	cfg         Config
 	data        []sectionData
+	rate        rateLimit // GraphQL budget left after the last fetch
 	rows        []Row
 	collapsed   map[string]bool
 	cursor      int
@@ -177,15 +179,27 @@ func newModel(cfg Config) model {
 	return m
 }
 
-func fetchCmd(cfg Config) tea.Cmd {
+func fetchCmd(cfg Config, prev []sectionData) tea.Cmd {
 	return func() tea.Msg {
-		d, err := fetchAll(cfg)
+		d, rate, err := fetchAll(cfg, prev)
 		at := time.Now()
 		if err == nil {
 			_ = saveCache(d, at) // shortcut: a failed cache write only costs a slower next start
 		}
-		return fetchedMsg{d, at, err}
+		return fetchedMsg{d, at, rate, err}
 	}
+}
+
+// lowRate is the GraphQL budget below which auto-refresh waits for the hourly reset, leaving the
+// rest for agents, gh and everything else using your token. r still refreshes.
+const lowRate = 500
+
+// refreshDelay is how long until the next auto-refresh: the interval, or until the budget resets when it's low.
+func refreshDelay(every time.Duration, rate rateLimit, now time.Time) time.Duration {
+	if rate.ResetAt.After(now) && rate.Remaining < lowRate {
+		return max(rate.ResetAt.Sub(now), every)
+	}
+	return every
 }
 
 func (m *model) scheduleRefresh() tea.Cmd {
@@ -194,7 +208,7 @@ func (m *model) scheduleRefresh() tea.Cmd {
 		return nil
 	}
 	gen := m.gen
-	return tea.Tick(m.cfg.refresh, func(time.Time) tea.Msg { return refreshMsg(gen) })
+	return tea.Tick(refreshDelay(m.cfg.refresh, m.rate, time.Now()), func(time.Time) tea.Msg { return refreshMsg(gen) })
 }
 
 func openCmd(url string) tea.Cmd {
@@ -208,9 +222,9 @@ func openCmd(url string) tea.Cmd {
 
 func (m model) Init() tea.Cmd {
 	if m.anyRunning() {
-		return tea.Batch(fetchCmd(m.cfg), jobTick())
+		return tea.Batch(fetchCmd(m.cfg, m.data), jobTick())
 	}
-	return fetchCmd(m.cfg)
+	return fetchCmd(m.cfg, m.data)
 }
 
 func (m model) anyRunning() bool {
@@ -325,8 +339,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status, m.isErr = "refresh failed, showing older data: "+msg.err.Error(), true
 			return m, m.scheduleRefresh()
 		}
-		m.data = msg.data
-		m.status, m.isErr = "updated "+msg.at.Format("15:04"), false
+		m.data, m.rate = msg.data, msg.rate
+		m.status, m.isErr = fmt.Sprintf("updated %s · %d API points left", msg.at.Format("15:04"), m.rate.Remaining), false
+		if d := refreshDelay(m.cfg.refresh, m.rate, msg.at); m.cfg.refresh > 0 && d > m.cfg.refresh {
+			m.status, m.isErr = fmt.Sprintf("auto-refresh paused: %d GitHub API points left this hour, resumes %s (r refreshes now)",
+				m.rate.Remaining, m.rate.ResetAt.Local().Format("15:04")), true
+		}
 		m.baseline()
 		if m.org.wake(m.data) { // snoozed PRs that changed come back
 			_ = m.org.save()
@@ -336,7 +354,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case refreshMsg:
 		if int(msg) == m.gen && !m.loading {
 			m.loading = true
-			return m, fetchCmd(m.cfg)
+			return m, fetchCmd(m.cfg, m.data)
 		}
 	case statusMsg:
 		m.status, m.isErr = string(msg), false
@@ -387,7 +405,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.detail.SetContent(m.renderDetail())
 			if finished && !m.loading { // the agent may have pushed or edited the PR: show it now
 				m.loading = true
-				cmds = append(cmds, fetchCmd(m.cfg))
+				cmds = append(cmds, fetchCmd(m.cfg, m.data))
 			}
 		}
 		if m.anyRunning() {
@@ -416,7 +434,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status, m.isErr = "✓ "+label, false
 		if msg.pp.cmd.Refresh && !m.loading {
 			m.loading = true
-			return m, fetchCmd(m.cfg)
+			return m, fetchCmd(m.cfg, m.data)
 		}
 	case tea.KeyMsg:
 		return m.handleKey(msg)

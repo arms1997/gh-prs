@@ -237,7 +237,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.loading = true
-		return m, fetchCmd(m.cfg)
+		return m, fetchCmd(m.cfg, m.data)
 	default:
 		return m, nil
 	}
