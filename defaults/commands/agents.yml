@@ -51,3 +51,9 @@
   terminal: true
   agent_session: true
   run: claude --resume "$PR_AGENT_SESSION"
+
+# Stops the agent running on the PR, a manage loop included, with everything it started.
+- key: cx
+  name: stop agent
+  builtin: stop_agent
+  confirm: true

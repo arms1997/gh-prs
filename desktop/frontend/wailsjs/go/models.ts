@@ -58,6 +58,7 @@ export namespace main {
 	    Name: string;
 	    Background: boolean;
 	    Confirm: boolean;
+	    Builtin: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new CommandView(source);
@@ -69,6 +70,7 @@ export namespace main {
 	        this.Name = source["Name"];
 	        this.Background = source["Background"];
 	        this.Confirm = source["Confirm"];
+	        this.Builtin = source["Builtin"];
 	    }
 	}
 	export class FileChange {

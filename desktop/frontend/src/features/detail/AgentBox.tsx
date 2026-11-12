@@ -3,7 +3,7 @@ import {Job} from '../../lib/pr'
 
 export function AgentBox({job}: { job: Job }) {
     const s = job.Summary
-    const title = {running: 'running', waiting: 'last round ✓ · waiting for the next', done: '✓', failed: '✗'}[job.State]
+    const title = {running: 'running', waiting: 'last round ✓ · waiting for the next', done: '✓', failed: '✗', stopped: 'stopped'}[job.State]
     const pushed = s?.Pushed ?? ''
     const body = useRef<HTMLDivElement>(null)
     useEffect(() => { // keep the newest activity in view while it runs
@@ -29,7 +29,7 @@ export function AgentBox({job}: { job: Job }) {
                 )}
             </div>
             <div className="dim small">
-                {job.State === 'done' || job.State === 'failed' ? `after ${job.Elapsed}` : `running ${job.Elapsed}`}
+                {job.State === 'running' || job.State === 'waiting' ? `running ${job.Elapsed}` : `after ${job.Elapsed}`}
                 {job.Turns > 0 && ` · ${job.Turns} turns`}{job.Cost > 0 && ` · $${job.Cost.toFixed(2)}`}
             </div>
         </div>

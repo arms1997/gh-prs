@@ -64,6 +64,7 @@
 .agentbox.done { --tone: var(--ok-fg); }
 .agentbox.failed { --tone: var(--bad-fg); }
 .agentbox.waiting { --tone: var(--info-fg); }
+.agentbox.stopped { --tone: var(--text-dim); }
 .agentbox-title { font-weight: 600; margin-bottom: 4px; color: var(--tone); }
 .agentbox-body { display: grid; gap: 3px; max-height: 360px; overflow-y: auto; padding-right: 6px; }
 .agentbox-body::-webkit-scrollbar { width: 8px; }

@@ -49,6 +49,7 @@ type JobView struct {
 	Turns    int
 	Finished time.Time
 	Waiting  bool // a /loop job between rounds: it reported a result but is still running
+	Stopped  bool // you stopped it
 
 	over    bool // the process exited and its log is fully read
 	offset  int64
@@ -171,6 +172,9 @@ func (v *JobView) Update() {
 			}
 		}
 	}
+	if _, err := os.Stat(v.Path(".stopped")); err == nil && dead {
+		v.Status, v.Stopped, v.Result = JobFailed, true, "stopped by you"
+	}
 	v.Waiting, v.over = !dead && v.Status != JobRunning, dead
 	if v.Status != JobRunning && !v.Waiting && v.Finished.IsZero() {
 		v.Finished = time.Now()
@@ -178,6 +182,30 @@ func (v *JobView) Update() {
 			v.Finished = info.ModTime()
 		}
 	}
+}
+
+// Stop ends the job and everything it started: it leads its own process group. A marker file
+// records that you stopped it, so it isn't shown as a crash, also after a restart.
+func (v *JobView) Stop() error {
+	if !v.alive() {
+		return fmt.Errorf("%s on #%d isn't running", v.Name, v.Number)
+	}
+	if err := os.WriteFile(v.Path(".stopped"), nil, 0o600); err != nil {
+		return err
+	}
+	return syscall.Kill(-v.PID, syscall.SIGTERM)
+}
+
+// StopAgent stops the agent running on a PR and says what it stopped.
+func StopAgent(jobs map[string]*JobView, p PR) (string, error) {
+	v := jobs[PrKey(p.Repo, p.Number)]
+	if v == nil || !v.Active() {
+		return "", fmt.Errorf("no agent is running on #%d", p.Number)
+	}
+	if err := v.Stop(); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("stopped %s on #%d", v.Name, p.Number), nil
 }
 
 // active reports whether the job still runs, mid-round or waiting for its next one.

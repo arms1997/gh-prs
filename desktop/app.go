@@ -155,7 +155,7 @@ type RowView struct {
 type JobState struct {
 	Name     string
 	Key      string
-	State    string // running, waiting, done, failed
+	State    string // running, waiting, done, failed, stopped
 	Activity []string
 	Result   string
 	Summary  *core.AgentSummary
@@ -169,6 +169,7 @@ type CommandView struct {
 	Name       string
 	Background bool
 	Confirm    bool
+	Builtin    string
 }
 
 type State struct {
@@ -210,6 +211,8 @@ func (a *App) State(filter string, collapsed []string, showAll bool) State {
 	for k, v := range a.jobs {
 		js := JobState{Name: v.Name, Key: v.Key, Activity: v.Activity, Result: v.Result, Cost: v.Cost, Turns: v.Turns, Elapsed: core.ShortDuration(v.Elapsed())}
 		switch {
+		case v.Stopped:
+			js.State = "stopped"
 		case v.Waiting:
 			js.State = "waiting"
 		case v.Status == core.JobRunning:
@@ -225,7 +228,7 @@ func (a *App) State(filter string, collapsed []string, showAll bool) State {
 		s.Jobs[k] = js
 	}
 	for _, c := range a.cfg.Commands {
-		s.Commands = append(s.Commands, CommandView{Key: c.Key, Name: c.Name, Background: c.Background, Confirm: c.Confirm})
+		s.Commands = append(s.Commands, CommandView{Key: c.Key, Name: c.Name, Background: c.Background, Confirm: c.Confirm, Builtin: c.Builtin})
 	}
 	return s
 }
@@ -269,6 +272,11 @@ func (a *App) Run(cmdKey, prKey string) (string, error) {
 		if err != nil || answer != "Yes" {
 			return "cancelled", nil
 		}
+	}
+	if c.Builtin == core.BuiltinStopAgent {
+		a.mu.Lock()
+		defer a.mu.Unlock()
+		return core.StopAgent(a.jobs, p)
 	}
 	if c.Interactive { // there's no terminal to hand over here: open it in your opener instead
 		c.Interactive, c.Terminal = false, true

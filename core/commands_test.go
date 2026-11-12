@@ -93,3 +93,15 @@ func TestPromptFiles(t *testing.T) {
 		}
 	}
 }
+
+func TestBuiltinCommands(t *testing.T) {
+	ok := Config{Commands: []Command{{Key: "cx", Builtin: BuiltinStopAgent, Confirm: true}}}
+	if err := validateCommands(&ok); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []Command{{Key: "cx", Builtin: "nope"}, {Key: "cx", Builtin: BuiltinStopAgent, Run: "echo"}, {Key: "cx", Builtin: BuiltinStopAgent, Background: true}} {
+		if err := validateCommands(&Config{Commands: []Command{c}}); err == nil {
+			t.Errorf("%+v should be rejected", c)
+		}
+	}
+}

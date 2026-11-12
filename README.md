@@ -117,6 +117,7 @@ Commands are key sequences defined in the config. The defaults:
 | `cr` | rebase | background agent: rebase onto the base branch, push with `--force-with-lease` |
 | `cm` | manage | background agent on `/loop`: every 15m resolves conflicts, rebases when behind and addresses new review comments, until the PR merges (◷ between rounds; stops after 8h or $10) |
 | `ct` | take over agent | open the PR's last agent session in your opener (`claude --resume`) |
+| `cx` | stop agent | stop the PR's running agent, a `cm` loop included, and everything it started (asks first) |
 | `w` | shell in worktree | open a shell in the PR's worktree |
 | `D` | merge + deploy prod | merge, deploy, then health-check prod (see below) |
 | `V` | open revert PR | open a revert PR for a merged PR |

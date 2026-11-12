@@ -30,12 +30,16 @@ type Command struct {
 	Timeout     string `yaml:"timeout"`       // background only: stop the job after this long (default 45m, "0" = never)
 	Confirm     bool   `yaml:"confirm"`       // ask y/N first
 	Refresh     bool   `yaml:"refresh"`       // refresh PRs after it succeeds
+	Builtin     string `yaml:"builtin"`       // an action gh-prs does itself instead of running a command: stop_agent
 
 	tmpl  *template.Template
 	limit time.Duration // parsed Timeout
 }
 
 const defaultJobLimit = 45 * time.Minute
+
+// BuiltinStopAgent stops the PR's running agent.
+const BuiltinStopAgent = "stop_agent"
 
 // builtinKeys can't start a command key sequence.
 var BuiltinKeys = map[string]bool{
@@ -60,6 +64,12 @@ func validateCommands(cfg *Config) error {
 			if strings.HasPrefix(o.Key, c.Key) || strings.HasPrefix(c.Key, o.Key) {
 				return fmt.Errorf("commands %q and %q: keys %q and %q overlap", o.Name, c.Name, o.Key, c.Key)
 			}
+		}
+		if c.Builtin != "" {
+			if c.Builtin != BuiltinStopAgent || c.Run != "" || c.Prompt != "" || c.PromptFile != "" || c.Terminal || c.Interactive || c.Background {
+				return fmt.Errorf("command %q: builtin %q runs on its own; the only builtin is %s", c.Name, c.Builtin, BuiltinStopAgent)
+			}
+			continue
 		}
 		if c.Run == "" && !c.Terminal {
 			return fmt.Errorf("command %q has nothing to run", c.Name)

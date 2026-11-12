@@ -67,6 +67,9 @@ func agentCell(v *core.JobView, spin int) (string, lipgloss.Style) {
 		}
 		return " ✓ " + v.Name, green
 	}
+	if v.Stopped {
+		return " ■ " + v.Name + " stopped", dim
+	}
 	return " ✗ " + v.Name + " ", badgeFail
 }
 

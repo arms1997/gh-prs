@@ -121,6 +121,14 @@ func prepareCmd(cfg core.Config, c core.Command, p core.PR, agentSession string)
 }
 
 func (m *model) startCommand(c core.Command, p core.PR) tea.Cmd {
+	if c.Builtin == core.BuiltinStopAgent {
+		msg, err := core.StopAgent(m.jobs, p)
+		if err != nil {
+			msg = err.Error()
+		}
+		m.status, m.isErr = msg, err != nil
+		return nil
+	}
 	job := m.jobs[core.PrKey(p.Repo, p.Number)]
 	if job != nil && job.Active() && (c.Background || c.Session) {
 		// One agent per PR: they'd share the worktree, and a session can't be resumed while it runs.

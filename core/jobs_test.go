@@ -193,3 +193,30 @@ func TestTimeoutConfig(t *testing.T) {
 		t.Error(`timeout "0" should disable the limit`)
 	}
 }
+
+// Stopping an agent ends it and what it started, and it reads as stopped, also after a reload.
+func TestStopAgent(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	p := PR{Repo: "o/r", Number: 5}
+	v, err := StartJob(Prepared{Cmd: Command{Key: "z", Name: "manage", Background: true, Run: "sleep 30 & sleep 30"}, Pr: p, jobID: NewJobID()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	jobs := map[string]*JobView{PrKey(p.Repo, p.Number): v}
+	if msg, err := StopAgent(jobs, p); err != nil || msg != "stopped manage on #5" {
+		t.Fatalf("StopAgent = %q, %v", msg, err)
+	}
+	if !groupGone(v.PID) {
+		t.Fatal("agent's processes still running")
+	}
+	waitJob(v, 3*time.Second)
+	if !v.Stopped || v.Active() || v.Result != "stopped by you" {
+		t.Fatalf("after stop: %+v", v)
+	}
+	if got := LoadJobs()[PrKey(p.Repo, p.Number)]; got == nil || !got.Stopped {
+		t.Fatalf("reloaded: %+v", got)
+	}
+	if _, err := StopAgent(jobs, p); err == nil {
+		t.Fatal("stopping a stopped agent should fail")
+	}
+}
