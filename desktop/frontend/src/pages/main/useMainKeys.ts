@@ -18,6 +18,7 @@ type Opts = {
     clear: () => void
     openPalette: () => void
     openHelp: () => void
+    cycleTab: (delta: number) => void
     organize: (seq: string) => void
 }
 
@@ -63,6 +64,10 @@ export function useMainKeys(o: Opts): string {
                         return o.focusFilter()
                     case '?':
                         return o.openHelp()
+                    case '[':
+                        return o.cycleTab(-1)
+                    case ']':
+                        return o.cycleTab(1)
                     case 'Escape':
                         return o.clear()
                     case 'h':

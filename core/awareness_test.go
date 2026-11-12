@@ -90,3 +90,11 @@ func TestTurnGroupBy(t *testing.T) {
 		t.Fatalf("got %v", got)
 	}
 }
+
+func TestCheckState(t *testing.T) {
+	for in, want := range map[string]string{"SUCCESS": "pass", "FAILURE": "fail", "TIMED_OUT": "fail", "": "pending", "PENDING": "pending", "SKIPPED": "skipped", "NEUTRAL": "skipped"} {
+		if got := checkState(in); got != want {
+			t.Errorf("checkState(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

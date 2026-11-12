@@ -61,3 +61,53 @@ export const QUICK_FILTERS: QuickFilter[] = [
     {id: 'conflict', label: 'Conflicts', dot: 'bad', match: conflict},
     {id: 'agent', label: 'Agent running', match: (_, j) => jobActive(j)},
 ]
+
+// statusBadges is a PR's full state for the detail header, passing states included.
+export function statusBadges(p: PR): Attention[] {
+    const out: Attention[] = []
+    if (ciFailing(p)) out.push({tone: 'bad', icon: 'x', text: 'CI failing'})
+    else if (ciRunning(p)) out.push({tone: 'info', icon: 'spinner', text: 'CI running'})
+    else if (p.CI === 'SUCCESS') out.push({tone: 'ok', icon: 'check', text: 'CI passing'})
+    if (p.IsDraft) out.push({tone: 'neutral', icon: 'eye', text: 'Draft'})
+    else if (p.ReviewDecision === 'APPROVED') out.push({tone: 'ok', icon: 'check', text: 'Approved'})
+    else if (p.ReviewDecision === 'CHANGES_REQUESTED') out.push({tone: 'bad', icon: 'thread', text: 'Changes requested'})
+    else if (p.ReviewDecision === 'REVIEW_REQUIRED') out.push({tone: 'neutral', icon: 'eye', text: 'In review'})
+    if (p.Unresolved > 0) out.push({tone: 'neutral', icon: 'thread', text: `${p.Unresolved} thread${p.Unresolved > 1 ? 's' : ''}`})
+    if (conflict(p)) out.push({tone: 'bad', icon: 'merge', text: 'Conflict'})
+    else if (p.Mergeable === 'MERGEABLE') out.push({tone: 'ok', icon: 'check', text: 'No conflicts'})
+    return out
+}
+
+export type GateState = 'done' | 'fail' | 'pending'
+export type Gate = { title: string, state: GateState, detail: string, action?: 'checks' | 'github' | 'ready' }
+
+// beforeMerge lists what stands between a PR and merging.
+export function beforeMerge(p: PR): Gate[] {
+    const checks = p.Checks ?? []
+    const failing = checks.filter(c => c.State === 'fail').length
+    const pending = checks.filter(c => c.State === 'pending').length
+    const gates: Gate[] = []
+    if (p.IsDraft) gates.push({title: 'Ready for review', state: 'pending', detail: 'Still a draft', action: 'ready'})
+    gates.push(
+        ciFailing(p) ? {title: 'Checks pass', state: 'fail', detail: `${failing || 'Some'} failing on the current head`, action: 'checks'}
+            : ciRunning(p) ? {title: 'Checks pass', state: 'pending', detail: `${pending} of ${checks.length} still running`, action: 'checks'}
+                : {title: 'Checks pass', state: 'done', detail: checks.length ? `${checks.length} checks on the current head` : 'No checks'},
+        p.ReviewDecision === 'APPROVED' ? {title: 'Review', state: 'done', detail: 'Approved'}
+            : p.ReviewDecision === 'CHANGES_REQUESTED' ? {title: 'Review', state: 'fail', detail: 'Changes requested', action: 'github'}
+                : p.ReviewDecision === 'REVIEW_REQUIRED' ? {title: 'Review', state: 'pending', detail: 'Awaiting an approving review'}
+                    : {title: 'Review', state: 'done', detail: 'No review required'},
+        p.Unresolved > 0
+            ? {title: 'Resolve threads', state: 'pending', detail: `${p.Unresolved} conversation${p.Unresolved > 1 ? 's' : ''} still open`, action: 'github'}
+            : {title: 'Resolve threads', state: 'done', detail: 'No open conversations'},
+        conflict(p) ? {title: 'Mergeable', state: 'fail', detail: 'Conflicts with the base branch'}
+            : p.Mergeable === 'MERGEABLE' ? {title: 'Mergeable', state: 'done', detail: 'No conflicts with the base branch'}
+                : {title: 'Mergeable', state: 'pending', detail: 'GitHub is still checking'},
+    )
+    return gates
+}
+
+// needsYou is the agent's open question, if its last run left one.
+export function needsYou(j?: Job): string {
+    const n = j?.Summary?.NeedsYou?.trim() ?? ''
+    return /^(nothing|none|no)\.?$/i.test(n) ? '' : n
+}

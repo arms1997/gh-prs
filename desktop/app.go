@@ -5,9 +5,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
+	"os/exec"
 	"slices"
 	"strings"
 	"sync"
@@ -177,9 +179,10 @@ type State struct {
 	IsErr    bool
 	Loading  bool
 
-	// Unused: makes Wails' TypeScript generator emit core.Check, which it skips when it's
+	// Unused: makes Wails' TypeScript generator emit these, which it skips when they're
 	// only reachable through the embedded core.PR.
-	CheckType core.Check
+	CheckType      core.Check
+	CheckStateType core.CheckState
 }
 
 // State returns the grouped PR list and agent jobs. collapsed holds the Paths of collapsed groups.
@@ -359,6 +362,34 @@ func (a *App) Organize(action, prKey, arg string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("#%d %s", p.Number, msg), nil
+}
+
+type FileChange struct {
+	Path      string
+	Additions int
+	Deletions int
+}
+
+// Files lists the files a PR changes. Fetched on demand: the list query doesn't carry them.
+func (a *App) Files(prKey string) ([]FileChange, error) {
+	a.mu.Lock()
+	p, ok := a.find(prKey)
+	a.mu.Unlock()
+	if !ok {
+		return nil, fmt.Errorf("unknown PR")
+	}
+	out, err := exec.Command("gh", "pr", "view", fmt.Sprint(p.Number), "-R", p.Repo, "--json", "files").Output()
+	if err != nil {
+		return nil, fmt.Errorf("listing files of #%d: %w", p.Number, err)
+	}
+	var resp struct{ Files []FileChange }
+	if err := json.Unmarshal(out, &resp); err != nil {
+		return nil, err
+	}
+	for i := range resp.Files {
+		resp.Files[i].Path = core.Sanitize(resp.Files[i].Path)
+	}
+	return resp.Files, nil
 }
 
 // Projects lists project names in use, for the move picker.

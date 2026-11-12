@@ -32,6 +32,22 @@ export namespace core {
 	        this.URL = source["URL"];
 	    }
 	}
+	export class CheckState {
+	    Name: string;
+	    State: string;
+	    URL: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CheckState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Name = source["Name"];
+	        this.State = source["State"];
+	        this.URL = source["URL"];
+	    }
+	}
 
 }
 
@@ -53,6 +69,22 @@ export namespace main {
 	        this.Name = source["Name"];
 	        this.Background = source["Background"];
 	        this.Confirm = source["Confirm"];
+	    }
+	}
+	export class FileChange {
+	    Path: string;
+	    Additions: number;
+	    Deletions: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new FileChange(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Path = source["Path"];
+	        this.Additions = source["Additions"];
+	        this.Deletions = source["Deletions"];
 	    }
 	}
 	export class JobState {
@@ -117,6 +149,7 @@ export namespace main {
 	    Mergeable: string;
 	    CI: string;
 	    FailingChecks: core.Check[];
+	    Checks: core.CheckState[];
 	    Repo: string;
 	    Author: string;
 	    Labels: string[];
@@ -157,6 +190,7 @@ export namespace main {
 	        this.Mergeable = source["Mergeable"];
 	        this.CI = source["CI"];
 	        this.FailingChecks = this.convertValues(source["FailingChecks"], core.Check);
+	        this.Checks = this.convertValues(source["Checks"], core.CheckState);
 	        this.Repo = source["Repo"];
 	        this.Author = source["Author"];
 	        this.Labels = source["Labels"];
@@ -245,6 +279,7 @@ export namespace main {
 	    IsErr: boolean;
 	    Loading: boolean;
 	    CheckType: core.Check;
+	    CheckStateType: core.CheckState;
 	
 	    static createFrom(source: any = {}) {
 	        return new State(source);
@@ -259,6 +294,7 @@ export namespace main {
 	        this.IsErr = source["IsErr"];
 	        this.Loading = source["Loading"];
 	        this.CheckType = this.convertValues(source["CheckType"], core.Check);
+	        this.CheckStateType = this.convertValues(source["CheckStateType"], core.CheckState);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

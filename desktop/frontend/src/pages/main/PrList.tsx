@@ -9,7 +9,7 @@ export function PrList({rows, cursor, collapsed, onSelect, onToggle}: {
 }) {
     const app = useApp()
     const selRef = useRef<HTMLDivElement>(null)
-    useEffect(() => selRef.current?.scrollIntoView({block: 'nearest'}), [cursor])
+    useEffect(() => { selRef.current?.scrollIntoView({block: 'nearest'}) }, [cursor])
 
     return (
         <main aria-label="Pull requests" className="prlist scroll-list">

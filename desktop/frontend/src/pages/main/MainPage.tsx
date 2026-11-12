@@ -3,7 +3,7 @@ import {Projects} from '../../../wailsjs/go/main/App'
 import {useApp} from '../../state/AppState'
 import {nextStep, PR, QUICK_FILTERS} from '../../lib/pr'
 import {countPRs, visibleRows} from '../../lib/rows'
-import {DetailPane} from '../../features/detail/DetailPane'
+import {DETAIL_TABS, DetailPane, DetailTab} from '../../features/detail/DetailPane'
 import {CommandPalette, PaletteItem} from '../../features/palette/CommandPalette'
 import {HelpDialog} from '../../features/organize/HelpDialog'
 import {MoveDialog} from '../../features/organize/MoveDialog'
@@ -21,6 +21,7 @@ export function MainPage() {
     const [sel, setSel] = useState('') // selected row Path
     const [keySeq, setKeySeq] = useState('')
     const [filtering, setFiltering] = useState(false)
+    const [tab, setTab] = useState<DetailTab>('overview')
     const [dialog, setDialog] = useState<'help' | 'palette' | { move: PR, projects: string[] }>()
     const filterRef = useRef<HTMLInputElement>(null)
 
@@ -52,6 +53,7 @@ export function MainPage() {
         clear: () => { app.setFilter(''); setQuick('') },
         openPalette: () => setDialog('palette'),
         openHelp: () => setDialog('help'),
+        cycleTab: (d: number) => setTab(t => DETAIL_TABS[(DETAIL_TABS.indexOf(t) + d + DETAIL_TABS.length) % DETAIL_TABS.length]),
     })
 
     const paletteItems: PaletteItem[] = [
@@ -78,7 +80,7 @@ export function MainPage() {
             <FilterBar quick={quick} setQuick={setQuick} counts={counts} total={total}/>
             <div className="split">
                 <PrList rows={rows} cursor={cursor} collapsed={collapsed} onSelect={setSel} onToggle={p => toggleGroup(p)}/>
-                <DetailPane pr={pr}/>
+                <DetailPane pr={pr} tab={tab} setTab={setTab} openPalette={() => setDialog('palette')}/>
             </div>
             <Footer hint={hint}/>
             {dialog === 'help' && <HelpDialog commands={commands} onClose={() => setDialog(undefined)}/>}

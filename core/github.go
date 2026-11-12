@@ -27,6 +27,7 @@ type PR struct {
 	Mergeable      string // MERGEABLE, CONFLICTING, UNKNOWN
 	CI             string // SUCCESS, FAILURE, ERROR, PENDING, EXPECTED, or "" when there are no checks
 	FailingChecks  []Check
+	Checks         []CheckState // every check on the latest commit
 	Repo           string
 	Author         string
 	Labels         []string
@@ -48,6 +49,26 @@ type PR struct {
 type Check struct {
 	Name string
 	URL  string
+}
+
+// CheckState is one check's outcome: pass, fail, pending or skipped.
+type CheckState struct {
+	Name  string
+	State string
+	URL   string
+}
+
+// checkState maps a CheckRun conclusion or StatusContext state to pass, fail, pending or skipped.
+func checkState(s string) string {
+	switch {
+	case failedConclusions[s]:
+		return "fail"
+	case s == "SUCCESS":
+		return "pass"
+	case s == "", s == "PENDING", s == "EXPECTED":
+		return "pending" // a CheckRun has no conclusion until it completes
+	}
+	return "skipped" // NEUTRAL, SKIPPED, CANCELLED, STALE
 }
 
 type SectionData struct {
@@ -231,6 +252,11 @@ func FetchAll(cfg Config, prev []SectionData) ([]SectionData, RateLimit, error) 
 				if r := c.StatusCheckRollup; r != nil {
 					p.CI = r.State
 					for _, ctx := range r.Contexts.Nodes {
+						if ctx.Typename == "CheckRun" {
+							p.Checks = append(p.Checks, CheckState{Sanitize(ctx.Name), checkState(ctx.Conclusion), ctx.DetailsURL})
+						} else {
+							p.Checks = append(p.Checks, CheckState{Sanitize(ctx.Context), checkState(ctx.State), ctx.TargetURL})
+						}
 						switch {
 						case ctx.Typename == "CheckRun" && failedConclusions[ctx.Conclusion]:
 							p.FailingChecks = append(p.FailingChecks, Check{Sanitize(ctx.Name), ctx.DetailsURL})

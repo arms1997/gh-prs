@@ -13,7 +13,7 @@ export function CommandPalette({items, context, onClose}: { items: PaletteItem[]
     const list = useRef<HTMLDivElement>(null)
     const shown = items.filter(it => (it.label + ' ' + (it.hint ?? '')).toLowerCase().includes(q.toLowerCase()))
     const cur = Math.min(i, shown.length - 1)
-    useEffect(() => list.current?.querySelector('.sel')?.scrollIntoView({block: 'nearest'}), [cur])
+    useEffect(() => { list.current?.querySelector('.sel')?.scrollIntoView({block: 'nearest'}) }, [cur])
 
     const pick = (it?: PaletteItem) => {
         if (!it) return

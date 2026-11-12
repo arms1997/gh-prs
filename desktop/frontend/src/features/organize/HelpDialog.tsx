@@ -5,7 +5,7 @@ import './organize.css'
 
 const KEYS: [string, string][] = [
     ['⌘K', 'command palette'], ['j k ↑ ↓', 'move'], ['g g / G', 'top / bottom'], ['h l', 'collapse / expand a group'],
-    ['⏎', 'run the next step, or toggle a group'], ['o', 'open on GitHub'], ['r', 'refresh'], ['/', 'filter'],
+    ['⏎', 'run the next step, or toggle a group'], ['[ ]', 'previous / next detail tab'], ['o', 'open on GitHub'], ['r', 'refresh'], ['/', 'filter'],
     ['esc', 'clear filters, close'], ['pp ps ph', 'pin, snooze, hide'], ['pm', 'move to a project'], ['pa', 'show hidden & snoozed'],
     ['?', 'this help'],
 ]
