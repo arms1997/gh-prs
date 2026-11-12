@@ -120,6 +120,18 @@ type promptData struct {
 	URL    string
 	Head   string
 	Base   string
+	Mine   bool // you opened the PR; agents push only to yours
+}
+
+// noPush makes git push fail in agents on other people's PRs, whatever remote or URL they try,
+// by rewriting push URLs to a path that doesn't exist (git's GIT_CONFIG_* env config).
+var noPush = [][2]string{
+	{"GIT_CONFIG_COUNT", "5"},
+	{"GIT_CONFIG_KEY_0", "url./gh-prs/not-your-pr/.pushInsteadOf"}, {"GIT_CONFIG_VALUE_0", "https://"},
+	{"GIT_CONFIG_KEY_1", "url./gh-prs/not-your-pr/.pushInsteadOf"}, {"GIT_CONFIG_VALUE_1", "git@"},
+	{"GIT_CONFIG_KEY_2", "url./gh-prs/not-your-pr/.pushInsteadOf"}, {"GIT_CONFIG_VALUE_2", "ssh://"},
+	{"GIT_CONFIG_KEY_3", "url./gh-prs/not-your-pr/.pushInsteadOf"}, {"GIT_CONFIG_VALUE_3", "file://"},
+	{"GIT_CONFIG_KEY_4", "url./gh-prs/not-your-pr/.pushInsteadOf"}, {"GIT_CONFIG_VALUE_4", "/"},
 }
 
 func btoi(b bool) int {
@@ -179,9 +191,12 @@ func prepare(cfg Config, c Command, p PR, agentSession string) (prepared, error)
 		pp.dir = dir
 		vars = append(vars, [2]string{"PR_WORKTREE", dir})
 	}
+	if c.Background && !p.Mine {
+		vars = append(vars, noPush...)
+	}
 	if c.tmpl != nil {
 		var buf bytes.Buffer
-		if err := c.tmpl.Execute(&buf, promptData{p.Number, p.Repo, p.URL, p.HeadRefName, p.BaseRefName}); err != nil {
+		if err := c.tmpl.Execute(&buf, promptData{p.Number, p.Repo, p.URL, p.HeadRefName, p.BaseRefName, p.Mine}); err != nil {
 			return pp, err
 		}
 		f, err := promptFile(pp.jobID)

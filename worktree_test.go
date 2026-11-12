@@ -69,6 +69,26 @@ func TestEnsureWorktree(t *testing.T) {
 	if _, err := prepare(cfg, agent, p, ""); err == nil || !strings.Contains(err.Error(), "1 uncommitted change") {
 		t.Fatalf("dirty worktree should be refused: %v", err)
 	}
+	os.Remove(filepath.Join(dir, "notes.txt"))
+
+	// Agents push to your PRs only: on someone else's, git push fails.
+	push := func(mine bool) error {
+		p.Mine = mine
+		pp, err := prepare(cfg, agent, p, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		c := exec.Command("git", "push", "-q", "origin", "HEAD")
+		c.Dir, c.Env = dir, append(os.Environ(), pp.env...)
+		return c.Run()
+	}
+	if err := push(false); err == nil {
+		t.Fatal("push to someone else's PR should fail")
+	}
+	if err := push(true); err != nil {
+		t.Fatalf("push to your own PR: %v", err)
+	}
+
 	shell := Command{Key: "w", Name: "shell", Terminal: true, Worktree: true, Opener: "true"}
 	if _, err := prepare(cfg, shell, p, ""); err != nil {
 		t.Fatalf("terminal commands should still open: %v", err)

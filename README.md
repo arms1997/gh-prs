@@ -21,6 +21,20 @@ The detail pane on the right shows the selected PR's description, branches, stat
 
 ## Install
 
+### With Claude (recommended)
+
+In Claude Code:
+
+```
+/plugin install gh-prs --marketplace arms1997/gh-prs
+```
+
+(On Claude Code before 2.1.275: `/plugin marketplace add arms1997/gh-prs`, then `/plugin install gh-prs@gh-prs`.)
+
+Then say **"set up gh-prs for me"**. Claude checks the prerequisites, clones and builds gh-prs, and interviews you: where your repos are cloned, how to group your PRs, which terminal commands open in, which commands and agents to keep, and your repos' conventions for agents to follow. It writes `~/.config/gh-prs/` and checks it with `gh prs check`. Say it again any time to change your setup.
+
+### By hand
+
 Requires [`gh`](https://cli.github.com) (logged in) and Go 1.26+. Background agents need [`claude`](https://claude.com/claude-code). The Herdr opener and the deploy command also need `jq`.
 
 ```sh
@@ -119,7 +133,7 @@ Commands marked y/N in the config ask before running (`D`, `V`, `M`).
 - **Logs:** every run is logged in `~/.cache/gh-prs/jobs/`.
 
 What to know before using them:
-- **They push.** When done, an agent commits and pushes to the PR's head branch. That includes other people's PRs from your review requests.
+- **They push to your PRs only.** When done, an agent commits and pushes to the PR's head branch. On someone else's PR (a review request) it commits but doesn't push: `git push` is blocked for that job, and the agent box says `PUSHED: NO`. Review the commit in the worktree and push it yourself.
 - **Allowed tools:** they run with `--permission-mode dontAsk`, so anything outside `--allowedTools` (file edits, `git`, `gh`, common package managers and test runners) and your Claude settings' allow rules is refused, not asked. Claude Code may still allow read-only commands like `cat`.
 - **Clean worktrees only:** an agent won't start in a worktree with uncommitted or untracked files, since it commits and pushes when done.
 - **Your Claude login:** they run as `env -u ANTHROPIC_API_KEY claude …`, so they use your claude.ai login even if an API key is set in your environment.

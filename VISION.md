@@ -64,14 +64,13 @@ context when I want help fixing it.
 | 2.5 | Background agents | Headless agent jobs, agent column, live activity, take over with `ct` | ✅ Done |
 | 3 | Awareness | Whose turn it is ("on me" vs "on them"), changes since last viewed, failing check name and logs, Linear link, `/` filter | ✅ Done |
 | 4 | Customization | Pins and overrides kept between sessions, Claude editing the grouping rules with a preview of the change | ✅ Done |
-| 5 | Team | Publish as a `gh` extension, README, default config | Next |
+| 5 | Team | Agentic onboarding (Claude Code plugin: "set up gh-prs for me"), publish as a `gh` extension, neutral defaults | In progress |
 
 ## Open questions
 
 - Should a stacked child always render under its parent, even when their statuses differ?
 - PRs from forks: worktrees only work for branches pushed to the main repo.
 - Human escalation for background agents: detect when an agent is blocked (a denied tool, a question) and surface it as "needs you", with `ct` as the way in.
-- Should background agents be allowed to push to other people's PRs (review requests), or only to mine?
 - Deploy health checks cost about $1.20 each ($5 per deploy): fewer checks or a cheaper model?
 - Switch background agents to `--permission-mode dontAsk`: verified that it makes the allowlist a hard limit.
 - Should repos that don't require reviews count an approval as "Ready to merge"?
@@ -86,5 +85,6 @@ context when I want help fixing it.
 - **2026-11-11:** Dropped `cd` (describe): it rewrote PR descriptions, and PRs are already written with one.
 - **2026-11-11:** `D` merge + deploy prod with Datadog health checks, `V` revert PR.
 - **2026-11-11:** Background agents: headless Claude jobs with an agent column, push on completion, `ct` to take over.
+- **2026-11-12:** Agents push only to your own PRs; on others' they commit and leave the push to you. Agents refuse dirty worktrees, run with `dontAsk`, and use Sonnet.
 - **2026-11-11:** Phase 2 shipped: commands, Claude launchers, worktrees. `cc` opens a new terminal window, configurable via `terminal`.
 - **2026-11-11:** Phase 1 shipped: grouping, table, stacking, cache and background refresh.

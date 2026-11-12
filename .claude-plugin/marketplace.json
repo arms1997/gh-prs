@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "gh-prs",
+  "description": "gh-prs: a terminal dashboard for your GitHub pull requests, with background Claude agents.",
+  "owner": {
+    "name": "arms1997",
+    "url": "https://github.com/arms1997"
+  },
+  "plugins": [
+    {
+      "name": "gh-prs",
+      "description": "Say \"set up gh-prs for me\": installs gh-prs and interviews you to write its config, commands and agent prompts.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

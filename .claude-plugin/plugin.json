@@ -1,0 +1,6 @@
+{
+  "name": "gh-prs",
+  "description": "Set up gh-prs: install it and write its config, commands and agent prompts from a short interview.",
+  "version": "0.1.0",
+  "author": { "name": "arms1997", "url": "https://github.com/arms1997" }
+}
