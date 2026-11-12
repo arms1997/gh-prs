@@ -6,7 +6,7 @@ cost; enabling one is moving its file there.
 | Workflow | Runs on | What it does |
 |---|---|---|
 | `check.yml` | every PR push, and every push to `main` | `make check`: gofmt, vet, `go test -race`, tsc, Vitest, `npm audit`, govulncheck |
-| `release.yml` | each merged PR | next version from the PR's label (`major`, `minor`, else patch), tag, build the gh extension for macOS and Linux, publish a release |
+| `release.yml` | each merged PR | `scripts/release.sh`, the same as `make release PR=<n>`: next version from the PR's label (`major`, `minor`, else patch), tag, build the gh extension for macOS and Linux, publish a release |
 
 The macOS app isn't built in CI: run `make app-release TAG=vX.Y.Z` on your Mac after a release.
 
@@ -19,7 +19,7 @@ upload no artifacts.
 
 | Run | Runner | Estimate |
 |---|---|---|
-| check | Linux | ~5 min: setup 1, GTK/WebKit headers 1–2, npm ci and govulncheck 1, tests 1–2 |
+| check | Linux | ~5 min: setup 1, GTK/WebKit headers 1–2, npm ci 1, tests and govulncheck 1–2 |
 | release | Linux | ~2 min |
 | (not planned) the `.app` in CI | macOS | ~4 min, counted as ~40 |
 
