@@ -165,6 +165,20 @@ If any check fails, nothing is merged. Repos without the workflow are merged onl
 
 Each health check costs about $1.20.
 
+## Desktop app (preview)
+
+`desktop/` is the same gh-prs as a macOS app ([Wails](https://wails.io): a web UI on the same Go code). It reads the same config, cache, organize.yml and agent jobs, so you can use it alongside the terminal UI.
+
+```sh
+go install github.com/wailsapp/wails/v2/cmd/wails@latest   # once; needs Node.js too
+cd desktop && wails build                                    # → desktop/build/bin/gh-prs.app
+open build/bin/gh-prs.app
+```
+
+It has the grouped list, the detail pane with the description rendered as Markdown, the agent box, filtering, and the same keys (`j`/`k`, `o`, `r`, `/`, `p…`, command keys), plus clickable command buttons. Commands that need a terminal (`interactive: true`) open in your opener instead. Not there yet: `pc`, failing-check logs (`f`), "changed since you looked", and notifications.
+
+The app is self-signed, so a teammate opening a copy you built gets a macOS warning; build it yourself.
+
 ## Configuration
 
 `~/.config/gh-prs/config.yml` is layered over the built-in defaults in [`defaults/`](defaults): any key you set replaces the default, and unknown keys are an error. The generated file documents every option. The main ones:

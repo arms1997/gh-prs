@@ -65,6 +65,7 @@ context when I want help fixing it.
 | 3 | Awareness | Whose turn it is ("on me" vs "on them"), changes since last viewed, failing check name and logs, Linear link, `/` filter | ✅ Done |
 | 4 | Customization | Pins and overrides kept between sessions, Claude editing the grouping rules with a preview of the change | ✅ Done |
 | 5 | Team | Agentic onboarding (Claude Code plugin: "set up gh-prs for me"), publish as a `gh` extension, neutral defaults | In progress |
+| 6 | Desktop | `core/` package shared by both front ends; Wails app with the list, detail, agent box, commands, organize. Next: pc, check logs, changes, notifications, signing | In progress |
 
 ## Open questions
 

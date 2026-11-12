@@ -187,25 +187,13 @@ func fetchCmd(cfg core.Config, prev []core.SectionData) tea.Cmd {
 	}
 }
 
-// lowRate is the GraphQL budget below which auto-refresh waits for the hourly reset, leaving the
-// rest for agents, gh and everything else using your token. r still refreshes.
-const lowRate = 500
-
-// refreshDelay is how long until the next auto-refresh: the interval, or until the budget resets when it's low.
-func refreshDelay(every time.Duration, rate core.RateLimit, now time.Time) time.Duration {
-	if rate.ResetAt.After(now) && rate.Remaining < lowRate {
-		return max(rate.ResetAt.Sub(now), every)
-	}
-	return every
-}
-
 func (m *model) scheduleRefresh() tea.Cmd {
 	m.gen++
 	if m.cfg.Refresh == 0 {
 		return nil
 	}
 	gen := m.gen
-	return tea.Tick(refreshDelay(m.cfg.Refresh, m.rate, time.Now()), func(time.Time) tea.Msg { return refreshMsg(gen) })
+	return tea.Tick(core.RefreshDelay(m.cfg.Refresh, m.rate, time.Now()), func(time.Time) tea.Msg { return refreshMsg(gen) })
 }
 
 func openCmd(url string) tea.Cmd {
@@ -338,7 +326,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.data, m.rate = msg.data, msg.rate
 		m.status, m.isErr = fmt.Sprintf("updated %s · %d API points left", msg.at.Format("15:04"), m.rate.Remaining), false
-		if d := refreshDelay(m.cfg.Refresh, m.rate, msg.at); m.cfg.Refresh > 0 && d > m.cfg.Refresh {
+		if d := core.RefreshDelay(m.cfg.Refresh, m.rate, msg.at); m.cfg.Refresh > 0 && d > m.cfg.Refresh {
 			m.status, m.isErr = fmt.Sprintf("auto-refresh paused: %d GitHub API points left this hour, resumes %s (r refreshes now)",
 				m.rate.Remaining, m.rate.ResetAt.Local().Format("15:04")), true
 		}

@@ -18,11 +18,11 @@ func TestParseSummary(t *testing.T) {
 		"- `registry.ts`: guard empty palettes\n" +
 		"PUSHED: a1b2c3d\n" +
 		"NEEDS YOU: nothing\n"
-	s, ok := parseSummary(result)
+	s, ok := core.ParseSummary(result)
 	if !ok || s.Headline != "Fixed the flaky registry test" || len(s.Changes) != 2 || s.Pushed != "a1b2c3d" || s.NeedsYou != "nothing" {
 		t.Fatalf("parsed %+v ok=%v", s, ok)
 	}
-	if _, ok := parseSummary("just prose, no block"); ok {
+	if _, ok := core.ParseSummary("just prose, no block"); ok {
 		t.Fatal("prose without DONE: should not parse")
 	}
 }

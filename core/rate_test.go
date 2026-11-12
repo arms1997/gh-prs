@@ -1,6 +1,9 @@
 package core
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestPageSize(t *testing.T) {
 	prev := []SectionData{
@@ -15,5 +18,23 @@ func TestPageSize(t *testing.T) {
 	}
 	if got := pageSize([]SectionData{{Section: Section{Title: "empty"}}}, "empty"); got != 10 {
 		t.Errorf("empty section: %d, want 10", got)
+	}
+}
+
+func TestRefreshDelay(t *testing.T) {
+	now := time.Now()
+	every := 2 * time.Minute
+	reset := now.Add(40 * time.Minute)
+	if d := RefreshDelay(every, RateLimit{Remaining: 4000, ResetAt: reset}, now); d != every {
+		t.Errorf("plenty left: %v", d)
+	}
+	if d := RefreshDelay(every, RateLimit{Remaining: 200, ResetAt: reset}, now); d != 40*time.Minute {
+		t.Errorf("low: %v, want to wait for the reset", d)
+	}
+	if d := RefreshDelay(every, RateLimit{Remaining: 200, ResetAt: now.Add(30 * time.Second)}, now); d != every {
+		t.Errorf("reset sooner than the interval: %v", d)
+	}
+	if d := RefreshDelay(every, RateLimit{}, now); d != every {
+		t.Errorf("no rate info yet: %v", d)
 	}
 }

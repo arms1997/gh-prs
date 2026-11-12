@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
+
+	"gh-prs/defaults"
 )
 
 type Section struct {
@@ -37,22 +39,22 @@ type Config struct {
 	promptContext string        // contents of PromptContextFile, prepended to every prompt
 }
 
-// Defaults holds the built-in defaults/ directory. The front end embeds it and sets it before loading config.
-var Defaults fs.FS
+// Defaults holds the built-in defaults/ directory (config.yml, commands/, prompts/).
+var Defaults fs.FS = defaults.FS
 
 // defaultConfig assembles the built-in defaults: defaults/config.yml plus every file in
 // defaults/commands/, in file-name order.
 func defaultConfig() (Config, error) {
 	var cfg Config
-	if err := decodeStrict(mustRead("defaults/config.yml"), &cfg); err != nil {
+	if err := decodeStrict(mustRead("config.yml"), &cfg); err != nil {
 		return cfg, fmt.Errorf("defaults/config.yml: %w", err)
 	}
-	files, _ := fs.Glob(Defaults, "defaults/commands/*.yml")
+	files, _ := fs.Glob(Defaults, "commands/*.yml")
 	sort.Strings(files)
 	for _, f := range files {
 		var cmds []Command
 		if err := decodeStrict(mustRead(f), &cmds); err != nil {
-			return cfg, fmt.Errorf("%s: %w", f, err)
+			return cfg, fmt.Errorf("defaults/%s: %w", f, err)
 		}
 		cfg.Commands = append(cfg.Commands, cmds...)
 	}
@@ -87,7 +89,7 @@ func readPrompt(name string) (string, error) {
 	if b, err := os.ReadFile(filepath.Join(filepath.Dir(ConfigPath()), "prompts", name)); err == nil {
 		return string(b), nil
 	}
-	if b, err := fs.ReadFile(Defaults, path.Join("defaults/prompts", name)); err == nil {
+	if b, err := fs.ReadFile(Defaults, path.Join("prompts", name)); err == nil {
 		return string(b), nil
 	}
 	return "", fmt.Errorf("prompt %q not found in %s or the built-in prompts", name, filepath.Join(filepath.Dir(ConfigPath()), "prompts"))
@@ -107,7 +109,7 @@ func LoadConfig() (Config, error) {
 	path := ConfigPath()
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		data = mustRead("defaults/config.yml")
+		data = mustRead("config.yml")
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return Config{}, err
 		}

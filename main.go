@@ -3,7 +3,6 @@ package main
 // Entry point: load the config and run the TUI.
 
 import (
-	"embed"
 	"fmt"
 	"os"
 
@@ -11,11 +10,6 @@ import (
 
 	"gh-prs/core"
 )
-
-//go:embed defaults
-var defaultsFS embed.FS
-
-func init() { core.Defaults = defaultsFS }
 
 func main() {
 	cfg, err := core.LoadConfig()

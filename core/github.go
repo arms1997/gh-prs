@@ -287,3 +287,15 @@ func Sanitize(s string) string {
 		return r
 	}, s)
 }
+
+// LowRate is the GraphQL budget below which auto-refresh waits for the hourly reset, leaving the
+// rest for agents, gh and everything else using your token. r still refreshes.
+const LowRate = 500
+
+// RefreshDelay is how long until the next auto-refresh: the interval, or until the budget resets when it's low.
+func RefreshDelay(every time.Duration, rate RateLimit, now time.Time) time.Duration {
+	if rate.ResetAt.After(now) && rate.Remaining < LowRate {
+		return max(rate.ResetAt.Sub(now), every)
+	}
+	return every
+}

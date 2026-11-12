@@ -13,49 +13,6 @@ import (
 	"gh-prs/core"
 )
 
-// agentSummary is the block agents are asked to end with (see prompt_context).
-type agentSummary struct {
-	Headline string
-	Changes  []string
-	Pushed   string
-	NeedsYou string
-}
-
-// parseSummary reads the last DONE: block of an agent's final message; ok is false if there is none.
-func parseSummary(result string) (agentSummary, bool) {
-	var s agentSummary
-	lines := strings.Split(result, "\n")
-	start := -1
-	for i, l := range lines {
-		if strings.HasPrefix(cleanLine(l), "DONE:") {
-			start = i
-		}
-	}
-	if start < 0 {
-		return s, false
-	}
-	for _, l := range lines[start:] {
-		l = cleanLine(l)
-		switch {
-		case strings.HasPrefix(l, "DONE:"):
-			s.Headline = strings.TrimSpace(strings.TrimPrefix(l, "DONE:"))
-		case strings.HasPrefix(l, "- "), strings.HasPrefix(l, "* "):
-			s.Changes = append(s.Changes, strings.TrimSpace(l[2:]))
-		case strings.HasPrefix(l, "PUSHED:"):
-			s.Pushed = strings.TrimSpace(strings.TrimPrefix(l, "PUSHED:"))
-		case strings.HasPrefix(l, "NEEDS YOU:"):
-			s.NeedsYou = strings.TrimSpace(strings.TrimPrefix(l, "NEEDS YOU:"))
-		}
-	}
-	return s, s.Headline != ""
-}
-
-// cleanLine drops markdown emphasis and code fences agents sometimes wrap the block in.
-func cleanLine(l string) string {
-	l = strings.TrimSpace(strings.ReplaceAll(l, "**", ""))
-	return strings.TrimSpace(strings.TrimLeft(l, "#>"))
-}
-
 var codeSpan = regexp.MustCompile("`[^`]+`")
 
 // colorSpans styles s, showing `code spans` (usually file names) in cyan without the backticks.
@@ -126,7 +83,7 @@ func renderJob(v *core.JobView, width int) string {
 			add(title+" ✗", red.Bold(true))
 			border = lipgloss.Color("1")
 		}
-		if sum, ok := parseSummary(v.Result); ok {
+		if sum, ok := core.ParseSummary(v.Result); ok {
 			wrap("", sum.Headline, bold)
 			for i, c := range sum.Changes {
 				if i == maxChanges {
