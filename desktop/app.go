@@ -153,15 +153,43 @@ type RowView struct {
 }
 
 type JobState struct {
+	ID       string
 	Name     string
-	Key      string
+	Key      string // the command that started it
+	PRKey    string
+	Repo     string
+	Number   int
 	State    string // running, waiting, done, failed, stopped
 	Activity []string
+	Rounds   []string
 	Result   string
 	Summary  *core.AgentSummary
 	Cost     float64
 	Turns    int
 	Elapsed  string
+	Started  string // RFC 3339
+}
+
+func jobState(v *core.JobView) JobState {
+	js := JobState{ID: v.ID, Name: v.Name, Key: v.Key, PRKey: core.PrKey(v.Repo, v.Number), Repo: v.Repo, Number: v.Number,
+		Activity: v.Activity, Rounds: v.Rounds, Result: v.Result, Cost: v.Cost, Turns: v.Turns,
+		Elapsed: core.ShortDuration(v.Elapsed()), Started: v.Started.Format(time.RFC3339)}
+	switch {
+	case v.Stopped:
+		js.State = "stopped"
+	case v.Waiting:
+		js.State = "waiting"
+	case v.Status == core.JobRunning:
+		js.State = "running"
+	case v.Status == core.JobDone:
+		js.State = "done"
+	default:
+		js.State = "failed"
+	}
+	if sum, ok := core.ParseSummary(v.Result); ok {
+		js.Summary = &sum
+	}
+	return js
 }
 
 type CommandView struct {
@@ -170,6 +198,8 @@ type CommandView struct {
 	Background bool
 	Confirm    bool
 	Builtin    string
+	Input      string // the question to ask before running, if any
+	Session    bool   // continues the PR's last agent session
 }
 
 type State struct {
@@ -209,26 +239,10 @@ func (a *App) State(filter string, collapsed []string, showAll bool) State {
 		s.Rows = append(s.Rows, rv)
 	}
 	for k, v := range a.jobs {
-		js := JobState{Name: v.Name, Key: v.Key, Activity: v.Activity, Result: v.Result, Cost: v.Cost, Turns: v.Turns, Elapsed: core.ShortDuration(v.Elapsed())}
-		switch {
-		case v.Stopped:
-			js.State = "stopped"
-		case v.Waiting:
-			js.State = "waiting"
-		case v.Status == core.JobRunning:
-			js.State = "running"
-		case v.Status == core.JobDone:
-			js.State = "done"
-		default:
-			js.State = "failed"
-		}
-		if sum, ok := core.ParseSummary(v.Result); ok {
-			js.Summary = &sum
-		}
-		s.Jobs[k] = js
+		s.Jobs[k] = jobState(v)
 	}
 	for _, c := range a.cfg.Commands {
-		s.Commands = append(s.Commands, CommandView{Key: c.Key, Name: c.Name, Background: c.Background, Confirm: c.Confirm, Builtin: c.Builtin})
+		s.Commands = append(s.Commands, CommandView{Key: c.Key, Name: c.Name, Background: c.Background, Confirm: c.Confirm, Builtin: c.Builtin, Input: c.Input, Session: c.Session})
 	}
 	return s
 }
@@ -246,8 +260,9 @@ func (a *App) find(key string) (core.PR, bool) {
 
 // ---- actions ----
 
-// Run runs the command bound to cmdKey on a PR and returns a status line.
-func (a *App) Run(cmdKey, prKey string) (string, error) {
+// Run runs the command bound to cmdKey on a PR and returns a status line. input answers the
+// command's Input question, if it has one.
+func (a *App) Run(cmdKey, prKey, input string) (string, error) {
 	a.mu.Lock()
 	p, ok := a.find(prKey)
 	var c core.Command
@@ -262,9 +277,19 @@ func (a *App) Run(cmdKey, prKey string) (string, error) {
 	if !ok || c.Key == "" {
 		return "", fmt.Errorf("unknown PR or command")
 	}
+	if c.Input != "" {
+		if strings.TrimSpace(input) == "" {
+			return "", fmt.Errorf("%s needs some text", c.Name)
+		}
+		c = c.WithInput(strings.TrimSpace(input))
+	}
+	replaces := false
 	if job != nil && job.Active() && (c.Background || c.Session) {
-		// One agent per PR: they'd share the worktree, and a session can't be resumed while it runs.
-		return "", fmt.Errorf("an agent is still running on #%d (%s)", p.Number, job.Name)
+		if !(c.Background && c.Session) {
+			// One agent per PR: they'd share the worktree, and a session can't be resumed while it runs.
+			return "", fmt.Errorf("an agent is still running on #%d (%s)", p.Number, job.Name)
+		}
+		replaces = true // a reply: the running agent stops and its session carries on in the new run
 	}
 	if c.Confirm {
 		answer, err := runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{Type: runtime.QuestionDialog,
@@ -281,9 +306,14 @@ func (a *App) Run(cmdKey, prKey string) (string, error) {
 	if c.Interactive { // there's no terminal to hand over here: open it in your opener instead
 		c.Interactive, c.Terminal = false, true
 	}
+	if replaces {
+		if err := job.StopAndWait(5 * time.Second); err != nil {
+			return "", err
+		}
+	}
 	session := ""
 	if job != nil {
-		session = job.ID
+		session = job.SessionID()
 	}
 	pp, err := core.Prepare(cfg, c, p, session)
 	if err != nil {
@@ -398,6 +428,22 @@ func (a *App) Files(prKey string) ([]FileChange, error) {
 		resp.Files[i].Path = core.Sanitize(resp.Files[i].Path)
 	}
 	return resp.Files, nil
+}
+
+// Sessions lists recent agent runs across all PRs, newest first. The PR's current job is used
+// where there is one, so a running agent shows live progress.
+func (a *App) Sessions() []JobState {
+	all := core.LoadAllJobs(50)
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	out := make([]JobState, 0, len(all))
+	for _, v := range all {
+		if cur := a.jobs[core.PrKey(v.Repo, v.Number)]; cur != nil && cur.ID == v.ID {
+			v = cur
+		}
+		out = append(out, jobState(v))
+	}
+	return out
 }
 
 // Projects lists project names in use, for the move picker.

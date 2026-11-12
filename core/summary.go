@@ -10,6 +10,7 @@ type AgentSummary struct {
 	Changes  []string
 	Pushed   string
 	NeedsYou string
+	Options  []string // answers to offer for NeedsYou, when it's a choice
 }
 
 // ParseSummary reads the last DONE: block of an agent's final message; ok is false if there is none.
@@ -36,6 +37,12 @@ func ParseSummary(result string) (AgentSummary, bool) {
 			s.Pushed = strings.TrimSpace(strings.TrimPrefix(l, "PUSHED:"))
 		case strings.HasPrefix(l, "NEEDS YOU:"):
 			s.NeedsYou = strings.TrimSpace(strings.TrimPrefix(l, "NEEDS YOU:"))
+		case strings.HasPrefix(l, "OPTIONS:"):
+			for _, o := range strings.Split(strings.TrimPrefix(l, "OPTIONS:"), "|") {
+				if o = strings.TrimSpace(o); o != "" {
+					s.Options = append(s.Options, o)
+				}
+			}
 		}
 	}
 	return s, s.Headline != ""

@@ -1,15 +1,16 @@
-import {useApp} from '../../state/AppState'
-import {needsYou, PR} from '../../lib/pr'
+import {DetailTabName, useApp} from '../../state/AppState'
+import {agentCommands, needsYou, PR} from '../../lib/pr'
 import {Badge} from '../../components/ui/Badge'
 import {TabDef, Tabs} from '../../components/ui/Tabs'
 import {DetailHeader} from './DetailHeader'
 import {OverviewTab} from './tabs/OverviewTab'
-import {ClaudeTab} from './tabs/ClaudeTab'
+import {ClaudeTab} from '../claude/ClaudeTab'
+import {Composer} from '../claude/Composer'
 import {ChecksTab} from './tabs/ChecksTab'
 import {FilesTab} from './tabs/FilesTab'
 import './detail.css'
 
-export type DetailTab = 'overview' | 'claude' | 'checks' | 'files'
+export type DetailTab = DetailTabName
 export const DETAIL_TABS: DetailTab[] = ['overview', 'claude', 'checks', 'files']
 
 export function DetailPane({pr, tab, setTab, openPalette}: {
@@ -47,6 +48,7 @@ export function DetailPane({pr, tab, setTab, openPalette}: {
                 {tab === 'checks' && <ChecksTab pr={pr}/>}
                 {tab === 'files' && <FilesTab pr={pr}/>}
             </div>
+            {tab === 'claude' && <Composer pr={pr} job={job} cmds={agentCommands(app.state?.Commands ?? [])}/>}
         </aside>
     )
 }

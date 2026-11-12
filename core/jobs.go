@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -19,7 +20,8 @@ import (
 // Job is a background agent run. Its stdout (Claude's stream-json) goes to <id>.jsonl, and the
 // process runs in its own session so it outlives gh-prs.
 type Job struct {
-	ID      string    `json:"id"` // also the Claude session id, so the run can be resumed
+	ID      string    `json:"id"`                // also the Claude session id of a new session
+	Session string    `json:"session,omitempty"` // the Claude session a resumed run continues
 	Key     string    `json:"key"`
 	Name    string    `json:"name"`
 	Repo    string    `json:"repo"`
@@ -37,7 +39,7 @@ const (
 	JobFailed
 )
 
-const maxActivity = 20
+const maxActivity = 100
 
 // jobView is a Job plus what its log says so far. Logs are read incrementally.
 type JobView struct {
@@ -48,12 +50,21 @@ type JobView struct {
 	Cost     float64
 	Turns    int
 	Finished time.Time
-	Waiting  bool // a /loop job between rounds: it reported a result but is still running
-	Stopped  bool // you stopped it
+	Waiting  bool     // a /loop job between rounds: it reported a result but is still running
+	Stopped  bool     // you stopped it
+	Rounds   []string // the headline of each result, oldest first: one per /loop round
 
 	over    bool // the process exited and its log is fully read
 	offset  int64
 	partial []byte
+}
+
+// SessionID is the Claude session the job ran in, to resume it.
+func (j Job) SessionID() string {
+	if j.Session != "" {
+		return j.Session
+	}
+	return j.ID
 }
 
 func PrKey(repo string, number int) string { return fmt.Sprintf("%s#%d", repo, number) }
@@ -72,7 +83,7 @@ func NewJobID() string {
 }
 
 func StartJob(pp Prepared) (*JobView, error) {
-	j := Job{ID: pp.jobID, Key: pp.Cmd.Key, Name: pp.Cmd.Name, Repo: pp.Pr.Repo, Number: pp.Pr.Number, Dir: pp.dir, Started: time.Now()}
+	j := Job{ID: pp.jobID, Session: pp.session, Key: pp.Cmd.Key, Name: pp.Cmd.Name, Repo: pp.Pr.Repo, Number: pp.Pr.Number, Dir: pp.dir, Started: time.Now()}
 	if err := os.MkdirAll(JobsDir(), 0o700); err != nil {
 		return nil, err
 	}
@@ -106,16 +117,7 @@ func StartJob(pp Prepared) (*JobView, error) {
 // loadJobs returns the latest job per PR.
 func LoadJobs() map[string]*JobView {
 	jobs := map[string]*JobView{}
-	files, _ := filepath.Glob(filepath.Join(JobsDir(), "*.json"))
-	for _, f := range files {
-		raw, err := os.ReadFile(f)
-		if err != nil {
-			continue
-		}
-		var j Job
-		if json.Unmarshal(raw, &j) != nil || j.ID == "" {
-			continue
-		}
+	for _, j := range readJobs() {
 		k := PrKey(j.Repo, j.Number)
 		if cur := jobs[k]; cur == nil || j.Started.After(cur.Started) {
 			jobs[k] = &JobView{Job: j}
@@ -123,6 +125,35 @@ func LoadJobs() map[string]*JobView {
 	}
 	for _, v := range jobs {
 		v.Update()
+	}
+	return jobs
+}
+
+// LoadAllJobs returns the newest jobs across all PRs, newest first, at most limit.
+func LoadAllJobs(limit int) []*JobView {
+	all := readJobs()
+	sort.Slice(all, func(a, b int) bool { return all[a].Started.After(all[b].Started) })
+	var out []*JobView
+	for _, j := range all[:min(limit, len(all))] {
+		v := &JobView{Job: j}
+		v.Update()
+		out = append(out, v)
+	}
+	return out
+}
+
+func readJobs() []Job {
+	var jobs []Job
+	files, _ := filepath.Glob(filepath.Join(JobsDir(), "*.json"))
+	for _, f := range files {
+		raw, err := os.ReadFile(f)
+		if err != nil {
+			continue
+		}
+		var j Job
+		if json.Unmarshal(raw, &j) == nil && j.ID != "" {
+			jobs = append(jobs, j)
+		}
 	}
 	return jobs
 }
@@ -194,6 +225,19 @@ func (v *JobView) Stop() error {
 		return err
 	}
 	return syscall.Kill(-v.PID, syscall.SIGTERM)
+}
+
+// StopAndWait stops the job and waits up to d for it to exit, so its session can be resumed.
+func (v *JobView) StopAndWait(d time.Duration) error {
+	if err := v.Stop(); err != nil {
+		return err
+	}
+	for end := time.Now().Add(d); time.Now().Before(end); time.Sleep(100 * time.Millisecond) {
+		if !v.alive() {
+			return nil
+		}
+	}
+	return fmt.Errorf("%s on #%d didn't stop in time", v.Name, v.Number)
 }
 
 // StopAgent stops the agent running on a PR and says what it stopped.

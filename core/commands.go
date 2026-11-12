@@ -31,12 +31,21 @@ type Command struct {
 	Confirm     bool   `yaml:"confirm"`       // ask y/N first
 	Refresh     bool   `yaml:"refresh"`       // refresh PRs after it succeeds
 	Builtin     string `yaml:"builtin"`       // an action gh-prs does itself instead of running a command: stop_agent
+	Input       string `yaml:"input"`         // ask for a line of text first (this is the question); the prompt gets it as {{.Input}}
+
+	input string // the answer to Input, set with WithInput
 
 	tmpl  *template.Template
 	limit time.Duration // parsed Timeout
 }
 
 const defaultJobLimit = 45 * time.Minute
+
+// WithInput returns the command with the text typed for its Input question.
+func (c Command) WithInput(text string) Command {
+	c.input = text
+	return c
+}
 
 // BuiltinStopAgent stops the PR's running agent.
 const BuiltinStopAgent = "stop_agent"
@@ -70,6 +79,9 @@ func validateCommands(cfg *Config) error {
 				return fmt.Errorf("command %q: builtin %q runs on its own; the only builtin is %s", c.Name, c.Builtin, BuiltinStopAgent)
 			}
 			continue
+		}
+		if c.Input != "" && c.Prompt == "" && c.PromptFile == "" {
+			return fmt.Errorf("command %q: input needs a prompt to put it in", c.Name)
 		}
 		if c.Run == "" && !c.Terminal {
 			return fmt.Errorf("command %q has nothing to run", c.Name)
@@ -130,7 +142,8 @@ type promptData struct {
 	URL    string
 	Head   string
 	Base   string
-	Mine   bool // you opened the PR; agents push only to yours
+	Mine   bool   // you opened the PR; agents push only to yours
+	Input  string // what you typed for the command's input question
 }
 
 // noPush makes git push fail in agents on other people's PRs, whatever remote or URL they try,
@@ -153,15 +166,16 @@ func btoi(b bool) int {
 
 // prepared is a command ready to execute: env and working directory resolved, files written.
 type Prepared struct {
-	Cmd    Command
-	Pr     PR
-	Env    []string
-	dir    string
-	script string // launcher script for terminal commands
-	jobID  string // background commands: the job and Claude session id
+	Cmd     Command
+	Pr      PR
+	Env     []string
+	dir     string
+	script  string // launcher script for terminal commands
+	jobID   string // background commands: the job id, and the Claude session id of a new session
+	session string // background agent_session commands: the Claude session they resume
 }
 
-// prepare resolves a command for a PR. agentSession is the PR's last agent job, for agent_session commands.
+// prepare resolves a command for a PR. agentSession is the Claude session of the PR's last agent job, for agent_session commands.
 func Prepare(cfg Config, c Command, p PR, agentSession string) (Prepared, error) {
 	pp := Prepared{Cmd: c, Pr: p}
 	if c.Background {
@@ -185,6 +199,7 @@ func Prepare(cfg Config, c Command, p PR, agentSession string) (Prepared, error)
 			return pp, fmt.Errorf("no agent has run on this PR yet")
 		}
 		vars = append(vars, [2]string{"PR_AGENT_SESSION", agentSession})
+		pp.session = agentSession
 	}
 	if c.Worktree {
 		dir, err := ensureWorktree(cfg, p)
@@ -206,7 +221,7 @@ func Prepare(cfg Config, c Command, p PR, agentSession string) (Prepared, error)
 	}
 	if c.tmpl != nil {
 		var buf bytes.Buffer
-		if err := c.tmpl.Execute(&buf, promptData{p.Number, p.Repo, p.URL, p.HeadRefName, p.BaseRefName, p.Mine}); err != nil {
+		if err := c.tmpl.Execute(&buf, promptData{p.Number, p.Repo, p.URL, p.HeadRefName, p.BaseRefName, p.Mine, c.input}); err != nil {
 			return pp, err
 		}
 		f, err := promptFile(pp.jobID)

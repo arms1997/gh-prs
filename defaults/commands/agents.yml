@@ -44,6 +44,28 @@
     --output-format stream-json --verbose --max-budget-usd 10
     --allowedTools "ScheduleWakeup,Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(npm:*),Bash(npx:*),Bash(pnpm:*),Bash(yarn:*),Bash(node:*),Bash(go:*),Bash(make:*),Bash(python3:*),Bash(pytest:*),Bash(uv:*),Bash(ls:*)"
   prompt_file: manage.md
+# Ask Claude anything about the PR, in a new agent session.
+- key: ci
+  name: ask Claude
+  worktree: true
+  background: true
+  input: Ask Claude about this PR
+  run: *agent
+  prompt_file: ask.md
+# Reply to the PR's last agent: resumes its session with your message. A manage loop that's
+# still running is stopped first, and carries on its rounds after handling the reply.
+- key: cy
+  name: reply to agent
+  worktree: true
+  background: true
+  agent_session: true
+  timeout: 8h
+  input: Reply to Claude
+  run: >-
+    env -u ANTHROPIC_API_KEY claude -p "$(cat "$PR_PROMPT_FILE")" --resume "$PR_AGENT_SESSION" --model sonnet
+    --output-format stream-json --verbose --max-budget-usd 10
+    --allowedTools "ScheduleWakeup,Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(npm:*),Bash(npx:*),Bash(pnpm:*),Bash(yarn:*),Bash(node:*),Bash(go:*),Bash(make:*),Bash(python3:*),Bash(pytest:*),Bash(uv:*),Bash(ls:*)"
+  prompt_file: reply.md
 # Open the PR's last agent session in your opener to take over from it.
 - key: ct
   name: take over agent

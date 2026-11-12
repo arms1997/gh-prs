@@ -5,6 +5,7 @@ export namespace core {
 	    Changes: string[];
 	    Pushed: string;
 	    NeedsYou: string;
+	    Options: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new AgentSummary(source);
@@ -16,6 +17,7 @@ export namespace core {
 	        this.Changes = source["Changes"];
 	        this.Pushed = source["Pushed"];
 	        this.NeedsYou = source["NeedsYou"];
+	        this.Options = source["Options"];
 	    }
 	}
 	export class Check {
@@ -59,6 +61,8 @@ export namespace main {
 	    Background: boolean;
 	    Confirm: boolean;
 	    Builtin: string;
+	    Input: string;
+	    Session: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new CommandView(source);
@@ -71,6 +75,8 @@ export namespace main {
 	        this.Background = source["Background"];
 	        this.Confirm = source["Confirm"];
 	        this.Builtin = source["Builtin"];
+	        this.Input = source["Input"];
+	        this.Session = source["Session"];
 	    }
 	}
 	export class FileChange {
@@ -90,15 +96,21 @@ export namespace main {
 	    }
 	}
 	export class JobState {
+	    ID: string;
 	    Name: string;
 	    Key: string;
+	    PRKey: string;
+	    Repo: string;
+	    Number: number;
 	    State: string;
 	    Activity: string[];
+	    Rounds: string[];
 	    Result: string;
 	    Summary?: core.AgentSummary;
 	    Cost: number;
 	    Turns: number;
 	    Elapsed: string;
+	    Started: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new JobState(source);
@@ -106,15 +118,21 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ID = source["ID"];
 	        this.Name = source["Name"];
 	        this.Key = source["Key"];
+	        this.PRKey = source["PRKey"];
+	        this.Repo = source["Repo"];
+	        this.Number = source["Number"];
 	        this.State = source["State"];
 	        this.Activity = source["Activity"];
+	        this.Rounds = source["Rounds"];
 	        this.Result = source["Result"];
 	        this.Summary = this.convertValues(source["Summary"], core.AgentSummary);
 	        this.Cost = source["Cost"];
 	        this.Turns = source["Turns"];
 	        this.Elapsed = source["Elapsed"];
+	        this.Started = source["Started"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

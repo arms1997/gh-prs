@@ -113,8 +113,14 @@ type logMsg struct {
 	log failLog
 }
 
-func prepareCmd(cfg core.Config, c core.Command, p core.PR, agentSession string) tea.Cmd {
+// prepareCmd prepares a command off the UI thread, first stopping the running agent it replaces, if any.
+func prepareCmd(cfg core.Config, c core.Command, p core.PR, agentSession string, replaces *core.JobView) tea.Cmd {
 	return func() tea.Msg {
+		if replaces != nil {
+			if err := replaces.StopAndWait(5 * time.Second); err != nil {
+				return preparedMsg{core.Prepared{Cmd: c, Pr: p}, err}
+			}
+		}
 		pp, err := core.Prepare(cfg, c, p, agentSession)
 		return preparedMsg{pp, err}
 	}
@@ -129,18 +135,36 @@ func (m *model) startCommand(c core.Command, p core.PR) tea.Cmd {
 		m.status, m.isErr = msg, err != nil
 		return nil
 	}
-	job := m.jobs[core.PrKey(p.Repo, p.Number)]
-	if job != nil && job.Active() && (c.Background || c.Session) {
-		// One agent per PR: they'd share the worktree, and a session can't be resumed while it runs.
-		m.status, m.isErr = fmt.Sprintf("an agent is still running on #%d (%s)", p.Number, job.Name), true
+	if c.Input != "" {
+		m.input = &textInput{label: c.Input + ": ", submit: func(m *model, text string) tea.Cmd {
+			if text == "" {
+				m.status, m.isErr = "cancelled", false
+				return nil
+			}
+			return m.launch(c.WithInput(text), p)
+		}}
 		return nil
+	}
+	return m.launch(c, p)
+}
+
+func (m *model) launch(c core.Command, p core.PR) tea.Cmd {
+	job := m.jobs[core.PrKey(p.Repo, p.Number)]
+	var replaces *core.JobView
+	if job != nil && job.Active() && (c.Background || c.Session) {
+		if !(c.Background && c.Session) {
+			// One agent per PR: they'd share the worktree, and a session can't be resumed while it runs.
+			m.status, m.isErr = fmt.Sprintf("an agent is still running on #%d (%s)", p.Number, job.Name), true
+			return nil
+		}
+		replaces = job // a reply: the running agent stops and its session carries on in the new run
 	}
 	session := ""
 	if job != nil {
-		session = job.ID
+		session = job.SessionID()
 	}
 	m.status, m.isErr = c.Name+" #"+fmt.Sprint(p.Number)+"…", false
-	return prepareCmd(m.cfg, c, p, session)
+	return prepareCmd(m.cfg, c, p, session, replaces)
 }
 
 func (m *model) ensureTicking() tea.Cmd {

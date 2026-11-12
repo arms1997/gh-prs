@@ -22,8 +22,12 @@ export function Refresh() {
   return window['go']['main']['App']['Refresh']();
 }
 
-export function Run(arg1, arg2) {
-  return window['go']['main']['App']['Run'](arg1, arg2);
+export function Run(arg1, arg2, arg3) {
+  return window['go']['main']['App']['Run'](arg1, arg2, arg3);
+}
+
+export function Sessions() {
+  return window['go']['main']['App']['Sessions']();
 }
 
 export function State(arg1, arg2, arg3) {

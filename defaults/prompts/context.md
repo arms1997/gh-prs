@@ -14,4 +14,5 @@ after it (no markdown headings; keep each line to one sentence):
   - <a change, naming the file in backticks>   (at most 10 lines, the most important first)
   PUSHED: <short commit sha> | NO: <why not>
   NEEDS YOU: <one line: what a person must still decide or check> | nothing
+  OPTIONS: <an answer> | <another answer>   (only when NEEDS YOU is a choice between clear answers; otherwise leave this line out)
 

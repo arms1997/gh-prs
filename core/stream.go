@@ -55,6 +55,13 @@ func (v *JobView) apply(line []byte) {
 			v.Result = ev.Subtype
 		}
 		v.Cost, v.Turns = ev.Cost, ev.Turns
+		headline := firstLine(v.Result)
+		if sum, ok := ParseSummary(v.Result); ok {
+			headline = sum.Headline
+		}
+		if v.Rounds = append(v.Rounds, headline); len(v.Rounds) > maxActivity {
+			v.Rounds = v.Rounds[len(v.Rounds)-maxActivity:]
+		}
 	}
 }
 

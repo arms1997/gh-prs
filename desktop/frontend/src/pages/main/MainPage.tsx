@@ -1,4 +1,4 @@
-import {useMemo, useRef, useState} from 'react'
+import {useEffect, useMemo, useRef, useState} from 'react'
 import {Projects} from '../../../wailsjs/go/main/App'
 import {useApp} from '../../state/AppState'
 import {nextStep, PR, QUICK_FILTERS} from '../../lib/pr'
@@ -32,6 +32,20 @@ export function MainPage() {
     const counts = useMemo(() => Object.fromEntries(QUICK_FILTERS.map(f => [f.id, countPRs(all, jobs, f.match)])), [all, jobs])
     const rows = visibleRows(all, collapsed, jobs, QUICK_FILTERS.find(f => f.id === quick)?.match)
 
+    // Another page asked to show a PR (e.g. a session): select its row and open the tab.
+    useEffect(() => {
+        const f = app.focus
+        if (!f || !all.length) return
+        const r = all.find(r => r.PR?.Key === f.prKey)
+        if (r) {
+            setQuick('')
+            setCollapsed(c => c.filter(p => !r.Path.startsWith(p + '/')))
+            setSel(r.Path)
+        } else app.say('That PR is no longer in your list', true)
+        setTab(f.tab)
+        app.setFocus(undefined)
+    }, [app.focus, all])
+
     let cursor = rows.findIndex(r => r.Path === sel)
     if (cursor < 0) cursor = rows.findIndex(r => r.PR) // first PR
     const pr = rows[cursor]?.PR
@@ -47,12 +61,17 @@ export function MainPage() {
 
     const hint = useMainKeys({
         app, rows, cursor, step, keySeq, setKeySeq, toggleGroup, organize,
-        paused: filtering || !!dialog,
+        paused: filtering || !!dialog || !!app.ask,
         select: setSel,
         focusFilter: () => filterRef.current?.focus(),
         clear: () => { app.setFilter(''); setQuick('') },
         openPalette: () => setDialog('palette'),
         openHelp: () => setDialog('help'),
+        openSessions: () => app.setPage('sessions'),
+        focusComposer: () => {
+            setTab('claude')
+            setTimeout(() => document.getElementById('composer')?.focus())
+        },
         cycleTab: (d: number) => setTab(t => DETAIL_TABS[(DETAIL_TABS.indexOf(t) + d + DETAIL_TABS.length) % DETAIL_TABS.length]),
     })
 
@@ -70,6 +89,11 @@ export function MainPage() {
             {section: 'Organize', label: 'Move to project', keys: 'pm', icon: 'stack' as const, run: () => organize('pm')},
         ] : []),
         {section: 'Organize', label: app.showAll ? 'Leave hidden & snoozed out' : 'Show hidden & snoozed', keys: 'pa', run: () => app.setShowAll(s => !s)},
+        ...(pr ? [{section: 'This pull request', label: 'Message Claude', keys: 'i', icon: 'thread' as const, run: () => {
+            setTab('claude')
+            setTimeout(() => document.getElementById('composer')?.focus())
+        }}] : []),
+        {section: 'App', label: 'All Claude sessions', keys: 'ga', icon: 'terminal', run: () => app.setPage('sessions')},
         {section: 'App', label: 'Refresh', keys: 'r', icon: 'refresh', run: () => app.refresh()},
         {section: 'App', label: 'Keyboard shortcuts', keys: '?', run: () => setDialog('help')},
     ]

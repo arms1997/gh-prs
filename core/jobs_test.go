@@ -220,3 +220,18 @@ func TestStopAgent(t *testing.T) {
 		t.Fatal("stopping a stopped agent should fail")
 	}
 }
+
+// A reply stops a running agent first, so the session is free to resume.
+func TestStopAndWait(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	v, err := StartJob(Prepared{Cmd: Command{Key: "z", Name: "manage", Background: true, Run: "sleep 30"}, Pr: PR{Repo: "o/r", Number: 6}, jobID: NewJobID()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := v.StopAndWait(5 * time.Second); err != nil {
+		t.Fatal(err)
+	}
+	if v.alive() {
+		t.Fatal("still running")
+	}
+}

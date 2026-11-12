@@ -33,7 +33,9 @@ export function PrList({rows, cursor, collapsed, onSelect, onToggle}: {
                 const p = r.PR
                 const step = nextStep(p, app.state?.Jobs[p.Key], app.state?.Commands ?? [])
                 return (
+                    // The dot lines up with its group heading's text: headings indent 18px a level.
                     <div key={r.Path} ref={ref} className={'pr-grid pr-row' + (sel ? ' sel' : '') + (p.Hidden || p.Snoozed ? ' faded' : '')}
+                         style={{'--lead': `${18 + 18 * r.Depth}px`} as React.CSSProperties}
                          onClick={() => onSelect(r.Path)} onDoubleClick={() => app.open(p.URL)}>
                         <TurnDot pr={p}/>
                         <span className="pr-title" style={{paddingLeft: r.Stack * 14}}>

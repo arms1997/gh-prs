@@ -2,7 +2,7 @@ import {useEffect} from 'react'
 import {App} from '../../state/AppState'
 import {NextStep, Row} from '../../lib/pr'
 
-const ORGANIZE_NAMES: Record<string, string> = {pp: 'pin', ps: 'snooze', ph: 'hide', pm: 'move', pa: 'show all', gg: 'top'}
+const ORGANIZE_NAMES: Record<string, string> = {pp: 'pin', ps: 'snooze', ph: 'hide', pm: 'move', pa: 'show all', gg: 'top', ga: 'Claude sessions'}
 
 type Opts = {
     app: App
@@ -19,6 +19,8 @@ type Opts = {
     openPalette: () => void
     openHelp: () => void
     cycleTab: (delta: number) => void
+    openSessions: () => void
+    focusComposer: () => void
     organize: (seq: string) => void
 }
 
@@ -37,6 +39,9 @@ export function useMainKeys(o: Opts): string {
                 e.preventDefault()
                 return o.openPalette()
             }
+            // Typing in any text field (filter, Claude's message box, a reply) is text, not shortcuts.
+            const t = e.target as HTMLElement
+            if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) return
             if (o.paused || e.metaKey || e.ctrlKey || e.altKey) return
             const move = (i: number) => {
                 const r = rows[Math.max(0, Math.min(rows.length - 1, i))]
@@ -64,6 +69,10 @@ export function useMainKeys(o: Opts): string {
                         return o.focusFilter()
                     case '?':
                         return o.openHelp()
+                    case 'i':
+                        if (!pr) return
+                        e.preventDefault()
+                        return o.focusComposer()
                     case '[':
                         return o.cycleTab(-1)
                     case ']':
@@ -87,6 +96,7 @@ export function useMainKeys(o: Opts): string {
             if (allKeys.includes(seq)) {
                 o.setKeySeq('')
                 if (seq === 'gg') return move(0)
+                if (seq === 'ga') return o.openSessions()
                 if (seq === 'pa') return app.setShowAll(s => !s)
                 if (!pr) return app.say('Select a PR first', true)
                 if (seq in ORGANIZE_NAMES) return o.organize(seq)

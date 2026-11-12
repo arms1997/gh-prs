@@ -117,6 +117,8 @@ Commands are key sequences defined in the config. The defaults:
 | `cr` | rebase | background agent: rebase onto the base branch, push with `--force-with-lease` |
 | `cm` | manage | background agent on `/loop`: every 15m resolves conflicts, rebases when behind and addresses new review comments, until the PR merges (◷ between rounds; stops after 8h or $10) |
 | `ct` | take over agent | open the PR's last agent session in your opener (`claude --resume`) |
+| `ci` | ask Claude | asks for a question, then answers it in a new agent session on the PR |
+| `cy` | reply to agent | asks for your reply, then resumes the PR's last agent session with it; a running `cm` loop is stopped first and carries on its rounds afterwards |
 | `cx` | stop agent | stop the PR's running agent, a `cm` loop included, and everything it started (asks first) |
 | `w` | shell in worktree | open a shell in the PR's worktree |
 | `D` | merge + deploy prod | merge, deploy, then health-check prod (see below) |
@@ -176,7 +178,7 @@ cd desktop && wails build                                    # → desktop/build
 open build/bin/gh-prs.app
 ```
 
-It has the grouped list, the detail pane with the description rendered as Markdown, the agent box, filtering, and the same keys (`j`/`k`, `o`, `r`, `/`, `p…`, command keys), plus clickable command buttons. Commands that need a terminal (`interactive: true`) open in your opener instead. Not there yet: `pc`, failing-check logs (`f`), "changed since you looked", and notifications.
+It has the grouped list with quick filters and a "next step" per PR, a detail pane with Overview (what's left before merge, the PR checklist, the description), Claude, Checks and Files tabs, a ⌘K command palette, and the same keys (`j`/`k`, `o`, `r`, `/`, `p…`, command keys; `[` `]` switch tabs). The Claude tab shows what the PR's agent did and its open question with suggested answers; answering or typing in the message box (`i`) runs `cy`, or `ci` when no agent has run yet. `ga` lists every agent session across your PRs. Commands that need a terminal (`interactive: true`) open in your opener instead. Not there yet: `pc`, failing-check logs (`f`), "changed since you looked", and notifications.
 
 The app is self-signed, so a teammate opening a copy you built gets a macOS warning; build it yourself.
 

@@ -105,3 +105,30 @@ func TestBuiltinCommands(t *testing.T) {
 		}
 	}
 }
+
+// A command's input lands in its prompt, and a resumed run records the session it continues.
+func TestInputAndSessionChaining(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	cfg := Config{Commands: []Command{{Key: "cy", Background: true, Session: true, Input: "Reply", Run: `printf '%s' "$PR_AGENT_SESSION"`, Prompt: "they said: {{.Input}}"}}}
+	if err := validateCommands(&cfg); err != nil {
+		t.Fatal(err)
+	}
+	pp, err := Prepare(cfg, cfg.Commands[0].WithInput("change it here"), PR{Repo: "o/r", Number: 2, Mine: true}, "sess-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ := os.ReadFile(filepath.Join(JobsDir(), pp.jobID+".prompt.md"))
+	if !strings.HasSuffix(string(got), "they said: change it here") {
+		t.Fatalf("prompt = %q", got)
+	}
+	v, err := StartJob(pp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.ID == "sess-1" || v.SessionID() != "sess-1" {
+		t.Fatalf("job %s continues %s, want sess-1", v.ID, v.SessionID())
+	}
+	if err := validateCommands(&Config{Commands: []Command{{Key: "z", Run: "x", Input: "Ask"}}}); err == nil {
+		t.Fatal("input without a prompt should be rejected")
+	}
+}

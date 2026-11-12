@@ -38,3 +38,16 @@ func TestJobParsing(t *testing.T) {
 		t.Fatalf("died without result: %+v", v)
 	}
 }
+
+func TestSummaryOptionsAndRounds(t *testing.T) {
+	s, ok := ParseSummary("DONE: paused\nPUSHED: NO: waiting\nNEEDS YOU: change it here or in the base?\nOPTIONS: Change it here | Change the base, then rebase")
+	if !ok || len(s.Options) != 2 || s.Options[1] != "Change the base, then rebase" {
+		t.Fatalf("summary: %+v", s)
+	}
+	v := &JobView{}
+	v.apply([]byte(evResult))
+	v.apply([]byte(`{"type":"result","subtype":"success","result":"x\nDONE: nothing to do"}`))
+	if len(v.Rounds) != 2 || v.Rounds[0] != "Pushed abc123: fixed the test." || v.Rounds[1] != "nothing to do" {
+		t.Fatalf("rounds: %q", v.Rounds)
+	}
+}

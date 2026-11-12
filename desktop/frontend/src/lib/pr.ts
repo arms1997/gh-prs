@@ -111,3 +111,24 @@ export function needsYou(j?: Job): string {
     const n = j?.Summary?.NeedsYou?.trim() ?? ''
     return /^(nothing|none|no)\.?$/i.test(n) ? '' : n
 }
+
+// The commands the Claude views use, found by what they do rather than by key, since keys are yours to change.
+export const agentCommands = (cmds: Command[]) => ({
+    reply: cmds.find(c => c.Background && c.Session && c.Input),
+    ask: cmds.find(c => c.Background && !c.Session && c.Input),
+    stop: cmds.find(c => c.Builtin === 'stop_agent'),
+    takeOver: cmds.find(c => c.Session && !c.Background),
+})
+
+// ago is how long ago an RFC 3339 time was, e.g. "5m ago".
+export function ago(iso: string): string {
+    const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000)
+    if (s < 60) return 'just now'
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`
+    if (s < 86400) return `${Math.floor(s / 3600)}h ago`
+    return `${Math.floor(s / 86400)}d ago`
+}
+
+export const JOB_LABEL: Record<string, string> = {
+    running: 'Running', waiting: 'Waiting for its next round', done: 'Done', failed: 'Failed', stopped: 'Stopped',
+}
