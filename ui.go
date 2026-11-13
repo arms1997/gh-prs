@@ -127,6 +127,7 @@ func prepareCmd(cfg core.Config, c core.Command, p core.PR, agentSession string,
 }
 
 func (m *model) startCommand(c core.Command, p core.PR) tea.Cmd {
+	core.MergeJobs(m.jobs) // an agent may have been started from the app or another terminal
 	if c.Builtin == core.BuiltinStopAgent {
 		msg, err := core.StopAgent(m.jobs, p)
 		if err != nil {
@@ -357,8 +358,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.org.Wake(m.data) { // snoozed PRs that changed come back
 			_ = m.org.Save()
 		}
+		core.MergeJobs(m.jobs)
 		m.rebuild()
-		return m, m.scheduleRefresh()
+		return m, tea.Batch(m.scheduleRefresh(), m.ensureTicking())
 	case refreshMsg:
 		if int(msg) == m.gen && !m.loading {
 			m.loading = true
