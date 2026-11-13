@@ -9,7 +9,6 @@ import {Composer} from '../claude/Composer'
 import {ChecksTab} from './tabs/ChecksTab'
 import {FilesTab} from './tabs/FilesTab'
 import {BriefTab} from '../brief/BriefTab'
-import './detail.css'
 
 export type DetailTab = DetailTabName
 export const DETAIL_TABS: DetailTab[] = ['overview', 'brief', 'claude', 'checks', 'files']
@@ -47,7 +46,7 @@ export function DetailPane({pr, tab, setTab, openPalette}: {
                 <DetailHeader pr={pr}/>
                 <Tabs tabs={tabs} active={tab} onChange={setTab}/>
             </div>
-            <div className="detail-body scroll-detail flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto px-6 pt-4 pb-8 select-text">
+            <div className="scroll-detail flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto px-6 pt-4 pb-8 select-text">
                 {tab === 'overview' && <OverviewTab pr={pr} showChecks={() => setTab('checks')} openPalette={openPalette}/>}
                 {tab === 'brief' && <BriefTab pr={pr}/>}
                 {tab === 'claude' && <ClaudeTab pr={pr} job={job}/>}
