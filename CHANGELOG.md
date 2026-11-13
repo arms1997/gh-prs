@@ -11,6 +11,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 ### Changed
 - Desktop app: styles can now use Tailwind utilities built on the app's design tokens, the first step
   of moving off per-component CSS files. Nothing looks different yet.
+- Desktop app: the shared buttons, badges, keys, tabs and dialogs use Tailwind. In the keys help,
+  `pm` and `pa` show as two keys, like the commands listed under them.
 
 ## v0.3.2 — 2026-11-13
 

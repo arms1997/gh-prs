@@ -7,4 +7,3 @@
 .dialog input:focus { border-color: var(--sel-ring); }
 .dialog .small { font-size: 12px; }
 .helprow { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; font-size: 13px; }
-.helprow > kbd { justify-self: start; }

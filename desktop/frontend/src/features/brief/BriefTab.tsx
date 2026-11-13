@@ -31,7 +31,7 @@ export function BriefTab({pr}: { pr: PR }) {
 
     if (err) return <p className="bad">{err}</p>
     if (!brief) return null
-    if (brief.Running) return <p className="brief-wait dim"><Icon name="spinner" className="spin"/> Claude is reading the reviews, threads and checks…</p>
+    if (brief.Running) return <p className="brief-wait dim"><Icon name="spinner" className="animate-spin"/> Claude is reading the reviews, threads and checks…</p>
     if (!brief.Text) return (
         <section className="brief-empty">
             {brief.Err && <p className="bad">{brief.Err}</p>}

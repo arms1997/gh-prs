@@ -42,6 +42,15 @@
   --radius-xl: var(--radius-xl);
   --radius-full: var(--radius-full);
 
+  /* The app's type scale (body text is 14px). Sizes only: line height is inherited unless set (text-xs/none). */
+  --text-*: initial;
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+
   --shadow-*: initial;
   --shadow-pop: var(--shadow-pop);
 

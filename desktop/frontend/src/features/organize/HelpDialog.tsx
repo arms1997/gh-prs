@@ -15,7 +15,7 @@ export function HelpDialog({commands, onClose}: { commands: Command[], onClose: 
         <Modal label="Keys" onClose={onClose}>
             <div className="dialog">
                 <h3>Keys</h3>
-                {KEYS.map(([k, d]) => <div key={k} className="helprow"><kbd>{k}</kbd><span>{d}</span></div>)}
+                {KEYS.map(([k, d]) => <div key={k} className="helprow"><Kbd keys={k}/><span>{d}</span></div>)}
                 {commands.map(c => <div key={c.Key} className="helprow"><span><Kbd keys={c.Key}/></span><span>{c.Name}</span></div>)}
             </div>
         </Modal>
