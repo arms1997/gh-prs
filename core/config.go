@@ -175,16 +175,21 @@ func ParseConfig(data []byte) (Config, error) {
 	return cfg, nil
 }
 
-// ColumnNames are the desktop list's resizable columns; the title takes the rest of the width.
-var ColumnNames = []string{"repo", "diff", "attention", "next"}
+// ColumnNames are the desktop app's resizable widths: the list's columns (the title takes the rest)
+// and the details pane.
+var ColumnNames = []string{"repo", "diff", "attention", "next", "detail"}
 
 func validateColumns(cols map[string]int) error {
 	for k, w := range cols {
 		if !slices.Contains(ColumnNames, k) {
 			return fmt.Errorf("columns: unknown column %q (use %s)", k, strings.Join(ColumnNames, ", "))
 		}
-		if w < 40 || w > 800 {
-			return fmt.Errorf("columns.%s: %d isn't between 40 and 800", k, w)
+		lo, hi := 40, 800
+		if k == "detail" {
+			lo, hi = 280, 1600
+		}
+		if w < lo || w > hi {
+			return fmt.Errorf("columns.%s: %d isn't between %d and %d", k, w, lo, hi)
 		}
 	}
 	return nil

@@ -15,6 +15,9 @@ func TestSaveColumns(t *testing.T) {
 	before = append(before, "# mine\n"...)
 	_ = os.WriteFile(ConfigPath(), before, 0o644)
 
+	if err := SaveColumns(map[string]int{"detail": 900}); err != nil { // wider than a list column may be
+		t.Fatal(err)
+	}
 	if err := SaveColumns(map[string]int{"next": 200, "repo": 150}); err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +49,7 @@ func TestSaveColumns(t *testing.T) {
 	}
 
 	after, _ := os.ReadFile(ConfigPath())
-	for _, bad := range []map[string]int{{"title": 100}, {"repo": 5}} {
+	for _, bad := range []map[string]int{{"title": 100}, {"repo": 5}, {"detail": 100}} {
 		if err := SaveColumns(bad); err == nil {
 			t.Fatalf("%v saved", bad)
 		}

@@ -1,17 +1,17 @@
-import {useEffect, useRef, useState} from 'react'
+import {useEffect, useRef} from 'react'
 import {useApp} from '../../state/AppState'
 import {nextStep, Row} from '../../lib/pr'
 import {AttentionBadges, DiffStat, NextStepLabel, TurnDot} from '../../components/pr/PrBits'
 import {Icon} from '../../components/ui/Icon'
+import {useWidths} from './useWidths'
 
 // The resizable columns, matching core.ColumnNames; the title takes the rest.
 const COLUMNS = [
-    {key: 'repo', label: 'Repository', width: 176},
-    {key: 'diff', label: 'Diff', width: 104, className: 'col-diff'},
-    {key: 'attention', label: 'Needs attention', width: 196},
-    {key: 'next', label: 'Next step', width: 152},
+    {key: 'repo', label: 'Repository'},
+    {key: 'diff', label: 'Diff', className: 'col-diff'},
+    {key: 'attention', label: 'Needs attention'},
+    {key: 'next', label: 'Next step'},
 ]
-const clamp = (w: number) => Math.round(Math.min(800, Math.max(40, w)))
 
 export function PrList({rows, cursor, collapsed, onSelect, onToggle}: {
     rows: Row[], cursor: number, collapsed: string[], onSelect: (path: string) => void, onToggle: (path: string) => void
@@ -20,41 +20,15 @@ export function PrList({rows, cursor, collapsed, onSelect, onToggle}: {
     const selRef = useRef<HTMLDivElement>(null)
     useEffect(() => { selRef.current?.scrollIntoView({block: 'nearest'}) }, [cursor])
 
-    // Widths you set (config.yml), overridden while a drag is under way.
-    const [dragging, setDragging] = useState<Record<string, number>>()
-    const saved = dragging ?? app.state?.Columns ?? {}
-    const width = (key: string) => saved[key] ?? COLUMNS.find(c => c.key === key)!.width
-    const vars = Object.fromEntries(COLUMNS.map(c => [`--w-${c.key}`, `${width(c.key)}px`]))
-    const save = (cols: Record<string, number>) => app.saveColumns(cols).finally(() => setDragging(undefined))
-    const reset = (key: string) => { const {[key]: _, ...rest} = saved; save(rest) }
-
-    // A column's left edge moves with the pointer: the column grows as you drag left, the title shrinks.
-    const drag = (key: string, e: React.PointerEvent<HTMLElement>) => {
-        const el = e.currentTarget, x0 = e.clientX, w0 = width(key)
-        let cols = saved
-        el.setPointerCapture(e.pointerId)
-        el.onpointermove = ev => setDragging(cols = {...saved, [key]: clamp(w0 - (ev.clientX - x0))})
-        el.onpointerup = () => {
-            el.onpointermove = el.onpointerup = null
-            if (cols !== saved) save(cols)
-        }
-    }
-    const nudge = (key: string, e: React.KeyboardEvent) => {
-        const d = {ArrowLeft: 8, ArrowRight: -8}[e.key]
-        if (d) { e.preventDefault(); save({...saved, [key]: clamp(width(key) + d)}) }
-    }
+    const {vars, handle} = useWidths()
 
     return (
-        <main aria-label="Pull requests" className="prlist scroll-list" style={vars as React.CSSProperties}>
+        <main aria-label="Pull requests" className="prlist scroll-list" style={vars}>
             <div className="pr-grid prlist-head">
                 <span/><span>Title</span>
                 {COLUMNS.map(c => (
                     <span key={c.key} className={'col-head ' + (c.className ?? '')}>
-                        <span role="separator" aria-orientation="vertical" aria-label={`Resize ${c.label}`} tabIndex={0}
-                              aria-valuenow={width(c.key)} title="Drag to resize · double-click to reset"
-                              className={'col-resize' + (dragging?.[c.key] !== undefined ? ' active' : '')}
-                              onPointerDown={e => drag(c.key, e)} onDoubleClick={() => reset(c.key)}
-                              onKeyDown={e => nudge(c.key, e)}/>
+                        <span {...handle(c.key, c.label)}/>
                         <span className="ellipsis">{c.label}</span>
                     </span>
                 ))}

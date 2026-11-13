@@ -108,6 +108,7 @@ can be used side by side.
 
 ## Changelog
 
+- **2026-11-13:** Resizable desktop layout: drag the list's column edges or the details pane's edge (double-click resets), or set `columns:` in config.yml. Long words in agent output wrap inside their box.
 - **2026-11-12:** Unit tests for the desktop app's logic (filters, next step, before-merge, Markdown sanitizing) with Vitest.
 - **2026-11-12:** Phase 7 shipped: conversations with agents. Answer an agent's question, reply by resuming its session (`cy`), ask in a new one (`ci`), stop it (`cx`); Claude tab and sessions page in the app.
 - **2026-11-12:** Desktop app redesign on Augment's design system: main view with quick filters and next step, detail tabs (overview with before-merge checklist, Claude, checks, files), ⌘K palette. Front end split into pages and components.

@@ -3,6 +3,7 @@ import {Projects} from '../../../wailsjs/go/main/App'
 import {useApp} from '../../state/AppState'
 import {nextStep, PR, QUICK_FILTERS} from '../../lib/pr'
 import {countPRs, visibleRows} from '../../lib/rows'
+import {useWidths} from './useWidths'
 import {DETAIL_TABS, DetailPane, DetailTab} from '../../features/detail/DetailPane'
 import {CommandPalette, PaletteItem} from '../../features/palette/CommandPalette'
 import {HelpDialog} from '../../features/organize/HelpDialog'
@@ -98,13 +99,17 @@ export function MainPage() {
         {section: 'App', label: 'Keyboard shortcuts', keys: '?', run: () => setDialog('help')},
     ]
 
+    const widths = useWidths()
     return (
         <div className="main-page">
             <TopBar ref={filterRef} total={total} onFocus={() => setFiltering(true)} onDone={() => setFiltering(false)}/>
             <FilterBar quick={quick} setQuick={setQuick} counts={counts} total={total}/>
-            <div className="split">
+            <div className="split" style={widths.vars}>
                 <PrList rows={rows} cursor={cursor} collapsed={collapsed} onSelect={setSel} onToggle={p => toggleGroup(p)}/>
-                <DetailPane pr={pr} tab={tab} setTab={setTab} openPalette={() => setDialog('palette')}/>
+                <div className="detail-wrap">
+                    <span {...widths.handle('detail', 'details pane')}/>
+                    <DetailPane pr={pr} tab={tab} setTab={setTab} openPalette={() => setDialog('palette')}/>
+                </div>
             </div>
             <Footer hint={hint}/>
             {dialog === 'help' && <HelpDialog commands={commands} onClose={() => setDialog(undefined)}/>}

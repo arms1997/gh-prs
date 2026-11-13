@@ -32,10 +32,17 @@
 .chip-dot.bad { background: var(--dot-bad); }
 
 /* ---- list ---- */
-.split { display: grid; grid-template-columns: minmax(0, 1fr) 440px; min-height: 0; }
-.prlist { overflow-y: auto; overflow-x: hidden; min-height: 0; padding: 0 8px 16px; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) var(--w-detail, 440px); min-height: 0; }
+.detail-wrap { position: relative; display: grid; min-width: 0; min-height: 0; }
+.detail-wrap > .resize-handle { left: -4px; top: 0; bottom: 0; z-index: 2; }
+.detail-wrap > .resize-handle::after { display: none; }
+.detail-wrap > .resize-handle:hover::after, .detail-wrap > .resize-handle.active::after, .detail-wrap > .resize-handle:focus-visible::after { display: block; top: 0; bottom: 0; }
+.prlist { overflow-y: auto; overflow-x: clip; min-height: 0; padding: 0 8px 16px; }
+/* Rows keep at least their full width, so a wide details pane covers them instead of squeezing them:
+   the deepest indent, the title's minimum, the columns, five gaps and the row padding. */
+.prlist > * { min-width: calc(54px + 120px + var(--w-repo, 176px) + var(--w-diff, 104px) + var(--w-attention, 196px) + var(--w-next, 152px) + 60px + 40px); }
 .pr-grid {
-    display: grid; grid-template-columns: var(--lead, 16px) minmax(120px, 1fr) var(--w-repo) var(--w-diff) var(--w-attention) var(--w-next);
+    display: grid; grid-template-columns: var(--lead, 16px) minmax(120px, 1fr) var(--w-repo, 176px) var(--w-diff, 104px) var(--w-attention, 196px) var(--w-next, 152px);
     gap: 12px; align-items: center; padding: 0 16px 0 24px;
 }
 .prlist-head {
@@ -43,10 +50,10 @@
     position: sticky; top: 0; background: var(--background); z-index: 1; margin: 0 -8px; padding-left: 32px; padding-right: 24px;
 }
 .col-head { position: relative; display: flex; min-width: 0; }
-.col-resize { position: absolute; left: -10px; top: -8px; bottom: -8px; width: 8px; cursor: col-resize; }
-.col-resize::after { content: ''; position: absolute; left: 3px; top: 6px; bottom: 6px; width: 2px; border-radius: 1px; }
-.col-resize:hover::after, .col-resize:focus-visible::after, .col-resize.active::after { background: var(--sel-ring); }
-.col-resize:focus-visible { outline: none; }
+.resize-handle { position: absolute; left: -10px; top: -8px; bottom: -8px; width: 8px; cursor: col-resize; }
+.resize-handle::after { content: ''; position: absolute; left: 3px; top: 8px; bottom: 8px; width: 1px; background: var(--border-200); }
+.resize-handle:hover::after, .resize-handle:focus-visible::after, .resize-handle.active::after { left: 3px; width: 2px; top: 6px; bottom: 6px; border-radius: 1px; background: var(--sel-ring); }
+.resize-handle:focus-visible { outline: none; }
 .pr-row { height: 36px; border-radius: var(--radius-md); margin-top: 2px; cursor: default; padding-left: 0; }
 .pr-row .turn-dot { justify-self: end; }
 .pr-row:hover { background: var(--muted); }
@@ -57,6 +64,9 @@
 .prlist-empty { padding: 24px; }
 
 .group { display: flex; align-items: center; gap: 8px; border-radius: var(--radius-md); cursor: pointer; color: var(--text-dim); }
+/* A narrow list (a wide details pane) clips headings at its edge instead of squeezing or wrapping them. */
+.group { white-space: nowrap; overflow: hidden; }
+.group > * { flex-shrink: 0; }
 .group.depth0 { height: 40px; padding-top: 12px; font-size: 16px; font-weight: 600; color: var(--foreground); }
 .group.depth1 { height: 30px; padding-top: 4px; font-size: 13px; font-weight: 500; }
 .group.depth2 { height: 28px; padding-top: 4px; font-size: 12px; font-weight: 500; }
@@ -64,8 +74,8 @@
 
 /* Narrow windows: the detail pane shrinks and the diff column goes. */
 @media (max-width: 1280px) {
-    .split { grid-template-columns: minmax(0, 1fr) 380px; }
-    .pr-grid { grid-template-columns: var(--lead, 16px) minmax(120px, 1fr) var(--w-repo) var(--w-attention) var(--w-next); }
+    .split { grid-template-columns: minmax(0, 1fr) var(--w-detail, 380px); }
+    .pr-grid { grid-template-columns: var(--lead, 16px) minmax(120px, 1fr) var(--w-repo, 150px) var(--w-attention, 180px) var(--w-next, 140px); }
     .col-diff { display: none; }
 }
 
