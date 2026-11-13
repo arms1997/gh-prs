@@ -38,8 +38,8 @@ export function Timeline({job}: { job: Job }) {
                 </section>
             )}
             <section>
-                <Heading aside={<span className="dim small">{steps.length} recent steps</span>}>What Claude did</Heading>
-                {steps.length === 0 ? <p className="dim small">Starting…</p> : (
+                <Heading aside={<span className="dim text-xs">{steps.length} recent steps</span>}>What Claude did</Heading>
+                {steps.length === 0 ? <p className="dim text-xs">Starting…</p> : (
                     <ol className="m-0 max-h-90 list-none overflow-y-auto rounded-lg border border-border-100 px-0 py-1 [--thumb:var(--text-faint)]" ref={box}>
                         {steps.map((a, i) => {
                             const current = i === steps.length - 1 && job.State === 'running'

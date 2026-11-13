@@ -21,12 +21,12 @@ export function OverviewTab({pr, showChecks, openPalette}: { pr: PR, showChecks:
     return (
         <>
             <section>
-                <Heading aside={<span className="dim small">{done} of {gates.length} done</span>}>Before merge</Heading>
+                <Heading aside={<span className="dim text-xs">{done} of {gates.length} done</span>}>Before merge</Heading>
                 <div className="mb-1 h-1 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-[width] duration-300" style={{width: `${(done / gates.length) * 100}%`}}/></div>
                 {gates.map(g => (
                     <div key={g.title} className="flex items-start gap-3 border-b border-border-100 py-2.5">
                         <GateIcon state={g.state}/>
-                        <div className="flex min-w-0 flex-1 flex-col gap-0.5"><span className="text-base font-medium">{g.title}</span><span className="dim small">{g.detail}</span></div>
+                        <div className="flex min-w-0 flex-1 flex-col gap-0.5"><span className="text-base font-medium">{g.title}</span><span className="dim text-xs">{g.detail}</span></div>
                         {g.action && g.state !== 'done' && (
                             <button type="button" className={LINK_BTN} onClick={() => act(g)}>
                                 {{checks: 'See checks', github: 'Open on GitHub', ready: 'Mark ready'}[g.action]}
@@ -48,7 +48,7 @@ export function OverviewTab({pr, showChecks, openPalette}: { pr: PR, showChecks:
 
             {tasks.length > 0 && (
                 <section>
-                    <Heading aside={<span className="dim small">{tasks.filter(t => t.done).length} of {tasks.length}</span>}>PR checklist</Heading>
+                    <Heading aside={<span className="dim text-xs">{tasks.filter(t => t.done).length} of {tasks.length}</span>}>PR checklist</Heading>
                     <ul className="m-0 flex list-none flex-col gap-2 p-0">
                         {tasks.map((t, i) => (
                             <li key={i} className={`flex gap-2 text-sm leading-[1.45] ${t.done ? 'text-dim' : ''}`}>

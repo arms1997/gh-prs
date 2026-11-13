@@ -5,6 +5,11 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
+/* narrow: windows where the detail pane shrinks and the diff column goes. live: a resize handle being
+   hovered, focused or dragged (data-active). */
+@custom-variant narrow (@media (max-width: 1280px));
+@custom-variant live (&:is(:hover, :focus-visible, [data-active]));
+
 @theme inline reference {
   --color-*: initial;
   --color-background: var(--background);
