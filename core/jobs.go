@@ -114,19 +114,31 @@ func StartJob(pp Prepared) (*JobView, error) {
 	return &JobView{Job: j, Status: JobRunning}, nil
 }
 
-// loadJobs returns the latest job per PR.
+// LoadJobs returns the latest job per PR.
 func LoadJobs() map[string]*JobView {
 	jobs := map[string]*JobView{}
+	MergeJobs(jobs)
+	return jobs
+}
+
+// MergeJobs adds jobs started since jobs was loaded, by this gh-prs or another one (the other front
+// end, another terminal), so stopping or replying finds them. Jobs already held keep their state.
+func MergeJobs(jobs map[string]*JobView) (added bool) {
+	latest := map[string]Job{}
 	for _, j := range readJobs() {
 		k := PrKey(j.Repo, j.Number)
-		if cur := jobs[k]; cur == nil || j.Started.After(cur.Started) {
-			jobs[k] = &JobView{Job: j}
+		if cur, ok := latest[k]; !ok || j.Started.After(cur.Started) {
+			latest[k] = j
 		}
 	}
-	for _, v := range jobs {
-		v.Update()
+	for k, j := range latest {
+		if cur := jobs[k]; cur == nil || j.Started.After(cur.Started) {
+			v := &JobView{Job: j}
+			v.Update()
+			jobs[k], added = v, true
+		}
 	}
-	return jobs
+	return added
 }
 
 // LoadAllJobs returns the newest jobs across all PRs, newest first, at most limit.

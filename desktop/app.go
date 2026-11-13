@@ -107,6 +107,7 @@ func (a *App) fetch() {
 func (a *App) jobLoop() {
 	for range time.Tick(time.Second) {
 		a.mu.Lock()
+		core.MergeJobs(a.jobs)
 		finished := false
 		for _, v := range a.jobs {
 			was := v.Status
@@ -314,6 +315,7 @@ func (a *App) Run(cmdKey, prKey, input string) (string, error) {
 			c = cc
 		}
 	}
+	core.MergeJobs(a.jobs) // an agent may have been started from the terminal UI or another window
 	job := a.jobs[prKey]
 	cfg := a.cfg
 	a.mu.Unlock()

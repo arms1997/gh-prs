@@ -18,6 +18,12 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 - Claude calls that write text (the PR brief, reorganizing) no longer load your own Claude Code hooks
   and plugins, so they can't change the answer.
 
+## v0.2.1 — 2026-11-13
+
+### Fixed
+- `cx`, `cy`, `ct` and `ci` find an agent started from the other front end or another gh-prs window,
+  instead of saying no agent is running. Both front ends also show those agents in the list.
+
 ## v0.2.0 — 2026-11-13
 
 ### Added
