@@ -84,8 +84,8 @@ export function SessionsPage() {
             </header>
             <div className={`${GRID} border-b border-border-100 px-6 text-xs font-medium text-dim`}><span>State</span><span>Pull request</span><span>Asked to</span><span>Started</span><span>Time</span></div>
             <main className="scroll-list overflow-y-auto px-2 pt-1 pb-4">
-                {jobs === undefined && <p className="dim p-4">Loading…</p>}
-                {jobs?.length === 0 && <p className="dim p-4">No agent has run yet.</p>}
+                {jobs === undefined && <p className="dim my-3.5 p-4">Loading…</p>}
+                {jobs?.length === 0 && <p className="dim my-3.5 p-4">No agent has run yet.</p>}
                 {active.length > 0 && <div className="px-4 pt-3 pb-1 text-xs font-medium text-dim">Active</div>}
                 {active.map(row)}
                 {finished.length > 0 && <div className="px-4 pt-3 pb-1 text-xs font-medium text-dim">Finished</div>}

@@ -84,7 +84,7 @@ function Description({md}: { md: string }) {
     return (
         <section>
             <Heading>Description</Heading>
-            <div className={'markdown' + (long && !full ? ' clipped' : '')}
+            <div className={`markdown text-sm leading-[1.55] text-neutral-fg ${long && !full ? 'max-h-[280px] overflow-hidden [mask-image:linear-gradient(to_bottom,#000_75%,transparent)]' : ''}`}
                  dangerouslySetInnerHTML={{__html: md.trim() ? html : '<p class="dim">No description.</p>'}}/>
             {long && <button type="button" className={LINK_BTN} onClick={() => setFull(f => !f)}>{full ? 'Show less' : 'Show full description'}</button>}
         </section>
