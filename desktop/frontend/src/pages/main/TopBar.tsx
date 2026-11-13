@@ -10,7 +10,7 @@ export const TopBar = forwardRef<HTMLInputElement, { total: number, onFocus: () 
         return (
             <header className="flex items-center gap-3 border-b border-border-100 px-4">
                 <span className="font-semibold">gh-prs</span>
-                <span className="dim text-xs">{total} open PRs</span>
+                <span className="text-dim text-xs">{total} open PRs</span>
                 <label className="mx-auto flex h-8 max-w-[560px] flex-1 items-center gap-2 rounded-md border border-input pr-2 pl-2.5 text-dim focus-within:border-sel-ring">
                     <Icon name="search" size={14}/>
                     <span className="sr-only">Filter pull requests</span>

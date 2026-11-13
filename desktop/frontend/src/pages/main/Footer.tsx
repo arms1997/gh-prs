@@ -14,7 +14,7 @@ export function Footer({hint}: { hint: string }) {
     return (
         <footer className={FOOTER}>
             {hint ? <span>{hint}</span> : SHORTCUTS.map(([k, d]) => <span key={k} className={FOOTER_KEY}><Kbd keys={k}/>{d}</span>)}
-            <span className={`${FOOTER_STATUS} ${err ? 'bad' : ''}`}>{app.flash?.text ?? app.state?.Status}</span>
+            <span className={`${FOOTER_STATUS} ${err ? 'text-bad-fg' : ''}`}>{app.flash?.text ?? app.state?.Status}</span>
         </footer>
     )
 }

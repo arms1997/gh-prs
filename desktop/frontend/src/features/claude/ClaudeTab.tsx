@@ -26,7 +26,7 @@ export function ClaudeTab({pr, job}: { pr: PR, job?: Job }) {
             ) : (
                 <section>
                     <Heading>No agent has worked on this PR yet</Heading>
-                    <p className="dim text-xs">Hand it to one, or ask Claude something below.</p>
+                    <p className="text-dim text-xs">Hand it to one, or ask Claude something below.</p>
                 </section>
             )}
             <section>

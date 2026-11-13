@@ -38,7 +38,7 @@ export function NeedsYouCard({pr, question, options}: { pr: PR, question: string
                     </form>
                 </>
             ) : (
-                <p className="dim text-xs">Add a reply command (agent_session with an input) to answer from here.</p>
+                <p className="text-dim text-xs">Add a reply command (agent_session with an input) to answer from here.</p>
             )}
         </div>
     )

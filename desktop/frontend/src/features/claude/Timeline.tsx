@@ -33,13 +33,13 @@ export function Timeline({job}: { job: Job }) {
                 <section>
                     <Heading>Rounds</Heading>
                     <ol className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
-                        {job.Rounds.map((r, i) => <li key={i} className="flex gap-2.5"><span className="mono dim">{i + 1}</span>{r}</li>)}
+                        {job.Rounds.map((r, i) => <li key={i} className="flex gap-2.5"><span className="font-mono text-dim">{i + 1}</span>{r}</li>)}
                     </ol>
                 </section>
             )}
             <section>
-                <Heading aside={<span className="dim text-xs">{steps.length} recent steps</span>}>What Claude did</Heading>
-                {steps.length === 0 ? <p className="dim text-xs">Starting…</p> : (
+                <Heading aside={<span className="text-dim text-xs">{steps.length} recent steps</span>}>What Claude did</Heading>
+                {steps.length === 0 ? <p className="text-dim text-xs">Starting…</p> : (
                     <ol className="m-0 max-h-90 list-none overflow-y-auto rounded-lg border border-border-100 px-0 py-1 [--thumb:var(--text-faint)]" ref={box}>
                         {steps.map((a, i) => {
                             const current = i === steps.length - 1 && job.State === 'running'

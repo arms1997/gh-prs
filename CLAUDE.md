@@ -13,6 +13,19 @@ README.md says how to use it.
   `state/AppState.tsx`.
 - `defaults/`: built-in config, commands and agent prompts, embedded in the binary.
 
+## Styles (desktop app)
+
+- Style with Tailwind utilities in `className`. No new CSS files or global class names.
+- Colors, radii, shadows and type sizes come from the app's tokens (`styles/tailwind.css`): `bg-muted`,
+  `text-dim`, `text-xs`. Tailwind's default palette is off, and dark mode follows the tokens, so
+  no `dark:` variants.
+- Variants are literal class strings in a map (`{ok: 'text-ok-fg', bad: 'text-bad-fg'}`), never
+  built from pieces: Tailwind only generates classes written out in full in the source.
+- A pattern used in more than one place becomes a component in `components/ui` (Button, Badge,
+  Input, Heading, BoxList), not a shared class.
+- CSS lives only in `styles/`: tokens, base (reset, scrollbars), the Tailwind entry, and
+  `prose.css` for markdown rendered as HTML, which has no class names to put utilities on.
+
 ## Workflow
 
 1. One branch and one PR per change, from `origin/main` (or stacked on the PR it builds on). Never

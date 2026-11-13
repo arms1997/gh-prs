@@ -24,9 +24,9 @@ export function FilesTab({pr}: { pr: PR }) {
         return () => { live = false }
     }, [id])
 
-    if (err) return <p className="bad">{err}</p>
-    if (!files) return <p className="dim">Loading files…</p>
-    if (!files.length) return <p className="dim">No files changed.</p>
+    if (err) return <p className="text-bad-fg">{err}</p>
+    if (!files) return <p className="text-dim">Loading files…</p>
+    if (!files.length) return <p className="text-dim">No files changed.</p>
     return (
         <section>
             <Heading aside={<a href={pr.URL + '/files'} className="text-xs">Review on GitHub</a>}>{files.length} files</Heading>
@@ -34,9 +34,9 @@ export function FilesTab({pr}: { pr: PR }) {
                 {files.map(f => {
                     const slash = f.Path.lastIndexOf('/')
                     return (
-                        <BoxRow key={f.Path} className="mono text-xs" title={f.Path}>
-                            <span className="min-w-0 truncate"><span className="dim">{f.Path.slice(0, slash + 1)}</span>{f.Path.slice(slash + 1)}</span>
-                            <span className={BOX_END}><span className="ok">+{f.Additions}</span> <span className="bad">−{f.Deletions}</span></span>
+                        <BoxRow key={f.Path} className="font-mono text-xs" title={f.Path}>
+                            <span className="min-w-0 truncate"><span className="text-dim">{f.Path.slice(0, slash + 1)}</span>{f.Path.slice(slash + 1)}</span>
+                            <span className={BOX_END}><span className="text-ok-fg">+{f.Additions}</span> <span className="text-bad-fg">−{f.Deletions}</span></span>
                         </BoxRow>
                     )
                 })}

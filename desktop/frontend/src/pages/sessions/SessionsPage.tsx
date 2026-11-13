@@ -68,10 +68,10 @@ export function SessionsPage() {
             <div key={j.ID} className={`${GRID} h-11 cursor-default rounded-md px-4 text-sm ${i === cur ? 'bg-sel-bg shadow-sel' : 'hover:bg-muted'}`}
                  onClick={() => setCur(i)} onDoubleClick={() => open(j)}>
                 <span><Badge tone={tone} icon={icon}>{asks ? 'Needs you' : JOB_LABEL[j.State].split(' ')[0]}</Badge></span>
-                <span className="mono text-xs dim min-w-0 truncate">{j.Repo.split('/')[1]}#{j.Number}</span>
+                <span className="font-mono text-xs text-dim min-w-0 truncate">{j.Repo.split('/')[1]}#{j.Number}</span>
                 <span className="min-w-0 truncate"><span className="font-medium">{j.Name}:</span> {what}</span>
-                <span className="text-xs dim">{ago(j.Started)}</span>
-                <span className="text-xs dim mono">{j.Elapsed}</span>
+                <span className="text-xs text-dim">{ago(j.Started)}</span>
+                <span className="text-xs text-dim font-mono">{j.Elapsed}</span>
             </div>
         )
     }
@@ -81,12 +81,12 @@ export function SessionsPage() {
             <header className="flex items-center gap-3 border-b border-border-100 px-5">
                 <Button size="sm" onClick={back}>← PRs <Kbd keys="esc"/></Button>
                 <h2 className="m-0 text-lg font-semibold">Claude sessions</h2>
-                <span className="dim text-xs">Every agent run across your PRs</span>
+                <span className="text-dim text-xs">Every agent run across your PRs</span>
             </header>
             <div className={`${GRID} border-b border-border-100 px-6 text-xs font-medium text-dim`}><span>State</span><span>Pull request</span><span>Asked to</span><span>Started</span><span>Time</span></div>
             <main className="scroll-list overflow-y-auto px-2 pt-1 pb-4">
-                {jobs === undefined && <p className="dim my-3.5 p-4">Loading…</p>}
-                {jobs?.length === 0 && <p className="dim my-3.5 p-4">No agent has run yet.</p>}
+                {jobs === undefined && <p className="text-dim my-3.5 p-4">Loading…</p>}
+                {jobs?.length === 0 && <p className="text-dim my-3.5 p-4">No agent has run yet.</p>}
                 {active.length > 0 && <div className="px-4 pt-3 pb-1 text-xs font-medium text-dim">Active</div>}
                 {active.map(row)}
                 {finished.length > 0 && <div className="px-4 pt-3 pb-1 text-xs font-medium text-dim">Finished</div>}
@@ -98,7 +98,7 @@ export function SessionsPage() {
                 {stop && <span className={FOOTER_KEY}><Kbd keys="x"/>stop</span>}
                 <span className={FOOTER_KEY}><Kbd keys="r"/>run again</span>
                 <span className={FOOTER_KEY}><Kbd keys="esc"/>back</span>
-                <span className={`${FOOTER_STATUS} ${app.flash?.err ? 'bad' : ''}`}>{app.flash?.text}</span>
+                <span className={`${FOOTER_STATUS} ${app.flash?.err ? 'text-bad-fg' : ''}`}>{app.flash?.text}</span>
             </footer>
         </div>
     )
