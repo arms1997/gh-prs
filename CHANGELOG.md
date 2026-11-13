@@ -8,6 +8,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+## v0.3.0 — 2026-11-13
+
 ### Added
 - Desktop app: a daily brief (`b`, or the "Daily brief" button) lists what's worth doing first across
   your PRs: Claude's open questions, reviews people are waiting on, PRs ready to merge, and stuck ones.
