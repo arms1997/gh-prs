@@ -18,6 +18,7 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 - Desktop app: the details pane and its tabs use Tailwind, with no visible change.
 - Desktop app: the daily brief and Brief tab use Tailwind, and rendered markdown shares one stylesheet, with no visible change.
 - Desktop app: the main page (top bar, quick filters, PR list, footer) uses Tailwind, with no visible change.
+- Desktop app: the last shared helper classes are Tailwind utilities, which finishes the move to Tailwind.
 
 ## v0.3.2 — 2026-11-13
 

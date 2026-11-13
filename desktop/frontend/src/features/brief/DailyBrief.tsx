@@ -30,7 +30,7 @@ export function DailyBrief({onClose}: { onClose: () => void }) {
             <div className="flex w-[640px] max-w-[calc(100vw-32px)] flex-col">
                 <header className="flex items-baseline gap-3 border-b border-border-100 px-5 pt-4 pb-3">
                     <h2 className="m-0 text-lg font-semibold">Daily brief</h2>
-                    <span className="dim text-xs">{items.length ? `${items.length} worth doing, most blocking first` : 'Nothing needs you right now'}</span>
+                    <span className="text-dim text-xs">{items.length ? `${items.length} worth doing, most blocking first` : 'Nothing needs you right now'}</span>
                 </header>
                 <ol className="m-0 max-h-[60vh] list-none overflow-y-auto px-2 py-1.5">
                     {items.map((i, n) => (
@@ -39,14 +39,14 @@ export function DailyBrief({onClose}: { onClose: () => void }) {
                                 <span className={`row-span-2 inline-flex items-center gap-1.5 text-sm font-medium ${KIND_COLOR[i.kind]}`}><Icon name={KIND[i.kind].icon} size={14}/> {KIND[i.kind].label}</span>
                                 <span className="flex min-w-0 items-baseline gap-2 text-base font-medium">
                                     <span className="min-w-0 truncate">{i.pr.Title}</span>
-                                    <span className="mono text-xs dim shrink-0 whitespace-nowrap">{i.pr.Repo.split('/')[1]}#{i.pr.Number}</span>
+                                    <span className="font-mono text-xs text-dim shrink-0 whitespace-nowrap">{i.pr.Repo.split('/')[1]}#{i.pr.Number}</span>
                                 </span>
-                                <span className="text-xs dim [overflow-wrap:anywhere]" dangerouslySetInnerHTML={{__html: markdownInline(i.why)}}/>
+                                <span className="text-xs text-dim [overflow-wrap:anywhere]" dangerouslySetInnerHTML={{__html: markdownInline(i.why)}}/>
                             </button>
                         </li>
                     ))}
                 </ol>
-                {counts.length > 0 && <footer className="text-xs dim border-t border-border-100 px-5 pt-2.5 pb-3.5">Also open: {counts.map(([n, t]) => `${n} ${t}`).join(' · ')}</footer>}
+                {counts.length > 0 && <footer className="text-xs text-dim border-t border-border-100 px-5 pt-2.5 pb-3.5">Also open: {counts.map(([n, t]) => `${n} ${t}`).join(' · ')}</footer>}
             </div>
         </Modal>
     )
