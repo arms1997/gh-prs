@@ -13,7 +13,7 @@ export function AgentStatus({pr, job}: { pr: PR, job: Job }) {
         job.Rounds?.length > 1 && `${job.Rounds.length} rounds`].filter(Boolean)
     return (
         <div className={'agent-status ' + job.State}>
-            <span className="agent-icon"><Icon name={ICON[job.State]} size={14} className={job.State === 'running' ? 'spin' : undefined}/></span>
+            <span className="agent-icon"><Icon name={ICON[job.State]} size={14} className={job.State === 'running' ? 'animate-spin' : undefined}/></span>
             <div className="agent-status-text">
                 <span className="agent-status-title">{job.Name} · {JOB_LABEL[job.State]}</span>
                 <span className="dim small">{facts.join(' · ')}</span>
