@@ -64,7 +64,7 @@ export function SessionsPage() {
         const [tone, icon] = asks ? ['warn', 'question'] as [Tone, IconName] : TONE[j.State]
         const what = (asks && needsYou(j)) || j.Summary?.Headline || j.Activity?.[j.Activity.length - 1] || j.Result
         return (
-            <div key={j.ID} className={`${GRID} h-11 cursor-default rounded-md px-4 text-sm ${i === cur ? 'bg-sel-bg shadow-[inset_0_0_0_1.5px_var(--sel-ring)]' : 'hover:bg-muted'}`}
+            <div key={j.ID} className={`${GRID} h-11 cursor-default rounded-md px-4 text-sm ${i === cur ? 'bg-sel-bg shadow-sel' : 'hover:bg-muted'}`}
                  onClick={() => setCur(i)} onDoubleClick={() => open(j)}>
                 <span><Badge tone={tone} icon={icon}>{asks ? 'Needs you' : JOB_LABEL[j.State].split(' ')[0]}</Badge></span>
                 <span className="mono small dim ellipsis">{j.Repo.split('/')[1]}#{j.Number}</span>
