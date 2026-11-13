@@ -209,6 +209,7 @@ type State struct {
 	Status   string
 	IsErr    bool
 	Loading  bool
+	Columns  map[string]int // list column widths you set, in pixels
 
 	// Unused: makes Wails' TypeScript generator emit these, which it skips when they're
 	// only reachable through the embedded core.PR.
@@ -225,7 +226,7 @@ func (a *App) State(filter string, collapsed []string, showAll bool) State {
 		col[p] = true
 	}
 	rows := core.BuildRows(a.data, a.cfg, core.View{Collapsed: col, Filter: filter, Org: a.org, ShowAll: showAll})
-	s := State{Jobs: map[string]JobState{}, Status: a.status, IsErr: a.isErr, Loading: a.loading}
+	s := State{Jobs: map[string]JobState{}, Status: a.status, IsErr: a.isErr, Loading: a.loading, Columns: a.cfg.Columns}
 	for _, r := range rows {
 		rv := RowView{Title: r.Title, Depth: r.Depth, Count: r.Count, Path: r.Path, Stack: r.Stack, StackedOn: r.StackedOn}
 		if p := r.PR; p != nil {
@@ -356,6 +357,17 @@ func (a *App) OpenURL(link string) error {
 		return fmt.Errorf("not a web link: %q", link)
 	}
 	runtime.BrowserOpenURL(a.ctx, u.String())
+	return nil
+}
+
+// SaveColumns stores the list's column widths in config.yml; none resets them to the defaults.
+func (a *App) SaveColumns(cols map[string]int) error {
+	if err := core.SaveColumns(cols); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.cfg.Columns = cols
+	a.mu.Unlock()
 	return nil
 }
 

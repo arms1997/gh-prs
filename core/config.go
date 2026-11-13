@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -26,14 +27,15 @@ type Section struct {
 }
 
 type Config struct {
-	ProjectLabelPrefix string    `yaml:"project_label_prefix"`
-	RefreshInterval    string    `yaml:"refresh_interval"`
-	ReposDir           string    `yaml:"repos_dir"`
-	Opener             string    `yaml:"opener"`
-	PromptContextFile  string    `yaml:"prompt_context_file"`
-	LinearWorkspace    string    `yaml:"linear_workspace"`
-	Sections           []Section `yaml:"sections"`
-	Commands           []Command `yaml:"commands"`
+	ProjectLabelPrefix string         `yaml:"project_label_prefix"`
+	RefreshInterval    string         `yaml:"refresh_interval"`
+	ReposDir           string         `yaml:"repos_dir"`
+	Opener             string         `yaml:"opener"`
+	PromptContextFile  string         `yaml:"prompt_context_file"`
+	LinearWorkspace    string         `yaml:"linear_workspace"`
+	Sections           []Section      `yaml:"sections"`
+	Commands           []Command      `yaml:"commands"`
+	Columns            map[string]int `yaml:"columns,omitempty"` // desktop list widths in pixels, by ColumnNames
 
 	Refresh       time.Duration `yaml:"-"` // parsed RefreshInterval; 0 disables auto-refresh
 	promptContext string        // contents of PromptContextFile, prepended to every prompt
@@ -167,5 +169,76 @@ func ParseConfig(data []byte) (Config, error) {
 	if err := validateCommands(&cfg); err != nil {
 		return cfg, err
 	}
+	if err := validateColumns(cfg.Columns); err != nil {
+		return cfg, err
+	}
 	return cfg, nil
+}
+
+// ColumnNames are the desktop app's resizable widths: the list's columns (the title takes the rest)
+// and the details pane.
+var ColumnNames = []string{"repo", "diff", "attention", "next", "detail"}
+
+func validateColumns(cols map[string]int) error {
+	for k, w := range cols {
+		if !slices.Contains(ColumnNames, k) {
+			return fmt.Errorf("columns: unknown column %q (use %s)", k, strings.Join(ColumnNames, ", "))
+		}
+		lo, hi := 40, 800
+		if k == "detail" {
+			lo, hi = 280, 1600
+		}
+		if w < lo || w > hi {
+			return fmt.Errorf("columns.%s: %d isn't between %d and %d", k, w, lo, hi)
+		}
+	}
+	return nil
+}
+
+// SaveColumns writes the widths to config.yml. Only the top-level columns key changes, so the rest
+// of the file, comments included, stays as you wrote it. No widths removes the key.
+func SaveColumns(cols map[string]int) error {
+	if err := validateColumns(cols); err != nil {
+		return err
+	}
+	data, err := os.ReadFile(ConfigPath())
+	if err != nil {
+		return err
+	}
+	out := setColumns(data, cols)
+	if _, err := ParseConfig(out); err != nil {
+		return err
+	}
+	return os.WriteFile(ConfigPath(), out, 0o644)
+}
+
+func setColumns(data []byte, cols map[string]int) []byte {
+	line := ""
+	if len(cols) > 0 {
+		var parts []string
+		for _, k := range ColumnNames {
+			if w, ok := cols[k]; ok {
+				parts = append(parts, fmt.Sprintf("%s: %d", k, w))
+			}
+		}
+		line = "columns: {" + strings.Join(parts, ", ") + "}"
+	}
+	lines := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+	var out []string
+	for i := 0; i < len(lines); i++ {
+		if !strings.HasPrefix(lines[i], "columns:") {
+			out = append(out, lines[i])
+			continue
+		}
+		for i+1 < len(lines) && (strings.HasPrefix(lines[i+1], " ") || strings.HasPrefix(lines[i+1], "\t")) {
+			i++ // the block-style entries under it
+		}
+		if line != "" {
+			out, line = append(out, line), ""
+		}
+	}
+	if line != "" {
+		out = append(out, "", line)
+	}
+	return []byte(strings.TrimRight(strings.Join(out, "\n"), "\n") + "\n")
 }

@@ -14,6 +14,8 @@ export function Refresh():Promise<void>;
 
 export function Run(arg1:string,arg2:string,arg3:string):Promise<string>;
 
+export function SaveColumns(arg1:Record<string, number>):Promise<void>;
+
 export function Sessions():Promise<Array<main.JobState>>;
 
 export function State(arg1:string,arg2:Array<string>,arg3:boolean):Promise<main.State>;

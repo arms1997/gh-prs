@@ -298,6 +298,7 @@ export namespace main {
 	    Status: string;
 	    IsErr: boolean;
 	    Loading: boolean;
+	    Columns: Record<string, number>;
 	    CheckType: core.Check;
 	    CheckStateType: core.CheckState;
 	
@@ -313,6 +314,7 @@ export namespace main {
 	        this.Status = source["Status"];
 	        this.IsErr = source["IsErr"];
 	        this.Loading = source["Loading"];
+	        this.Columns = source["Columns"];
 	        this.CheckType = this.convertValues(source["CheckType"], core.Check);
 	        this.CheckStateType = this.convertValues(source["CheckStateType"], core.CheckState);
 	    }

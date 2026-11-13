@@ -3,6 +3,15 @@ import {useApp} from '../../state/AppState'
 import {nextStep, Row} from '../../lib/pr'
 import {AttentionBadges, DiffStat, NextStepLabel, TurnDot} from '../../components/pr/PrBits'
 import {Icon} from '../../components/ui/Icon'
+import {useWidths} from './useWidths'
+
+// The resizable columns, matching core.ColumnNames; the title takes the rest.
+const COLUMNS = [
+    {key: 'repo', label: 'Repository'},
+    {key: 'diff', label: 'Diff', className: 'col-diff'},
+    {key: 'attention', label: 'Needs attention'},
+    {key: 'next', label: 'Next step'},
+]
 
 export function PrList({rows, cursor, collapsed, onSelect, onToggle}: {
     rows: Row[], cursor: number, collapsed: string[], onSelect: (path: string) => void, onToggle: (path: string) => void
@@ -11,10 +20,18 @@ export function PrList({rows, cursor, collapsed, onSelect, onToggle}: {
     const selRef = useRef<HTMLDivElement>(null)
     useEffect(() => { selRef.current?.scrollIntoView({block: 'nearest'}) }, [cursor])
 
+    const {vars, handle} = useWidths()
+
     return (
-        <main aria-label="Pull requests" className="prlist scroll-list">
+        <main aria-label="Pull requests" className="prlist scroll-list" style={vars}>
             <div className="pr-grid prlist-head">
-                <span/><span>Title</span><span>Repository</span><span className="col-diff">Diff</span><span>Needs attention</span><span>Next step</span>
+                <span/><span>Title</span>
+                {COLUMNS.map(c => (
+                    <span key={c.key} className={'col-head ' + (c.className ?? '')}>
+                        <span {...handle(c.key, c.label)}/>
+                        <span className="ellipsis">{c.label}</span>
+                    </span>
+                ))}
             </div>
             {rows.map((r, i) => {
                 const sel = i === cursor

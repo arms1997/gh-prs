@@ -1,7 +1,7 @@
 // The app's shared state: the backend snapshot (polled every second), the status message, the
 // current page, and the actions every page uses. Pages read it with useApp().
 import {createContext, useCallback, useContext, useEffect, useState} from 'react'
-import {OpenURL, Organize, Refresh, Run, State} from '../../wailsjs/go/main/App'
+import {OpenURL, Organize, Refresh, Run, SaveColumns, State} from '../../wailsjs/go/main/App'
 import {main} from '../../wailsjs/go/models'
 
 type Flash = { text: string, err: boolean }
@@ -45,6 +45,7 @@ function useAppState() {
             report(Run(cmdKey, prKey, input ?? ''))
         },
         organize: (action: string, prKey: string, arg = '') => report(Organize(action, prKey, arg)),
+        saveColumns: (cols: Record<string, number>) => SaveColumns(cols).catch(e => say(String(e), true)).finally(load),
         open: (url: string) => OpenURL(url).catch(e => say(String(e), true)),
         refresh: () => {
             say('refreshing…')

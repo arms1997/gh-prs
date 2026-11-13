@@ -1,4 +1,5 @@
-.detail-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border-100); }
+/* Long paths, branch names and URLs in agent output wrap instead of running past their box. */
+.detail-pane { overflow-wrap: anywhere; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border-100); }
 .detail-empty { padding: 24px; }
 .detail-top { padding: 20px 24px 0; display: flex; flex-direction: column; gap: 12px; }
 .detail-header { display: flex; flex-direction: column; gap: 8px; user-select: text; }

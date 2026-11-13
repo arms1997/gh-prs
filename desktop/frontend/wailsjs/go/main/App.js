@@ -26,6 +26,10 @@ export function Run(arg1, arg2, arg3) {
   return window['go']['main']['App']['Run'](arg1, arg2, arg3);
 }
 
+export function SaveColumns(arg1) {
+  return window['go']['main']['App']['SaveColumns'](arg1);
+}
+
 export function Sessions() {
   return window['go']['main']['App']['Sessions']();
 }

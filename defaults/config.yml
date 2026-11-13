@@ -32,6 +32,11 @@ repos_dir: ~/augment
 # A command can set its own 'opener:' to override this one.
 opener: open -na Ghostty.app --args -e
 
+# columns: the desktop app's widths in pixels: the list's columns (repo, diff, attention, next; the
+# title takes the rest) and the details pane (detail). Dragging an edge in the app writes this key;
+# double-click resets it.
+#   columns: {repo: 176, diff: 104, attention: 196, next: 152, detail: 440}
+
 # Prompts are files. A name like context.md is looked up in ~/.config/gh-prs/prompts/
 # first, then in the built-in defaults, so you can replace one prompt by adding a file
 # with its name. Absolute and ~/ paths work too.
