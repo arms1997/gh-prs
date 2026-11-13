@@ -28,7 +28,7 @@ export function DetailPane({pr, tab, setTab, openPalette}: {
             app.open(a.getAttribute('href') ?? '')
         }
     }
-    if (!pr) return <aside aria-label="Pull request details" className={PANE}><div className="dim p-6">Select a PR.</div></aside>
+    if (!pr) return <aside aria-label="Pull request details" className={PANE}><div className="text-dim p-6">Select a PR.</div></aside>
 
     const job = app.state?.Jobs[pr.Key]
     const failing = (pr.Checks ?? []).filter(c => c.State === 'fail').length
@@ -38,7 +38,7 @@ export function DetailPane({pr, tab, setTab, openPalette}: {
         {id: 'claude', label: 'Claude', extra: needsYou(job) ? <Badge tone="warn">Needs you</Badge>
                 : job?.State === 'running' ? <Badge tone="info" icon="spinner">Running</Badge> : undefined},
         {id: 'checks', label: 'Checks', extra: failing > 0 ? <Badge tone="bad">{failing}</Badge> : undefined},
-        {id: 'files', label: 'Files', extra: <span className="mono text-xs text-dim">{pr.ChangedFiles}</span>},
+        {id: 'files', label: 'Files', extra: <span className="font-mono text-xs text-dim">{pr.ChangedFiles}</span>},
     ]
     return (
         <aside aria-label="Pull request details" className={PANE} onClick={onLink}>

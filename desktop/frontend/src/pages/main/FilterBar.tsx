@@ -10,7 +10,7 @@ function Chip({active, dot, label, count, onClick}: {
 }) {
     return (
         <button type="button" className={`${CHIP} ${active ? 'border-foreground bg-foreground text-background' : 'border-border-200 bg-background hover:bg-muted'}`} aria-pressed={active} onClick={onClick}>
-            {dot && <span className={`size-1.5 rounded-full ${DOT[dot]}`}/>}{label}<span className={`mono ${active ? 'opacity-75' : 'text-dim'}`}>{count}</span>
+            {dot && <span className={`size-1.5 rounded-full ${DOT[dot]}`}/>}{label}<span className={`font-mono ${active ? 'opacity-75' : 'text-dim'}`}>{count}</span>
         </button>
     )
 }

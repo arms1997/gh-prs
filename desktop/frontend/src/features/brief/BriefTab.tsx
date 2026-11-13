@@ -28,22 +28,22 @@ export function BriefTab({pr}: { pr: PR }) {
         return () => clearInterval(t)
     }, [pr.Key])
 
-    if (err) return <p className="bad">{err}</p>
+    if (err) return <p className="text-bad-fg">{err}</p>
     if (!brief) return null
-    if (brief.Running) return <p className="dim flex items-center gap-2"><Icon name="spinner" className="animate-spin"/> Claude is reading the reviews, threads and checks…</p>
+    if (brief.Running) return <p className="text-dim flex items-center gap-2"><Icon name="spinner" className="animate-spin"/> Claude is reading the reviews, threads and checks…</p>
     if (!brief.Text) return (
         <section className="flex flex-col items-start gap-3">
-            {brief.Err && <p className="bad">{brief.Err}</p>}
-            <p className="dim">Claude reads this PR's reviews, open threads, checks and conflicts, and writes what's left
+            {brief.Err && <p className="text-bad-fg">{brief.Err}</p>}
+            <p className="text-dim">Claude reads this PR's reviews, open threads, checks and conflicts, and writes what's left
                 before it can merge. Takes about 30 seconds and a few cents.</p>
             <Button variant="primary" onClick={() => load(true)}>Write brief <Kbd keys="B"/></Button>
         </section>
     )
     return (
         <section>
-            {brief.Head !== pr.HeadOID && <p className="warn text-xs">Written before the latest push.</p>}
+            {brief.Head !== pr.HeadOID && <p className="text-warn-fg text-xs">Written before the latest push.</p>}
             <div className="brief-text text-sm leading-[1.55] select-text" dangerouslySetInnerHTML={{__html: markdown(brief.Text)}}/>
-            <div className="text-xs dim mt-4 flex items-center justify-between border-t border-border-100 pt-3">
+            <div className="text-xs text-dim mt-4 flex items-center justify-between border-t border-border-100 pt-3">
                 <span>Written {ago(brief.At)} · ${brief.Cost.toFixed(2)}</span>
                 <Button size="sm" onClick={() => load(true)}>Rewrite <Kbd keys="B"/></Button>
             </div>

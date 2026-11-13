@@ -10,7 +10,7 @@ export function TurnDot({pr}: { pr: PR }) {
 }
 
 export function DiffStat({pr}: { pr: PR }) {
-    return <span className="inline-flex gap-1.5 font-mono text-xs whitespace-nowrap"><span className="ok">+{pr.Additions}</span><span className="bad">−{pr.Deletions}</span></span>
+    return <span className="inline-flex gap-1.5 font-mono text-xs whitespace-nowrap"><span className="text-ok-fg">+{pr.Additions}</span><span className="text-bad-fg">−{pr.Deletions}</span></span>
 }
 
 export function AttentionBadges({pr}: { pr: PR }) {
