@@ -16,10 +16,14 @@ CLAUDE.md            (pre-push hook)       /code-review          make release PR
 - One branch and PR per change, from `origin/main` or stacked on the PR it builds on.
 - `CLAUDE.md` is the brief for any agent: layout, rules, definition of done.
 - New behaviour comes with its test, at the lowest layer that can show it works (below).
+- A change users would notice adds a line under `## Unreleased` in `CHANGELOG.md`.
+  `scripts/check-changelog.sh` refuses a push that changes the app, terminal UI, core, defaults,
+  plugin or openers without one; tests and docs don't need one.
 
 ## 2. Audit: `make check`
 
-Runs before every push once you've run `make hooks` in a clone (skip one push with `--no-verify`).
+Runs before every push, with the changelog check, once you've run `make hooks` in a clone (skip one
+push with `--no-verify`).
 
 | Check | Catches |
 |---|---|
@@ -46,9 +50,12 @@ Test layers, cheapest first:
 
 ## 4. Deploy
 
-- Every merged PR is a release: `make release PR=<n>` (or `ci/workflows/release.yml` once
-  enabled) tags it, patch by default or `minor`/`major` by label, and publishes the gh extension
-  binaries for macOS and Linux. `RELEASE_DRY_RUN=1` rehearses.
+- Every merged PR is a release, made right after it merges: `make release PR=<n>` (or
+  `ci/workflows/release.yml` once enabled) picks the version (patch by default, `minor`/`major` by
+  label), uses CHANGELOG.md's Unreleased section as the release notes, commits "chore: release
+  vX.Y.Z" to `main` renaming that section to the version, tags that commit, and publishes the gh
+  extension binaries for macOS and Linux. `RELEASE_DRY_RUN=1` rehearses and shows the notes.
+- The release commit is the one push to `main` outside a PR; it needs the ruleset's admin bypass.
 - The macOS app is built on your Mac and attached: `make app-release TAG=vX.Y.Z`.
 - Teammates update with `gh extension upgrade prs`.
 

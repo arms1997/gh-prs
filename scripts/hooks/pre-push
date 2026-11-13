@@ -1,4 +1,5 @@
 #!/bin/sh
-# Runs `make check` before every push, so a broken change never leaves your machine.
-# Enable once per clone with `make hooks`; skip a single push with `git push --no-verify`.
-exec make -C "$(git rev-parse --show-toplevel)" check
+# Runs `make check` and the changelog check before every push, so a broken change never leaves
+# your machine. Enable once per clone with `make hooks`; skip a single push with `git push --no-verify`.
+root=$(git rev-parse --show-toplevel)
+make -C "$root" check && "$root/scripts/check-changelog.sh"
