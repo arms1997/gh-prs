@@ -53,6 +53,7 @@
 
   --shadow-*: initial;
   --shadow-pop: var(--shadow-pop);
+  --shadow-sel: inset 0 0 0 1.5px var(--sel-ring);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
