@@ -8,6 +8,10 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+### Fixed
+- Building the desktop app works again (v0.3.1's change of working folder broke binding generation);
+  the app still moves to your home folder when opened from Finder.
+
 ## v0.3.1 — 2026-11-13
 
 ### Fixed
