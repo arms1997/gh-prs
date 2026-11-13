@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {Projects} from '../../../wailsjs/go/main/App'
+import {PRBrief, Projects} from '../../../wailsjs/go/main/App'
 import {useApp} from '../../state/AppState'
 import {nextStep, PR, QUICK_FILTERS} from '../../lib/pr'
 import {countPRs, visibleRows} from '../../lib/rows'
@@ -8,6 +8,7 @@ import {DETAIL_TABS, DetailPane, DetailTab} from '../../features/detail/DetailPa
 import {CommandPalette, PaletteItem} from '../../features/palette/CommandPalette'
 import {HelpDialog} from '../../features/organize/HelpDialog'
 import {MoveDialog} from '../../features/organize/MoveDialog'
+import {DailyBrief} from '../../features/brief/DailyBrief'
 import {TopBar} from './TopBar'
 import {FilterBar} from './FilterBar'
 import {PrList} from './PrList'
@@ -23,7 +24,7 @@ export function MainPage() {
     const [keySeq, setKeySeq] = useState('')
     const [filtering, setFiltering] = useState(false)
     const [tab, setTab] = useState<DetailTab>('overview')
-    const [dialog, setDialog] = useState<'help' | 'palette' | { move: PR, projects: string[] }>()
+    const [dialog, setDialog] = useState<'help' | 'palette' | 'brief' | { move: PR, projects: string[] }>()
     const filterRef = useRef<HTMLInputElement>(null)
 
     const all = app.state?.Rows ?? []
@@ -60,6 +61,12 @@ export function MainPage() {
         app.organize({pp: 'pin', ps: 'snooze', ph: 'hide'}[seq]!, pr.Key)
     }
 
+    // Starts Claude on the PR's brief and shows the tab, which follows it until it's written.
+    const writeBrief = () => {
+        if (!pr) return
+        PRBrief(pr.Key, true).then(() => setTab('brief')).catch(e => app.say(String(e), true))
+    }
+
     const hint = useMainKeys({
         app, rows, cursor, step, keySeq, setKeySeq, toggleGroup, organize,
         paused: filtering || !!dialog || !!app.ask,
@@ -68,6 +75,8 @@ export function MainPage() {
         clear: () => { app.setFilter(''); setQuick('') },
         openPalette: () => setDialog('palette'),
         openHelp: () => setDialog('help'),
+        openDailyBrief: () => setDialog('brief'),
+        writeBrief,
         openSessions: () => app.setPage('sessions'),
         focusComposer: () => {
             setTab('claude')
@@ -81,6 +90,7 @@ export function MainPage() {
             ...commands.map(c => ({section: 'This pull request', label: c.Name, hint: c.Background ? 'hand to agent' : undefined,
                 keys: c.Key, icon: c.Background ? 'terminal' as const : undefined, run: () => app.run(c.Key, pr.Key)})),
             {section: 'This pull request', label: 'Open in browser', keys: 'o', icon: 'external' as const, run: () => app.open(pr.URL)},
+            {section: 'This pull request', label: 'Write PR brief', hint: 'Claude, ~30s', keys: 'B', icon: 'thread' as const, run: writeBrief},
         ] : []),
         ...QUICK_FILTERS.map(f => ({section: 'Filter the list', label: f.label, hint: `${counts[f.id]} PRs`, run: () => setQuick(f.id)})),
         ...(pr ? [
@@ -94,6 +104,7 @@ export function MainPage() {
             setTab('claude')
             setTimeout(() => document.getElementById('composer')?.focus())
         }}] : []),
+        {section: 'App', label: 'Daily brief', keys: 'b', icon: 'clock', run: () => setDialog('brief')},
         {section: 'App', label: 'All Claude sessions', keys: 'ga', icon: 'terminal', run: () => app.setPage('sessions')},
         {section: 'App', label: 'Refresh', keys: 'r', icon: 'refresh', run: () => app.refresh()},
         {section: 'App', label: 'Keyboard shortcuts', keys: '?', run: () => setDialog('help')},
@@ -102,7 +113,8 @@ export function MainPage() {
     const widths = useWidths()
     return (
         <div className="main-page">
-            <TopBar ref={filterRef} total={total} onFocus={() => setFiltering(true)} onDone={() => setFiltering(false)}/>
+            <TopBar ref={filterRef} total={total} onFocus={() => setFiltering(true)} onDone={() => setFiltering(false)}
+                    onBrief={() => setDialog('brief')}/>
             <FilterBar quick={quick} setQuick={setQuick} counts={counts} total={total}/>
             <div className="split" style={widths.vars}>
                 <PrList rows={rows} cursor={cursor} collapsed={collapsed} onSelect={setSel} onToggle={p => toggleGroup(p)}/>
@@ -112,6 +124,7 @@ export function MainPage() {
                 </div>
             </div>
             <Footer hint={hint}/>
+            {dialog === 'brief' && <DailyBrief onClose={() => setDialog(undefined)}/>}
             {dialog === 'help' && <HelpDialog commands={commands} onClose={() => setDialog(undefined)}/>}
             {dialog === 'palette' && <CommandPalette items={paletteItems} onClose={() => setDialog(undefined)}
                                                      context={pr && `${pr.Repo.split('/')[1]}#${pr.Number}`}/>}

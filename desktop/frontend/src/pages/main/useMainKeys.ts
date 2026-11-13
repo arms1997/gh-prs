@@ -18,6 +18,8 @@ type Opts = {
     clear: () => void
     openPalette: () => void
     openHelp: () => void
+    openDailyBrief: () => void
+    writeBrief: () => void
     cycleTab: (delta: number) => void
     openSessions: () => void
     focusComposer: () => void
@@ -69,6 +71,10 @@ export function useMainKeys(o: Opts): string {
                         return o.focusFilter()
                     case '?':
                         return o.openHelp()
+                    case 'b':
+                        return o.openDailyBrief()
+                    case 'B':
+                        return pr && o.writeBrief()
                     case 'i':
                         if (!pr) return
                         e.preventDefault()

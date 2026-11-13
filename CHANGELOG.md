@@ -8,6 +8,16 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+### Added
+- Desktop app: a daily brief (`b`, or the "Daily brief" button) lists what's worth doing first across
+  your PRs: Claude's open questions, reviews people are waiting on, PRs ready to merge, and stuck ones.
+- Desktop app: a Brief tab where Claude writes what's left on a PR before it can merge: reviews, open
+  threads, failing checks and conflicts (`B`; about 10 seconds and a few cents per brief).
+
+### Changed
+- Claude calls that write text (the PR brief, reorganizing) no longer load your own Claude Code hooks
+  and plugins, so they can't change the answer.
+
 ## v0.2.1 — 2026-11-13
 
 ### Fixed

@@ -1,0 +1,28 @@
+.brief-wait { display: flex; align-items: center; gap: 8px; }
+.brief-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.brief-text { font-size: 13px; line-height: 1.55; user-select: text; }
+.brief .brief-text h3 { margin: 16px 0 6px; font-size: 13px; }
+.brief .brief-text h3:first-child { margin-top: 0; }
+.brief-text ul, .brief-text ol { margin: 0; padding-left: 18px; }
+.brief-text code { background: var(--muted); padding: 1px 4px; border-radius: var(--radius-sm); font-size: 12px; }
+.brief-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-100); }
+
+.daily { width: 640px; max-width: calc(100vw - 32px); display: flex; flex-direction: column; }
+.daily-head { display: flex; align-items: baseline; gap: 12px; padding: 16px 20px 12px; border-bottom: 1px solid var(--border-100); }
+.daily-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.daily-list { list-style: none; margin: 0; padding: 6px 8px; max-height: 60vh; overflow-y: auto; }
+.daily-item {
+    width: 100%; display: grid; grid-template-columns: 136px minmax(0, 1fr); gap: 2px 12px; padding: 10px 12px;
+    border: 0; border-radius: var(--radius-md); background: transparent; text-align: left; cursor: pointer; color: inherit; font: inherit;
+}
+.daily-item:hover, .daily-item:focus-visible { background: var(--muted); outline: none; }
+.daily-item:focus-visible { box-shadow: inset 0 0 0 1.5px var(--sel-ring); }
+.daily-kind { grid-row: span 2; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; }
+.daily-kind.answer { color: var(--warn-fg); }
+.daily-kind.review { color: var(--link); }
+.daily-kind.merge { color: var(--ok-fg); }
+.daily-kind.unblock { color: var(--bad-fg); }
+.daily-pr { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 14px; font-weight: 500; }
+.daily-pr .mono { flex-shrink: 0; white-space: nowrap; }
+.daily-why { overflow-wrap: anywhere; }
+.daily-foot { padding: 10px 20px 14px; border-top: 1px solid var(--border-100); }

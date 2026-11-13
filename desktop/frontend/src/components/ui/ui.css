@@ -37,9 +37,9 @@ kbd {
     min-width: 420px; max-height: 76vh; overflow-y: auto; --thumb: var(--text-faint);
 }
 
-.tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--border-100); }
+.tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--border-100); overflow-x: auto; scrollbar-width: none; }
 .tab {
-    height: 40px; padding: 0 2px; border: 0; border-bottom: 2px solid transparent; background: transparent;
+    flex-shrink: 0; white-space: nowrap; height: 40px; padding: 0 2px; border: 0; border-bottom: 2px solid transparent; background: transparent;
     font-size: 14px; font-weight: 500; color: var(--text-dim); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
 }
 .tab:hover { color: var(--foreground); }

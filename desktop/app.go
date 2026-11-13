@@ -33,10 +33,11 @@ type App struct {
 	status  string
 	isErr   bool
 	kick    chan struct{} // wakes the refresh loop for an immediate refresh
+	briefs  map[string]*Brief
 }
 
 func NewApp(cfg core.Config) *App {
-	a := &App{cfg: cfg, jobs: core.LoadJobs(), kick: make(chan struct{}, 1)}
+	a := &App{cfg: cfg, jobs: core.LoadJobs(), kick: make(chan struct{}, 1), briefs: map[string]*Brief{}}
 	org, err := core.LoadOrganize()
 	if err != nil {
 		a.status, a.isErr = err.Error(), true
@@ -258,6 +259,47 @@ func (a *App) find(key string) (core.PR, bool) {
 		}
 	}
 	return core.PR{}, false
+}
+
+// Brief is Claude's written brief of what's left on a PR. Head is the commit it was written for, so
+// the app can say when it's out of date.
+type Brief struct {
+	Text    string
+	Cost    float64
+	At      string // RFC 3339
+	Head    string
+	Running bool
+	Err     string
+}
+
+// PRBrief returns the PR's brief, if one was written since the app started. write starts writing a
+// new one in the background (it takes Claude 20 to 60 seconds); poll until Running is false.
+func (a *App) PRBrief(prKey string, write bool) (Brief, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	b := a.briefs[prKey]
+	if !write || (b != nil && b.Running) {
+		if b == nil {
+			return Brief{}, nil
+		}
+		return *b, nil
+	}
+	p, ok := a.find(prKey)
+	if !ok {
+		return Brief{}, fmt.Errorf("%s isn't in the list", prKey)
+	}
+	a.briefs[prKey] = &Brief{Running: true}
+	go func() {
+		text, cost, err := core.PRBrief(p)
+		nb := &Brief{Text: text, Cost: cost, At: time.Now().Format(time.RFC3339), Head: p.HeadOID}
+		if err != nil {
+			nb.Err = err.Error()
+		}
+		a.mu.Lock()
+		a.briefs[prKey] = nb
+		a.mu.Unlock()
+	}()
+	return *a.briefs[prKey], nil
 }
 
 // ---- actions ----
