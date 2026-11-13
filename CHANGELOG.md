@@ -8,6 +8,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+## v0.2.0 — 2026-11-13
+
 ### Added
 - Desktop app: resize the list's columns and the details pane by dragging their edges (double-click
   resets, ←/→ when focused), or set them in `config.yml` under `columns:`. A wide details pane covers
