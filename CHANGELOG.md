@@ -8,6 +8,15 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+### Added
+- Desktop app: resize the list's columns and the details pane by dragging their edges (double-click
+  resets, ←/→ when focused), or set them in `config.yml` under `columns:`. A wide details pane covers
+  the list instead of squeezing it.
+
+### Fixed
+- Desktop app: long paths, branch names and URLs in the details pane wrap instead of running past
+  their box.
+
 ## v0.1.2 — 2026-11-13
 
 ### Added
