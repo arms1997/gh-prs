@@ -14,6 +14,9 @@ import './detail.css'
 export type DetailTab = DetailTabName
 export const DETAIL_TABS: DetailTab[] = ['overview', 'brief', 'claude', 'checks', 'files']
 
+// overflow-wrap: long paths, branch names and URLs in agent output wrap instead of running past their box.
+const PANE = 'flex min-h-0 min-w-0 flex-col border-l border-border-100 [overflow-wrap:anywhere]'
+
 export function DetailPane({pr, tab, setTab, openPalette}: {
     pr?: PR, tab: DetailTab, setTab: (t: DetailTab) => void, openPalette: () => void
 }) {
@@ -26,7 +29,7 @@ export function DetailPane({pr, tab, setTab, openPalette}: {
             app.open(a.getAttribute('href') ?? '')
         }
     }
-    if (!pr) return <aside aria-label="Pull request details" className="detail-pane"><div className="detail-empty dim">Select a PR.</div></aside>
+    if (!pr) return <aside aria-label="Pull request details" className={PANE}><div className="dim p-6">Select a PR.</div></aside>
 
     const job = app.state?.Jobs[pr.Key]
     const failing = (pr.Checks ?? []).filter(c => c.State === 'fail').length
@@ -36,15 +39,15 @@ export function DetailPane({pr, tab, setTab, openPalette}: {
         {id: 'claude', label: 'Claude', extra: needsYou(job) ? <Badge tone="warn">Needs you</Badge>
                 : job?.State === 'running' ? <Badge tone="info" icon="spinner">Running</Badge> : undefined},
         {id: 'checks', label: 'Checks', extra: failing > 0 ? <Badge tone="bad">{failing}</Badge> : undefined},
-        {id: 'files', label: 'Files', extra: <span className="tab-count mono">{pr.ChangedFiles}</span>},
+        {id: 'files', label: 'Files', extra: <span className="mono text-xs text-dim">{pr.ChangedFiles}</span>},
     ]
     return (
-        <aside aria-label="Pull request details" className="detail-pane" onClick={onLink}>
-            <div className="detail-top">
+        <aside aria-label="Pull request details" className={PANE} onClick={onLink}>
+            <div className="flex flex-col gap-3 px-6 pt-5">
                 <DetailHeader pr={pr}/>
                 <Tabs tabs={tabs} active={tab} onChange={setTab}/>
             </div>
-            <div className="detail-body scroll-detail">
+            <div className="detail-body scroll-detail flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto px-6 pt-4 pb-8 select-text">
                 {tab === 'overview' && <OverviewTab pr={pr} showChecks={() => setTab('checks')} openPalette={openPalette}/>}
                 {tab === 'brief' && <BriefTab pr={pr}/>}
                 {tab === 'claude' && <ClaudeTab pr={pr} job={job}/>}
