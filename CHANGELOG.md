@@ -8,6 +8,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+## v0.1.2 — 2026-11-13
+
 ### Added
 - `CHANGELOG.md`: what changed in each release, also used as the GitHub release notes.
 
