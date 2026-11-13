@@ -29,13 +29,13 @@ export function FilesTab({pr}: { pr: PR }) {
     if (!files.length) return <p className="dim">No files changed.</p>
     return (
         <section>
-            <Heading aside={<a href={pr.URL + '/files'} className="small">Review on GitHub</a>}>{files.length} files</Heading>
+            <Heading aside={<a href={pr.URL + '/files'} className="text-xs">Review on GitHub</a>}>{files.length} files</Heading>
             <BoxList>
                 {files.map(f => {
                     const slash = f.Path.lastIndexOf('/')
                     return (
-                        <BoxRow key={f.Path} className="mono small" title={f.Path}>
-                            <span className="ellipsis"><span className="dim">{f.Path.slice(0, slash + 1)}</span>{f.Path.slice(slash + 1)}</span>
+                        <BoxRow key={f.Path} className="mono text-xs" title={f.Path}>
+                            <span className="min-w-0 truncate"><span className="dim">{f.Path.slice(0, slash + 1)}</span>{f.Path.slice(slash + 1)}</span>
                             <span className={BOX_END}><span className="ok">+{f.Additions}</span> <span className="bad">−{f.Deletions}</span></span>
                         </BoxRow>
                     )

@@ -7,6 +7,7 @@ import {Badge, Tone} from '../../components/ui/Badge'
 import {Button} from '../../components/ui/Button'
 import {IconName} from '../../components/ui/Icon'
 import {Kbd} from '../../components/ui/Kbd'
+import {FOOTER, FOOTER_KEY, FOOTER_STATUS} from '../main/Footer'
 
 const TONE: Record<string, [Tone, IconName]> = {
     running: ['info', 'spinner'], waiting: ['info', 'clock'], done: ['ok', 'check'], failed: ['bad', 'x'], stopped: ['neutral', 'x'],
@@ -67,10 +68,10 @@ export function SessionsPage() {
             <div key={j.ID} className={`${GRID} h-11 cursor-default rounded-md px-4 text-sm ${i === cur ? 'bg-sel-bg shadow-sel' : 'hover:bg-muted'}`}
                  onClick={() => setCur(i)} onDoubleClick={() => open(j)}>
                 <span><Badge tone={tone} icon={icon}>{asks ? 'Needs you' : JOB_LABEL[j.State].split(' ')[0]}</Badge></span>
-                <span className="mono small dim ellipsis">{j.Repo.split('/')[1]}#{j.Number}</span>
-                <span className="ellipsis"><span className="font-medium">{j.Name}:</span> {what}</span>
-                <span className="small dim">{ago(j.Started)}</span>
-                <span className="small dim mono">{j.Elapsed}</span>
+                <span className="mono text-xs dim min-w-0 truncate">{j.Repo.split('/')[1]}#{j.Number}</span>
+                <span className="min-w-0 truncate"><span className="font-medium">{j.Name}:</span> {what}</span>
+                <span className="text-xs dim">{ago(j.Started)}</span>
+                <span className="text-xs dim mono">{j.Elapsed}</span>
             </div>
         )
     }
@@ -80,7 +81,7 @@ export function SessionsPage() {
             <header className="flex items-center gap-3 border-b border-border-100 px-5">
                 <Button size="sm" onClick={back}>← PRs <Kbd keys="esc"/></Button>
                 <h2 className="m-0 text-lg font-semibold">Claude sessions</h2>
-                <span className="dim small">Every agent run across your PRs</span>
+                <span className="dim text-xs">Every agent run across your PRs</span>
             </header>
             <div className={`${GRID} border-b border-border-100 px-6 text-xs font-medium text-dim`}><span>State</span><span>Pull request</span><span>Asked to</span><span>Started</span><span>Time</span></div>
             <main className="scroll-list overflow-y-auto px-2 pt-1 pb-4">
@@ -91,13 +92,13 @@ export function SessionsPage() {
                 {finished.length > 0 && <div className="px-4 pt-3 pb-1 text-xs font-medium text-dim">Finished</div>}
                 {finished.map(row)}
             </main>
-            <footer className="footer">
-                <span className="footer-key"><Kbd keys="⏎"/>open</span>
-                {takeOver && <span className="footer-key"><Kbd keys="a"/>open in Claude Code</span>}
-                {stop && <span className="footer-key"><Kbd keys="x"/>stop</span>}
-                <span className="footer-key"><Kbd keys="r"/>run again</span>
-                <span className="footer-key"><Kbd keys="esc"/>back</span>
-                <span className={'footer-status' + (app.flash?.err ? ' bad' : '')}>{app.flash?.text}</span>
+            <footer className={FOOTER}>
+                <span className={FOOTER_KEY}><Kbd keys="⏎"/>open</span>
+                {takeOver && <span className={FOOTER_KEY}><Kbd keys="a"/>open in Claude Code</span>}
+                {stop && <span className={FOOTER_KEY}><Kbd keys="x"/>stop</span>}
+                <span className={FOOTER_KEY}><Kbd keys="r"/>run again</span>
+                <span className={FOOTER_KEY}><Kbd keys="esc"/>back</span>
+                <span className={`${FOOTER_STATUS} ${app.flash?.err ? 'bad' : ''}`}>{app.flash?.text}</span>
             </footer>
         </div>
     )

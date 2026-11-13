@@ -14,7 +14,6 @@ import {FilterBar} from './FilterBar'
 import {PrList} from './PrList'
 import {Footer} from './Footer'
 import {useMainKeys} from './useMainKeys'
-import './main.css'
 
 export function MainPage() {
     const app = useApp()
@@ -112,13 +111,13 @@ export function MainPage() {
 
     const widths = useWidths()
     return (
-        <div className="main-page">
+        <div className="grid h-full grid-rows-[52px_48px_minmax(0,1fr)_32px]">
             <TopBar ref={filterRef} total={total} onFocus={() => setFiltering(true)} onDone={() => setFiltering(false)}
                     onBrief={() => setDialog('brief')}/>
             <FilterBar quick={quick} setQuick={setQuick} counts={counts} total={total}/>
-            <div className="split" style={widths.vars}>
+            <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_var(--w-detail,440px)] narrow:grid-cols-[minmax(0,1fr)_var(--w-detail,380px)]" style={widths.vars}>
                 <PrList rows={rows} cursor={cursor} collapsed={collapsed} onSelect={setSel} onToggle={p => toggleGroup(p)}/>
-                <div className="detail-wrap">
+                <div className="relative grid min-h-0 min-w-0">
                     <span {...widths.handle('detail', 'details pane')}/>
                     <DetailPane pr={pr} tab={tab} setTab={setTab} openPalette={() => setDialog('palette')}/>
                 </div>
