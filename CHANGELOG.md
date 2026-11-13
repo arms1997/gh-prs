@@ -13,6 +13,7 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
   of moving off per-component CSS files. Nothing looks different yet.
 - Desktop app: the shared buttons, badges, keys, tabs and dialogs use Tailwind. In the keys help,
   `pm` and `pa` show as two keys, like the commands listed under them.
+- Desktop app: the PR list's status pieces and the Claude sessions page use Tailwind, with no visible change.
 
 ## v0.3.2 — 2026-11-13
 

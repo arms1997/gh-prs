@@ -7,11 +7,12 @@ import {Badge, Tone} from '../../components/ui/Badge'
 import {Button} from '../../components/ui/Button'
 import {IconName} from '../../components/ui/Icon'
 import {Kbd} from '../../components/ui/Kbd'
-import './sessions.css'
 
 const TONE: Record<string, [Tone, IconName]> = {
     running: ['info', 'spinner'], waiting: ['info', 'clock'], done: ['ok', 'check'], failed: ['bad', 'x'], stopped: ['neutral', 'x'],
 }
+
+const GRID = 'grid grid-cols-[130px_220px_minmax(0,1fr)_80px_56px] items-center gap-3'
 
 // Every agent run across your PRs, newest first: what it was asked, where it got to.
 export function SessionsPage() {
@@ -63,11 +64,11 @@ export function SessionsPage() {
         const [tone, icon] = asks ? ['warn', 'question'] as [Tone, IconName] : TONE[j.State]
         const what = (asks && needsYou(j)) || j.Summary?.Headline || j.Activity?.[j.Activity.length - 1] || j.Result
         return (
-            <div key={j.ID} className={'session-grid session-row' + (i === cur ? ' sel' : '')}
+            <div key={j.ID} className={`${GRID} h-11 cursor-default rounded-md px-4 text-sm ${i === cur ? 'bg-sel-bg shadow-[inset_0_0_0_1.5px_var(--sel-ring)]' : 'hover:bg-muted'}`}
                  onClick={() => setCur(i)} onDoubleClick={() => open(j)}>
                 <span><Badge tone={tone} icon={icon}>{asks ? 'Needs you' : JOB_LABEL[j.State].split(' ')[0]}</Badge></span>
                 <span className="mono small dim ellipsis">{j.Repo.split('/')[1]}#{j.Number}</span>
-                <span className="ellipsis"><span className="session-name">{j.Name}:</span> {what}</span>
+                <span className="ellipsis"><span className="font-medium">{j.Name}:</span> {what}</span>
                 <span className="small dim">{ago(j.Started)}</span>
                 <span className="small dim mono">{j.Elapsed}</span>
             </div>
@@ -75,19 +76,19 @@ export function SessionsPage() {
     }
 
     return (
-        <div className="sessions-page">
-            <header className="sessions-head">
+        <div className="grid h-full grid-rows-[56px_32px_minmax(0,1fr)_32px]">
+            <header className="flex items-center gap-3 border-b border-border-100 px-5">
                 <Button size="sm" onClick={back}>← PRs <Kbd keys="esc"/></Button>
-                <h2>Claude sessions</h2>
+                <h2 className="m-0 text-lg font-semibold">Claude sessions</h2>
                 <span className="dim small">Every agent run across your PRs</span>
             </header>
-            <div className="session-grid sessions-cols"><span>State</span><span>Pull request</span><span>Asked to</span><span>Started</span><span>Time</span></div>
-            <main className="sessions-list scroll-list">
-                {jobs === undefined && <p className="dim pad">Loading…</p>}
-                {jobs?.length === 0 && <p className="dim pad">No agent has run yet.</p>}
-                {active.length > 0 && <div className="sessions-group">Active</div>}
+            <div className={`${GRID} border-b border-border-100 px-6 text-xs font-medium text-dim`}><span>State</span><span>Pull request</span><span>Asked to</span><span>Started</span><span>Time</span></div>
+            <main className="scroll-list overflow-y-auto px-2 pt-1 pb-4">
+                {jobs === undefined && <p className="dim p-4">Loading…</p>}
+                {jobs?.length === 0 && <p className="dim p-4">No agent has run yet.</p>}
+                {active.length > 0 && <div className="px-4 pt-3 pb-1 text-xs font-medium text-dim">Active</div>}
                 {active.map(row)}
-                {finished.length > 0 && <div className="sessions-group">Finished</div>}
+                {finished.length > 0 && <div className="px-4 pt-3 pb-1 text-xs font-medium text-dim">Finished</div>}
                 {finished.map(row)}
             </main>
             <footer className="footer">
