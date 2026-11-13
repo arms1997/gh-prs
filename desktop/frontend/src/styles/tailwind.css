@@ -1,0 +1,50 @@
+/* Tailwind utilities on the app's own tokens (tokens.css). No Preflight: base.css stays the reset.
+   Only these names exist, so colors and radii come from the design system; dark mode follows the
+   token variables, so no dark: variants are needed. Spacing and type use Tailwind's default scale. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline reference {
+  --color-*: initial;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-dim: var(--text-dim);
+  --color-faint: var(--text-faint);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-input: var(--input);
+  --color-link: var(--link);
+  --color-bar: var(--bar);
+  --color-shade: var(--shade);
+  --color-border-100: var(--border-100);
+  --color-border-200: var(--border-200);
+  --color-sel-bg: var(--sel-bg);
+  --color-sel-ring: var(--sel-ring);
+  --color-ok-bg: var(--ok-bg);
+  --color-ok-fg: var(--ok-fg);
+  --color-bad-bg: var(--bad-bg);
+  --color-bad-fg: var(--bad-fg);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-fg: var(--warn-fg);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-neutral-fg: var(--neutral-fg);
+  --color-dot-ok: var(--dot-ok);
+  --color-dot-bad: var(--dot-bad);
+
+  --radius-*: initial;
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+
+  --shadow-*: initial;
+  --shadow-pop: var(--shadow-pop);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
