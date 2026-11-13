@@ -41,9 +41,9 @@ export function BriefTab({pr}: { pr: PR }) {
     )
     return (
         <section>
-            {brief.Head !== pr.HeadOID && <p className="warn small">Written before the latest push.</p>}
+            {brief.Head !== pr.HeadOID && <p className="warn text-xs">Written before the latest push.</p>}
             <div className="brief-text text-sm leading-[1.55] select-text" dangerouslySetInnerHTML={{__html: markdown(brief.Text)}}/>
-            <div className="small dim mt-4 flex items-center justify-between border-t border-border-100 pt-3">
+            <div className="text-xs dim mt-4 flex items-center justify-between border-t border-border-100 pt-3">
                 <span>Written {ago(brief.At)} · ${brief.Cost.toFixed(2)}</span>
                 <Button size="sm" onClick={() => load(true)}>Rewrite <Kbd keys="B"/></Button>
             </div>

@@ -21,7 +21,7 @@ export function ChecksTab({pr}: { pr: PR }) {
                 if (!list.length) return null
                 return (
                     <section key={g.state}>
-                        <Heading>{g.title} <span className="dim small mono">{list.length}</span></Heading>
+                        <Heading>{g.title} <span className="dim text-xs mono">{list.length}</span></Heading>
                         <BoxList>
                             {list.map(c => (
                                 <BoxRow key={c.Name + c.URL}>
@@ -29,8 +29,8 @@ export function ChecksTab({pr}: { pr: PR }) {
                                         <Icon name={{fail: 'x', pending: 'spinner', pass: 'check', skipped: 'chevronRight'}[g.state] as 'x'}
                                               className={g.state === 'pending' ? 'animate-spin' : undefined}/>
                                     </span>
-                                    <span className="ellipsis">{c.Name}</span>
-                                    {c.URL && <a href={c.URL} className={`${BOX_END} small`}>Details <Icon name="external"/></a>}
+                                    <span className="min-w-0 truncate">{c.Name}</span>
+                                    {c.URL && <a href={c.URL} className={`${BOX_END} text-xs`}>Details <Icon name="external"/></a>}
                                 </BoxRow>
                             ))}
                         </BoxList>

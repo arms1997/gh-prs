@@ -3,6 +3,12 @@ import {useApp} from '../../state/AppState'
 
 // Widths you set (config.yml's columns key, see core.ColumnNames), overridden while a drag is under
 // way. Unset ones fall back to the CSS defaults, so vars only carries what you set.
+// A column's handle straddles the line before its header; the details pane's shows only while live.
+const HANDLE = {
+    column: "absolute -top-2 -bottom-2 -left-2.5 w-2 cursor-col-resize focus-visible:outline-none after:absolute after:top-2 after:bottom-2 after:left-[3px] after:w-px after:bg-border-200 after:content-[''] live:after:top-1.5 live:after:bottom-1.5 live:after:w-0.5 live:after:rounded-[1px] live:after:bg-sel-ring",
+    detail: "absolute top-0 bottom-0 -left-1 z-2 w-2 cursor-col-resize focus-visible:outline-none after:absolute after:left-[3px] after:hidden after:content-[''] live:after:top-0 live:after:bottom-0 live:after:block live:after:w-0.5 live:after:rounded-[1px] live:after:bg-sel-ring",
+}
+
 export function useWidths() {
     const app = useApp()
     const [dragging, setDragging] = useState<Record<string, number>>()
@@ -19,7 +25,7 @@ export function useWidths() {
         return {
             role: 'separator', 'aria-orientation': 'vertical' as const, 'aria-label': `Resize ${label}`, tabIndex: 0,
             title: 'Drag to resize · double-click to reset',
-            className: 'resize-handle' + (dragging?.[key] !== undefined ? ' active' : ''),
+            className: HANDLE[key === 'detail' ? 'detail' : 'column'], 'data-active': dragging?.[key] !== undefined || undefined,
             onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
                 const el = e.currentTarget, x0 = e.clientX, w0 = current(el)
                 let cols = saved

@@ -18,7 +18,7 @@ export function MoveDialog({pr, projects, onMove, onClose}: {
                 <Input autoFocus list="projects" value={value} placeholder="Project name (empty: use its label)"
                        onChange={e => setValue(e.target.value)} onKeyDown={e => e.key === 'Escape' && onClose()}/>
                 <datalist id="projects">{projects.map(p => <option key={p} value={p}/>)}</datalist>
-                <div className="dim small">Enter to move · Esc to cancel</div>
+                <div className="dim text-xs">Enter to move · Esc to cancel</div>
             </form>
         </Modal>
     )
