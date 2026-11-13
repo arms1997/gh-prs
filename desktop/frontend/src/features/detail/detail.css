@@ -1,63 +1,11 @@
-/* Long paths, branch names and URLs in agent output wrap instead of running past their box. */
-.detail-pane { overflow-wrap: anywhere; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border-100); }
-.detail-empty { padding: 24px; }
-.detail-top { padding: 20px 24px 0; display: flex; flex-direction: column; gap: 12px; }
-.detail-header { display: flex; flex-direction: column; gap: 8px; user-select: text; }
-.detail-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); white-space: nowrap; min-width: 0; }
-.detail-gh { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
-.detail-header h2 { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.3; }
-.detail-header h2 a { color: var(--foreground); }
-.detail-sub { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.detail-badges { display: flex; flex-wrap: wrap; gap: 6px; }
-.badge-link:hover { text-decoration: none; }
-.tab-count { font-size: 12px; color: var(--text-dim); }
-
-.detail-body {
-    flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 16px 24px 32px;
-    display: flex; flex-direction: column; gap: 24px; user-select: text;
+/* Markdown rendered as HTML (PR descriptions, agent output): it has no class names to put utilities on.
+   The base layer lets utilities on the pane's own headings and paragraphs win. */
+@layer base {
+    .detail-body h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+    .detail-body p { margin: 0; }
 }
-.detail-body h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
-.detail-body p { margin: 0; }
-.section-head { display: flex; align-items: baseline; justify-content: space-between; }
-.small { font-size: 12px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.link-btn { border: 0; background: none; padding: 0; color: var(--link); font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; }
-.link-btn:hover { text-decoration: underline; }
+.md-inline code { background: var(--muted); padding: 1px 4px; border-radius: var(--radius-sm); }
 
-/* ---- before merge ---- */
-.progress { height: 4px; border-radius: var(--radius-full); background: var(--muted); overflow: hidden; margin: 0 0 4px; }
-.progress div { height: 100%; background: var(--primary); transition: width 0.3s; }
-.gate { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border-100); }
-.gate-icon { display: inline-flex; width: 20px; height: 20px; flex-shrink: 0; border-radius: var(--radius-full); align-items: center; justify-content: center; }
-.gate-icon.done { background: var(--ok-bg); color: var(--ok-fg); }
-.gate-icon.fail { background: var(--bad-bg); color: var(--bad-fg); }
-.gate-icon.pending { border: 1.5px dashed var(--text-faint); }
-.gate-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.gate-title { font-size: 14px; font-weight: 500; }
-
-/* ---- PR checklist ---- */
-.tasks { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.tasks li { display: flex; gap: 8px; font-size: 13px; line-height: 1.45; }
-.tasks li.done { color: var(--text-dim); }
-.task-box {
-    width: 14px; height: 14px; margin-top: 2px; flex-shrink: 0; border-radius: var(--radius-sm);
-    border: 1.5px solid var(--border-200); display: inline-flex; align-items: center; justify-content: center;
-}
-.tasks li.done .task-box { background: var(--primary); border-color: var(--primary); color: #fff; }
-.tasks code { background: var(--muted); padding: 1px 4px; border-radius: var(--radius-sm); }
-
-/* ---- checks and files ---- */
-.boxlist { display: flex; flex-direction: column; border: 1px solid var(--border-100); border-radius: var(--radius-lg); }
-.boxlist-row { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; font-size: 13px; }
-.boxlist-row + .boxlist-row { border-top: 1px solid var(--border-100); }
-.boxlist-end { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; flex-shrink: 0; }
-.check-icon { display: inline-flex; flex-shrink: 0; }
-.check-icon.pass { color: var(--ok-fg); }
-.check-icon.fail { color: var(--bad-fg); }
-.check-icon.pending { color: var(--info-fg); }
-.check-icon.skipped { color: var(--text-faint); }
-
-/* ---- description ---- */
 .markdown { font-size: 13px; line-height: 1.55; color: var(--neutral-fg); }
 .markdown.clipped { max-height: 280px; overflow: hidden; mask-image: linear-gradient(to bottom, #000 75%, transparent); }
 .markdown > :first-child { margin-top: 0; }
