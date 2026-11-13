@@ -8,10 +8,11 @@ import {ClaudeTab} from '../claude/ClaudeTab'
 import {Composer} from '../claude/Composer'
 import {ChecksTab} from './tabs/ChecksTab'
 import {FilesTab} from './tabs/FilesTab'
+import {BriefTab} from '../brief/BriefTab'
 import './detail.css'
 
 export type DetailTab = DetailTabName
-export const DETAIL_TABS: DetailTab[] = ['overview', 'claude', 'checks', 'files']
+export const DETAIL_TABS: DetailTab[] = ['overview', 'brief', 'claude', 'checks', 'files']
 
 export function DetailPane({pr, tab, setTab, openPalette}: {
     pr?: PR, tab: DetailTab, setTab: (t: DetailTab) => void, openPalette: () => void
@@ -31,6 +32,7 @@ export function DetailPane({pr, tab, setTab, openPalette}: {
     const failing = (pr.Checks ?? []).filter(c => c.State === 'fail').length
     const tabs: TabDef<DetailTab>[] = [
         {id: 'overview', label: 'Overview'},
+        {id: 'brief', label: 'Brief'},
         {id: 'claude', label: 'Claude', extra: needsYou(job) ? <Badge tone="warn">Needs you</Badge>
                 : job?.State === 'running' ? <Badge tone="info" icon="spinner">Running</Badge> : undefined},
         {id: 'checks', label: 'Checks', extra: failing > 0 ? <Badge tone="bad">{failing}</Badge> : undefined},
@@ -44,6 +46,7 @@ export function DetailPane({pr, tab, setTab, openPalette}: {
             </div>
             <div className="detail-body scroll-detail">
                 {tab === 'overview' && <OverviewTab pr={pr} showChecks={() => setTab('checks')} openPalette={openPalette}/>}
+                {tab === 'brief' && <BriefTab pr={pr}/>}
                 {tab === 'claude' && <ClaudeTab pr={pr} job={job}/>}
                 {tab === 'checks' && <ChecksTab pr={pr}/>}
                 {tab === 'files' && <FilesTab pr={pr}/>}

@@ -6,7 +6,7 @@ import {main} from '../../wailsjs/go/models'
 
 type Flash = { text: string, err: boolean }
 export type Page = 'main' | 'sessions'
-export type DetailTabName = 'overview' | 'claude' | 'checks' | 'files'
+export type DetailTabName = 'overview' | 'brief' | 'claude' | 'checks' | 'files'
 // focus asks the main page to select a PR and show one of its tabs (e.g. from the sessions page).
 export type Focus = { prKey: string, tab: DetailTabName }
 // ask is a command waiting for the text its Input question asks for.

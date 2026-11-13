@@ -34,8 +34,9 @@ type Proposal struct {
 
 // RunClaude asks Claude for a text answer and returns it with what the call cost.
 func RunClaude(prompt string) (string, float64, error) {
+	// No setting sources: the user's own hooks and plugins would otherwise add to the answer.
 	c := exec.Command("env", "-u", "ANTHROPIC_API_KEY", "claude", "-p", "--model", "sonnet", "--output-format", "json",
-		"--tools", "", "--strict-mcp-config", "--permission-mode", "dontAsk")
+		"--tools", "", "--strict-mcp-config", "--permission-mode", "dontAsk", "--setting-sources", "")
 	c.Stdin = strings.NewReader(prompt)
 	out, err := c.Output()
 	var res struct {

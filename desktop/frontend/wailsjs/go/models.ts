@@ -55,6 +55,28 @@ export namespace core {
 
 export namespace main {
 	
+	export class Brief {
+	    Text: string;
+	    Cost: number;
+	    At: string;
+	    Head: string;
+	    Running: boolean;
+	    Err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Brief(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Text = source["Text"];
+	        this.Cost = source["Cost"];
+	        this.At = source["At"];
+	        this.Head = source["Head"];
+	        this.Running = source["Running"];
+	        this.Err = source["Err"];
+	    }
+	}
 	export class CommandView {
 	    Key: string;
 	    Name: string;

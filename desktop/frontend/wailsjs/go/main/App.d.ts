@@ -8,6 +8,8 @@ export function OpenURL(arg1:string):Promise<void>;
 
 export function Organize(arg1:string,arg2:string,arg3:string):Promise<string>;
 
+export function PRBrief(arg1:string,arg2:boolean):Promise<main.Brief>;
+
 export function Projects():Promise<Array<string>>;
 
 export function Refresh():Promise<void>;
