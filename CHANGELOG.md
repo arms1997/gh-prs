@@ -8,6 +8,10 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+### Fixed
+- `cx`, `cy`, `ct` and `ci` find an agent started from the other front end or another gh-prs window,
+  instead of saying no agent is running. Both front ends also show those agents in the list.
+
 ## v0.2.0 — 2026-11-13
 
 ### Added

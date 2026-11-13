@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"strings"
@@ -233,5 +234,34 @@ func TestStopAndWait(t *testing.T) {
 	}
 	if v.alive() {
 		t.Fatal("still running")
+	}
+}
+
+// A job started by another gh-prs after this one loaded its jobs is picked up; held ones are kept.
+func TestMergeJobs(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	save := func(n int, started time.Time) Job {
+		j := Job{ID: NewJobID(), Name: "manage", Repo: "o/r", Number: n, PID: os.Getpid(), Started: started}
+		os.MkdirAll(JobsDir(), 0o700)
+		meta, _ := json.Marshal(j)
+		os.WriteFile(j.Path(".json"), meta, 0o600)
+		return j
+	}
+	old := save(1, time.Now().Add(-time.Hour))
+	jobs := LoadJobs()
+	held := jobs[PrKey("o/r", 1)]
+	if held == nil || held.ID != old.ID {
+		t.Fatalf("loaded %+v, want %s", held, old.ID)
+	}
+	if MergeJobs(jobs) || jobs[PrKey("o/r", 1)] != held {
+		t.Fatal("nothing new on disk, but the held job was replaced")
+	}
+	newer := save(1, time.Now())
+	other := save(2, time.Now())
+	if !MergeJobs(jobs) {
+		t.Fatal("new jobs not reported")
+	}
+	if jobs[PrKey("o/r", 1)].ID != newer.ID || jobs[PrKey("o/r", 2)].ID != other.ID {
+		t.Fatalf("got %s and %v, want the jobs started elsewhere", jobs[PrKey("o/r", 1)].ID, jobs[PrKey("o/r", 2)])
 	}
 }
