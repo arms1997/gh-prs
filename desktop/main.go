@@ -34,6 +34,10 @@ func useShellPath() {
 
 func main() {
 	useShellPath()
+	// Apps opened from Finder start in /, which openers would use for commands without a worktree.
+	if home, err := os.UserHomeDir(); err == nil {
+		_ = os.Chdir(home)
+	}
 	cfg, err := core.LoadConfig()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "gh-prs:", err)

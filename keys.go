@@ -128,7 +128,12 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case m.keySeq != "":
 			m.keySeq = "" // dead sequence: drop it and treat this key on its own
-			return m.handleKey(msg)
+			tm, cmd := m.handleKey(msg)
+			if mm, ok := tm.(model); ok && mm.status == "" {
+				mm.status, mm.isErr = "no command "+seq+" (? lists them)", true
+				tm = mm
+			}
+			return tm, cmd
 		}
 	}
 
@@ -288,6 +293,7 @@ func (m model) organizeKey(k string, r *core.Row) (tea.Model, tea.Cmd) {
 		}}
 		return m, nil
 	default:
+		m.status, m.isErr = "no command p"+k+" (? lists them)", true
 		return m, nil
 	}
 	m.saveOrganize(fmt.Sprintf("#%d %s", p.Number, note))

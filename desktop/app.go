@@ -383,11 +383,14 @@ func (a *App) Run(cmdKey, prKey, input string) (string, error) {
 				detail = err.Error()
 			}
 			a.status, a.isErr = "✗ "+label+": "+detail, true
+		} else if c.Terminal {
+			a.status, a.isErr = label+" opened in your terminal", false
 		} else {
 			a.status, a.isErr = "✓ "+label, false
 		}
 		a.mu.Unlock()
-		if err == nil && c.Refresh {
+		// A terminal command has only started when the opener returns; the next refresh shows its result.
+		if err == nil && c.Refresh && !c.Terminal {
 			a.Refresh()
 		}
 	}()
