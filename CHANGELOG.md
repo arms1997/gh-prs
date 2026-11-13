@@ -8,6 +8,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+## v0.3.1 — 2026-11-13
+
 ### Fixed
 - A key sequence that isn't a command (like `cd`, which was removed) says "no command cd" instead of
   doing nothing, in both front ends.
