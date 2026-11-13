@@ -1,0 +1,19 @@
+/* Markdown rendered as HTML (PR descriptions, briefs, agent output) has no class names to put
+   utilities on, so its elements are styled here. The containers' own styles are utilities. */
+@layer components {
+    .md-inline code, .markdown code, .brief-text code { background: var(--muted); padding: 1px 4px; border-radius: var(--radius-sm); }
+
+    .markdown > :first-child { margin-top: 0; }
+    .markdown h1, .markdown h2, .markdown h3 { font-size: 14px; margin: 14px 0 6px; color: var(--foreground); }
+    .markdown h3 { font-weight: 600; }
+    .markdown pre { background: var(--muted); padding: 10px; border-radius: var(--radius-md); overflow-x: auto; --thumb: var(--text-faint); }
+    .markdown pre code { padding: 0; }
+    .markdown img { max-width: 100%; }
+    .markdown table { border-collapse: collapse; }
+    .markdown td, .markdown th { border: 1px solid var(--border-100); padding: 4px 8px; }
+    .markdown blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--border-100); color: var(--text-dim); }
+
+    .brief-text h3 { margin: 16px 0 6px; font-size: 13px; font-weight: 600; }
+    .brief-text h3:first-child { margin-top: 0; }
+    .brief-text ul, .brief-text ol { margin: 0; padding-left: 18px; }
+}
