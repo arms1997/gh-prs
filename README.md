@@ -217,6 +217,7 @@ repos_dir: ~/augment            # owner/repo is expected at <repos_dir>/repo
 opener: open -na Ghostty.app --args -e
 linear_workspace: go-augment    # Linear links: linear.app/<workspace>/issue/AGT-915
 prompt_context_file: context.md # prepended to every agent prompt
+columns: {repo: 176, attention: 196} # desktop list widths in px (repo, diff, attention, next); drag a column edge to set, double-click to reset
 
 sections:
   - title: My PRs
