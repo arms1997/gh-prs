@@ -8,6 +8,9 @@ cost; enabling one is moving its file there.
 | `check.yml` | every PR push, and every push to `main` | `make check`: gofmt, vet, `go test -race`, tsc, Vitest, `npm audit`, govulncheck |
 | `release.yml` | each merged PR | `scripts/release.sh`, the same as `make release PR=<n>`: next version from the PR's label (`major`, `minor`, else patch), tag, build the gh extension for macOS and Linux, publish a release |
 
+Before enabling `release.yml`: the release commits CHANGELOG.md to `main`, which the ruleset only
+allows for admins. Add GitHub Actions as a bypass actor, or the release step fails on push.
+
 The macOS app isn't built in CI: run `make app-release TAG=vX.Y.Z` on your Mac after a release.
 
 ## What it costs

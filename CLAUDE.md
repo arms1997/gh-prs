@@ -16,12 +16,14 @@ README.md says how to use it.
 ## Workflow
 
 1. One branch and one PR per change, from `origin/main` (or stacked on the PR it builds on). Never
-   push to `main`.
+   push to `main`; the only exception is the release commit `scripts/release.sh` makes.
 2. Done means `make check` passes. `make hooks` runs it before every push. docs/FACTORY.md has the
    whole pipeline, from branch to release.
 3. Changed a Go method or type the front end calls? Run `make bindings`. Never edit `desktop/frontend/wailsjs/` by hand.
 4. A PR labelled `minor` or `major` bumps that part of the version on merge; anything else is a patch.
-5. Add a VISION.md changelog line for anything a user would notice.
+5. Anything a user would notice gets a line under `## Unreleased` in CHANGELOG.md (Added, Changed,
+   Fixed, Removed, Security), written for the people who use gh-prs; the pre-push hook checks it.
+   It becomes the release notes. Notable milestones also get a VISION.md changelog line.
 
 ## Rules that keep it safe
 

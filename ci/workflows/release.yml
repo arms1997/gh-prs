@@ -12,7 +12,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write # push the tag, create the release
+  contents: write # push the release commit and tag, create the release
 
 concurrency:
   group: release # one at a time, so two merges can't take the same version
