@@ -14,15 +14,15 @@ export function Composer({pr, job, cmds}: { pr: PR, job?: Job, cmds: ReturnType<
         ? (jobActive(job) ? 'Message Claude (stops the running agent and continues its session)' : 'Message Claude in this session')
         : 'Ask Claude about this PR'
     return (
-        <form className="composer" onSubmit={e => {
+        <form className="border-t border-border-100 px-6 py-3" onSubmit={e => {
             e.preventDefault()
             if (!text.trim()) return
             app.run(cmd.Key, pr.Key, text)
             setText('')
         }}>
-            <label>
+            <label className="flex items-center gap-2 rounded-md border border-border-200 bg-background px-2.5 focus-within:border-sel-ring h-10">
                 <span className="sr-only">{hint}</span>
-                <input id="composer" value={text} placeholder={hint} onChange={e => setText(e.target.value)}
+                <input id="composer" className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none" value={text} placeholder={hint} onChange={e => setText(e.target.value)}
                        onKeyDown={e => e.key === 'Escape' && (e.target as HTMLInputElement).blur()}/>
                 <Kbd keys="i"/>
             </label>

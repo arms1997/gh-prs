@@ -6,7 +6,7 @@ import {AgentStatus} from './AgentStatus'
 import {NeedsYouCard} from './NeedsYouCard'
 import {LastResult} from './LastResult'
 import {Timeline} from './Timeline'
-import './claude.css'
+import {Heading} from '../../components/ui/Heading'
 
 // The PR's conversation with Claude: what the agent is doing, its question for you, and what it
 // did. The message box (Composer) sits under the tab, outside its scroll area.
@@ -15,7 +15,7 @@ export function ClaudeTab({pr, job}: { pr: PR, job?: Job }) {
     const cmds = app.state?.Commands ?? []
     const question = needsYou(job)
     return (
-        <div className="claude">
+        <div className="flex flex-col gap-5">
             {job ? (
                 <>
                     <AgentStatus pr={pr} job={job}/>
@@ -25,13 +25,13 @@ export function ClaudeTab({pr, job}: { pr: PR, job?: Job }) {
                 </>
             ) : (
                 <section>
-                    <h3>No agent has worked on this PR yet</h3>
+                    <Heading>No agent has worked on this PR yet</Heading>
                     <p className="dim small">Hand it to one, or ask Claude something below.</p>
                 </section>
             )}
             <section>
-                <h3>Hand it to Claude</h3>
-                <div className="actions">
+                <Heading>Hand it to Claude</Heading>
+                <div className="flex flex-wrap gap-2">
                     {cmds.filter(c => c.Background && !c.Input).map(c => (
                         <Button key={c.Key} size="sm" onClick={() => app.run(c.Key, pr.Key)}>{c.Name} <Kbd keys={c.Key}/></Button>
                     ))}
