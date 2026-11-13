@@ -24,7 +24,7 @@ export function ChecksTab({pr}: { pr: PR }) {
                                 <div key={c.Name + c.URL} className="boxlist-row">
                                     <span className={'check-icon ' + c.State}>
                                         <Icon name={{fail: 'x', pending: 'spinner', pass: 'check', skipped: 'chevronRight'}[g.state] as 'x'}
-                                              className={g.state === 'pending' ? 'spin' : undefined}/>
+                                              className={g.state === 'pending' ? 'animate-spin' : undefined}/>
                                     </span>
                                     <span className="ellipsis">{c.Name}</span>
                                     {c.URL && <a href={c.URL} className="boxlist-end small">Details <Icon name="external"/></a>}
