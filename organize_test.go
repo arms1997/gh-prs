@@ -134,3 +134,15 @@ func titles(rows []core.Row) []string {
 	}
 	return out
 }
+
+// A key that ends no command (like the old "cd") says so instead of doing nothing.
+func TestDeadKeySequence(t *testing.T) {
+	m := selectPR(orgModel(t), 1)
+	m.cfg.Commands = []core.Command{{Key: "cc", Name: "agent", Run: "true"}}
+	for _, seq := range []string{"cd", "pz"} {
+		m := typeKeys(m, runes(seq[:1]), runes(seq[1:]))
+		if m.keySeq != "" || !m.isErr || !strings.Contains(m.status, "no command "+seq) {
+			t.Fatalf("%s: keySeq=%q status=%q", seq, m.keySeq, m.status)
+		}
+	}
+}

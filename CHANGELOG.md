@@ -8,6 +8,13 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+### Fixed
+- A key sequence that isn't a command (like `cd`, which was removed) says "no command cd" instead of
+  doing nothing, in both front ends.
+- Desktop app: commands that open in your terminal (`M` merge, `L` label, `cc`…) say they opened there
+  instead of showing ✓ before they've run, and no longer refresh before they finish. Without a
+  worktree they open in your home folder, not `/`.
+
 ## v0.3.0 — 2026-11-13
 
 ### Added

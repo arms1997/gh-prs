@@ -108,7 +108,9 @@ export function useMainKeys(o: Opts): string {
                 if (seq in ORGANIZE_NAMES) return o.organize(seq)
                 return app.run(seq, pr.Key)
             }
-            o.setKeySeq(allKeys.some(x => x.startsWith(seq)) ? seq : '')
+            const partial = allKeys.some(x => x.startsWith(seq))
+            if (keySeq && !partial) app.say(`No command ${seq} (? lists them)`, true)
+            o.setKeySeq(partial ? seq : '')
         }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
