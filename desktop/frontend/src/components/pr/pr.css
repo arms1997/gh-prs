@@ -1,7 +1,0 @@
-.turn-dot { width: 8px; height: 8px; border-radius: var(--radius-full); border: 1.5px solid var(--text-faint); }
-.turn-dot.me { background: var(--warn-fg); border-color: var(--warn-fg); }
-.diffstat { display: inline-flex; gap: 6px; font-size: 12px; white-space: nowrap; }
-.badges { display: flex; gap: 4px; overflow: hidden; }
-.next { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.next.command { color: var(--link); font-weight: 500; }
-.next.agent { color: var(--info-fg); font-weight: 500; }
