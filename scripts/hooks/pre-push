@@ -1,5 +1,8 @@
 #!/bin/sh
 # Runs `make check` and the changelog check before every push, so a broken change never leaves
 # your machine. Enable once per clone with `make hooks`; skip a single push with `git push --no-verify`.
+# Git sets GIT_DIR (and more) for hooks; in a worktree, tests that run git in their own temp repos
+# would act on this repo instead, and push to its remote.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX
 root=$(git rev-parse --show-toplevel)
 make -C "$root" check && "$root/scripts/check-changelog.sh"
