@@ -8,6 +8,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+## v0.3.3 — 2026-11-16
+
 ### Changed
 - Desktop app: styles can now use Tailwind utilities built on the app's design tokens, the first step
   of moving off per-component CSS files. Nothing looks different yet.
