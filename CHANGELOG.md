@@ -8,6 +8,12 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+### Changed
+- Desktop app: the PR list fills the window, with columns for whose turn it is and why, and each PR's
+  agent. `e` (or a double-click) opens a PR on the whole page: `j`/`k` step to the next or previous PR,
+  `[` `]` switch tabs, and `esc` goes back to the list where you left it. The details pane is gone,
+  and in `config.yml`'s `columns:` the `next` and `detail` widths are dropped the next time you resize a column.
+
 ## v0.3.3 — 2026-11-16
 
 ### Changed

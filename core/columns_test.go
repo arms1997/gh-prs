@@ -15,18 +15,16 @@ func TestSaveColumns(t *testing.T) {
 	before = append(before, "# mine\n"...)
 	_ = os.WriteFile(ConfigPath(), before, 0o644)
 
-	if err := SaveColumns(map[string]int{"detail": 900}); err != nil { // wider than a list column may be
-		t.Fatal(err)
-	}
-	if err := SaveColumns(map[string]int{"next": 200, "repo": 150}); err != nil {
+	// Retired columns (next, detail) from an older config are accepted and dropped.
+	if err := SaveColumns(map[string]int{"agent": 200, "repo": 150, "next": 300, "detail": 900}); err != nil {
 		t.Fatal(err)
 	}
 	got, _ := os.ReadFile(ConfigPath())
-	if want := string(before) + "\ncolumns: {repo: 150, next: 200}\n"; string(got) != want {
+	if want := string(before) + "\ncolumns: {repo: 150, agent: 200}\n"; string(got) != want {
 		t.Fatalf("appended wrong:\n%s", got)
 	}
 	cfg, err := LoadConfig()
-	if err != nil || cfg.Columns["repo"] != 150 || cfg.Columns["next"] != 200 {
+	if err != nil || cfg.Columns["repo"] != 150 || cfg.Columns["agent"] != 200 {
 		t.Fatalf("columns %v, %v", cfg.Columns, err)
 	}
 
@@ -49,7 +47,7 @@ func TestSaveColumns(t *testing.T) {
 	}
 
 	after, _ := os.ReadFile(ConfigPath())
-	for _, bad := range []map[string]int{{"title": 100}, {"repo": 5}, {"detail": 100}} {
+	for _, bad := range []map[string]int{{"title": 100}, {"repo": 5}, {"agent": 900}} {
 		if err := SaveColumns(bad); err == nil {
 			t.Fatalf("%v saved", bad)
 		}

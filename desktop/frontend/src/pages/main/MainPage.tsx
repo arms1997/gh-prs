@@ -2,9 +2,8 @@ import {useEffect, useMemo, useRef, useState} from 'react'
 import {PRBrief, Projects} from '../../../wailsjs/go/main/App'
 import {useApp} from '../../state/AppState'
 import {nextStep, PR, QUICK_FILTERS} from '../../lib/pr'
-import {countPRs, visibleRows} from '../../lib/rows'
-import {useWidths} from './useWidths'
-import {DETAIL_TABS, DetailPane, DetailTab} from '../../features/detail/DetailPane'
+import {countPRs, groupsOf, nextPR, visibleRows} from '../../lib/rows'
+import {DETAIL_TABS, DetailTab} from '../../features/detail/DetailPane'
 import {CommandPalette, PaletteItem} from '../../features/palette/CommandPalette'
 import {HelpDialog} from '../../features/organize/HelpDialog'
 import {MoveDialog} from '../../features/organize/MoveDialog'
@@ -12,6 +11,7 @@ import {DailyBrief} from '../../features/brief/DailyBrief'
 import {TopBar} from './TopBar'
 import {FilterBar} from './FilterBar'
 import {PrList} from './PrList'
+import {PrView} from './PrView'
 import {Footer} from './Footer'
 import {useMainKeys} from './useMainKeys'
 
@@ -23,6 +23,7 @@ export function MainPage() {
     const [keySeq, setKeySeq] = useState('')
     const [filtering, setFiltering] = useState(false)
     const [tab, setTab] = useState<DetailTab>('overview')
+    const [open, setOpen] = useState(false) // the selected PR fills the page
     const [dialog, setDialog] = useState<'help' | 'palette' | 'brief' | { move: PR, projects: string[] }>()
     const filterRef = useRef<HTMLInputElement>(null)
 
@@ -43,7 +44,7 @@ export function MainPage() {
             setCollapsed(c => c.filter(p => !r.Path.startsWith(p + '/')))
             setSel(r.Path)
         } else app.say('That PR is no longer in your list', true)
-        setTab(f.tab)
+        showTab(f.tab)
         app.setFocus(undefined)
     }, [app.focus, all])
 
@@ -51,6 +52,10 @@ export function MainPage() {
     if (cursor < 0) cursor = rows.findIndex(r => r.PR) // first PR
     const pr = rows[cursor]?.PR
     const step = pr && nextStep(pr, jobs[pr.Key], commands)
+    const viewing = open && !!pr
+
+    const showTab = (t: DetailTab) => { setTab(t); setOpen(true) }
+    const stepPR = (d: 1 | -1) => { const i = nextPR(rows, cursor, d); if (i >= 0) setSel(rows[i].Path) }
 
     const toggleGroup = (path: string, open?: boolean) =>
         setCollapsed(c => (open ?? c.includes(path)) ? c.filter(p => p !== path) : [...c, path])
@@ -63,13 +68,16 @@ export function MainPage() {
     // Starts Claude on the PR's brief and shows the tab, which follows it until it's written.
     const writeBrief = () => {
         if (!pr) return
-        PRBrief(pr.Key, true).then(() => setTab('brief')).catch(e => app.say(String(e), true))
+        PRBrief(pr.Key, true).then(() => showTab('brief')).catch(e => app.say(String(e), true))
     }
 
     const hint = useMainKeys({
-        app, rows, cursor, step, keySeq, setKeySeq, toggleGroup, organize,
+        app, rows, cursor, step, keySeq, setKeySeq, toggleGroup, organize, viewing,
         paused: filtering || !!dialog || !!app.ask,
         select: setSel,
+        openPR: () => pr && setOpen(true),
+        back: () => setOpen(false),
+        stepPR,
         focusFilter: () => filterRef.current?.focus(),
         clear: () => { app.setFilter(''); setQuick('') },
         openPalette: () => setDialog('palette'),
@@ -78,7 +86,7 @@ export function MainPage() {
         writeBrief,
         openSessions: () => app.setPage('sessions'),
         focusComposer: () => {
-            setTab('claude')
+            showTab('claude')
             setTimeout(() => document.getElementById('composer')?.focus())
         },
         cycleTab: (d: number) => setTab(t => DETAIL_TABS[(DETAIL_TABS.indexOf(t) + d + DETAIL_TABS.length) % DETAIL_TABS.length]),
@@ -100,7 +108,7 @@ export function MainPage() {
         ] : []),
         {section: 'Organize', label: app.showAll ? 'Leave hidden & snoozed out' : 'Show hidden & snoozed', keys: 'pa', run: () => app.setShowAll(s => !s)},
         ...(pr ? [{section: 'This pull request', label: 'Message Claude', keys: 'i', icon: 'thread' as const, run: () => {
-            setTab('claude')
+            showTab('claude')
             setTimeout(() => document.getElementById('composer')?.focus())
         }}] : []),
         {section: 'App', label: 'Daily brief', keys: 'b', icon: 'clock', run: () => setDialog('brief')},
@@ -109,20 +117,21 @@ export function MainPage() {
         {section: 'App', label: 'Keyboard shortcuts', keys: '?', run: () => setDialog('help')},
     ]
 
-    const widths = useWidths()
+    const prRows = rows.filter(r => r.PR)
     return (
-        <div className="grid h-full grid-rows-[52px_48px_minmax(0,1fr)_32px]">
-            <TopBar ref={filterRef} total={total} onFocus={() => setFiltering(true)} onDone={() => setFiltering(false)}
-                    onBrief={() => setDialog('brief')}/>
-            <FilterBar quick={quick} setQuick={setQuick} counts={counts} total={total}/>
-            <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_var(--w-detail,440px)] narrow:grid-cols-[minmax(0,1fr)_var(--w-detail,380px)]" style={widths.vars}>
-                <PrList rows={rows} cursor={cursor} collapsed={collapsed} onSelect={setSel} onToggle={p => toggleGroup(p)}/>
-                <div className="relative grid min-h-0 min-w-0">
-                    <span {...widths.handle('detail', 'details pane')}/>
-                    <DetailPane pr={pr} tab={tab} setTab={setTab} openPalette={() => setDialog('palette')}/>
-                </div>
-            </div>
-            <Footer hint={hint}/>
+        <div className={`grid h-full ${viewing ? 'grid-rows-[minmax(0,1fr)_32px]' : 'grid-rows-[52px_48px_minmax(0,1fr)_32px]'}`}>
+            {viewing ? (
+                <PrView pr={pr} groups={groupsOf(all, rows[cursor].Path)} onBack={() => setOpen(false)} onStep={stepPR}
+                        pos={{n: prRows.indexOf(rows[cursor]) + 1, total: prRows.length}}
+                        tab={tab} setTab={setTab} openPalette={() => setDialog('palette')}/>
+            ) : <>
+                <TopBar ref={filterRef} total={total} onFocus={() => setFiltering(true)} onDone={() => setFiltering(false)}
+                        onBrief={() => setDialog('brief')}/>
+                <FilterBar quick={quick} setQuick={setQuick} counts={counts} total={total}/>
+                <PrList rows={rows} cursor={cursor} collapsed={collapsed} onSelect={setSel} onToggle={p => toggleGroup(p)}
+                        onOpen={p => { setSel(p); setOpen(true) }}/>
+            </>}
+            <Footer hint={hint} viewing={viewing}/>
             {dialog === 'brief' && <DailyBrief onClose={() => setDialog(undefined)}/>}
             {dialog === 'help' && <HelpDialog commands={commands} onClose={() => setDialog(undefined)}/>}
             {dialog === 'palette' && <CommandPalette items={paletteItems} onClose={() => setDialog(undefined)}

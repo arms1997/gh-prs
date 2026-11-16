@@ -10,9 +10,13 @@ type Opts = {
     cursor: number
     step?: NextStep
     paused: boolean // a dialog or the filter box has the keyboard
+    viewing: boolean // the selected PR fills the page
     keySeq: string
     setKeySeq: (s: string) => void
     select: (path: string) => void
+    openPR: () => void
+    back: () => void
+    stepPR: (d: 1 | -1) => void
     toggleGroup: (path: string, open?: boolean) => void
     focusFilter: () => void
     clear: () => void
@@ -45,7 +49,9 @@ export function useMainKeys(o: Opts): string {
             const t = e.target as HTMLElement
             if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) return
             if (o.paused || e.metaKey || e.ctrlKey || e.altKey) return
+            // Viewing a PR, moves go from PR to PR; in the list they stop on group headings too.
             const move = (i: number) => {
+                if (o.viewing) return o.stepPR(i < cursor ? -1 : 1)
                 const r = rows[Math.max(0, Math.min(rows.length - 1, i))]
                 if (r) o.select(r.Path)
             }
@@ -61,7 +67,9 @@ export function useMainKeys(o: Opts): string {
                         e.preventDefault()
                         return move(cursor - 1)
                     case 'G':
-                        return move(rows.length - 1)
+                        return o.viewing || move(rows.length - 1)
+                    case 'e':
+                        return o.openPR()
                     case 'o':
                         return pr && app.open(pr.URL)
                     case 'r':
@@ -80,11 +88,11 @@ export function useMainKeys(o: Opts): string {
                         e.preventDefault()
                         return o.focusComposer()
                     case '[':
-                        return o.cycleTab(-1)
+                        return o.viewing && o.cycleTab(-1)
                     case ']':
-                        return o.cycleTab(1)
+                        return o.viewing && o.cycleTab(1)
                     case 'Escape':
-                        return o.clear()
+                        return o.viewing ? o.back() : o.clear()
                     case 'h':
                     case 'ArrowLeft':
                         return row && !row.PR && o.toggleGroup(row.Path, false)
@@ -101,7 +109,7 @@ export function useMainKeys(o: Opts): string {
             const seq = keySeq + k
             if (allKeys.includes(seq)) {
                 o.setKeySeq('')
-                if (seq === 'gg') return move(0)
+                if (seq === 'gg') return o.viewing || move(0)
                 if (seq === 'ga') return o.openSessions()
                 if (seq === 'pa') return app.setShowAll(s => !s)
                 if (!pr) return app.say('Select a PR first', true)

@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {countPRs, visibleRows} from './rows'
+import {countPRs, groupsOf, nextPR, visibleRows} from './rows'
 import {ciFailing} from './pr'
 import {group, prRow, pr} from '../test/fixtures'
 
@@ -42,5 +42,21 @@ describe('countPRs', () => {
         const twice = [...rows, group('Reviews', 0, 1), prRow('Reviews', a, 1)]
         expect(countPRs(twice, {}, ciFailing)).toBe(2)
         expect(countPRs(twice, {}, () => true)).toBe(3)
+    })
+})
+
+describe('nextPR', () => {
+    it('skips group headings and stops at either end', () => {
+        expect(nextPR(rows, 2, 1)).toBe(3)
+        expect(nextPR(rows, 3, 1)).toBe(5)
+        expect(nextPR(rows, 5, 1)).toBe(-1)
+        expect(nextPR(rows, 5, -1)).toBe(3)
+        expect(nextPR(rows, 2, -1)).toBe(-1)
+    })
+})
+
+describe('groupsOf', () => {
+    it('lists the groups a PR sits in, outermost first', () => {
+        expect(groupsOf(rows, rows[5].Path)).toEqual(['Mine', 'Draft'])
     })
 })
