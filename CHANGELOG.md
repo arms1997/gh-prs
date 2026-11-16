@@ -15,6 +15,7 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
   `pm` and `pa` show as two keys, like the commands listed under them.
 - Desktop app: the PR list's status pieces and the Claude sessions page use Tailwind, with no visible change.
 - Desktop app: the command palette, keys help, move and ask dialogs use Tailwind, with no visible change.
+- Desktop app: the details pane and its tabs use Tailwind, with no visible change.
 
 ## v0.3.2 — 2026-11-13
 
