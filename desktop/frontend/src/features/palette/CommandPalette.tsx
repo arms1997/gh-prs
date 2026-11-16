@@ -39,7 +39,7 @@ export function CommandPalette({items, context, onClose}: { items: PaletteItem[]
                     <span className="sr-only">Command</span>
                     <input autoFocus className="flex-1 border-0 bg-transparent text-lg text-foreground outline-none" value={q} placeholder="Type a command" onKeyDown={onKey}
                            onChange={e => { setQ(e.target.value); setI(0) }}/>
-                    {context && <span className="text-xs whitespace-nowrap text-dim">Acting on <span className="mono">{context}</span></span>}
+                    {context && <span className="text-xs whitespace-nowrap text-dim">Acting on <span className="font-mono">{context}</span></span>}
                 </label>
                 <div className="max-h-[50vh] overflow-y-auto px-2 pt-1 pb-2" ref={list}>
                     {shown.map((it, n) => (
@@ -50,7 +50,7 @@ export function CommandPalette({items, context, onClose}: { items: PaletteItem[]
                                     onMouseMove={() => setI(n)} onClick={() => pick(it)}>
                                 <span className="inline-flex w-4 text-faint">{it.icon && <Icon name={it.icon} size={16}/>}</span>
                                 <span className="text-base font-medium">{it.label}</span>
-                                {it.hint && <span className="dim">{it.hint}</span>}
+                                {it.hint && <span className="text-dim">{it.hint}</span>}
                                 {it.keys && <span className="ml-auto"><Kbd keys={it.keys}/></span>}
                             </button>
                         </div>

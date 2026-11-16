@@ -54,7 +54,7 @@ export function PrList({rows, cursor, collapsed, onSelect, onToggle}: {
                              style={{paddingLeft: 8 + r.Depth * 18}}
                              onClick={() => { onSelect(r.Path); onToggle(r.Path) }}>
                             <Icon name={closed ? 'chevronRight' : 'chevronDown'} size={r.Depth ? 12 : 14}/>
-                            <span>{r.Title}</span><span className="mono text-xs font-medium text-dim">{r.Count}</span>
+                            <span>{r.Title}</span><span className="font-mono text-xs font-medium text-dim">{r.Count}</span>
                         </div>
                     )
                 }
@@ -68,19 +68,19 @@ export function PrList({rows, cursor, collapsed, onSelect, onToggle}: {
                         <TurnDot pr={p}/>
                         <span className="flex min-w-0 items-center gap-1.5" style={{paddingLeft: r.Stack * 14}}>
                             {r.Stack > 0 && <Icon name="stack" size={14} className="text-faint"/>}
-                            {p.Pinned && <Icon name="pin" className="warn" />}
+                            {p.Pinned && <Icon name="pin" className="text-warn-fg" />}
                             {p.Snoozed && <Icon name="moon" className="text-faint"/>}
                             {p.Hidden && <Icon name="eyeOff" className="text-faint"/>}
                             <span className="min-w-0 truncate">{p.Title}</span>
                         </span>
-                        <span className="mono min-w-0 truncate text-xs text-dim">{p.Repo.split('/')[1]}#{p.Number}</span>
+                        <span className="font-mono min-w-0 truncate text-xs text-dim">{p.Repo.split('/')[1]}#{p.Number}</span>
                         <span className="narrow:hidden"><DiffStat pr={p}/></span>
                         <AttentionBadges pr={p}/>
                         <NextStepLabel step={step} showKey={sel}/>
                     </div>
                 )
             })}
-            {rows.length === 0 && <div className="dim p-6">{app.state ? 'No PRs match.' : 'Loading…'}</div>}
+            {rows.length === 0 && <div className="text-dim p-6">{app.state ? 'No PRs match.' : 'Loading…'}</div>}
         </main>
     )
 }

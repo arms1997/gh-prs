@@ -13,7 +13,7 @@ const COLOR = {fail: 'text-bad-fg', pending: 'text-info-fg', pass: 'text-ok-fg',
 
 export function ChecksTab({pr}: { pr: PR }) {
     const checks = pr.Checks ?? []
-    if (checks.length === 0) return <p className="dim">No checks on the latest commit.</p>
+    if (checks.length === 0) return <p className="text-dim">No checks on the latest commit.</p>
     return (
         <>
             {GROUPS.map(g => {
@@ -21,7 +21,7 @@ export function ChecksTab({pr}: { pr: PR }) {
                 if (!list.length) return null
                 return (
                     <section key={g.state}>
-                        <Heading>{g.title} <span className="dim text-xs mono">{list.length}</span></Heading>
+                        <Heading>{g.title} <span className="text-dim text-xs font-mono">{list.length}</span></Heading>
                         <BoxList>
                             {list.map(c => (
                                 <BoxRow key={c.Name + c.URL}>
