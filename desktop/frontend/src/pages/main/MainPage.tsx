@@ -121,9 +121,9 @@ export function MainPage() {
     return (
         <div className={`grid h-full ${viewing ? 'grid-rows-[minmax(0,1fr)_32px]' : 'grid-rows-[52px_48px_minmax(0,1fr)_32px]'}`}>
             {viewing ? (
-                <PrView pr={pr} groups={groupsOf(all, rows[cursor].Path)} onBack={() => setOpen(false)} onStep={stepPR}
+                <PrView pr={pr} stackedOn={rows[cursor].StackedOn} groups={groupsOf(all, rows[cursor].Path)} onBack={() => setOpen(false)} onStep={stepPR}
                         pos={{n: prRows.indexOf(rows[cursor]) + 1, total: prRows.length}}
-                        tab={tab} setTab={setTab} openPalette={() => setDialog('palette')}/>
+                        tab={tab} setTab={setTab}/>
             ) : <>
                 <TopBar ref={filterRef} total={total} onFocus={() => setFiltering(true)} onDone={() => setFiltering(false)}
                         onBrief={() => setDialog('brief')}/>

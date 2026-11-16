@@ -5,9 +5,9 @@ import {Kbd} from '../../components/ui/Kbd'
 import {DetailPane, DetailTab} from '../../features/detail/DetailPane'
 
 // One PR on the whole page, opened from the list (e); j/k step through the list's PRs, esc goes back.
-export function PrView({pr, groups, pos, onBack, onStep, tab, setTab, openPalette}: {
-    pr: PR, groups: string[], pos: { n: number, total: number }, onBack: () => void, onStep: (d: 1 | -1) => void,
-    tab: DetailTab, setTab: (t: DetailTab) => void, openPalette: () => void
+export function PrView({pr, stackedOn, groups, pos, onBack, onStep, tab, setTab}: {
+    pr: PR, stackedOn: number, groups: string[], pos: { n: number, total: number }, onBack: () => void, onStep: (d: 1 | -1) => void,
+    tab: DetailTab, setTab: (t: DetailTab) => void
 }) {
     return (
         <div className="grid min-h-0 grid-rows-[48px_minmax(0,1fr)]">
@@ -20,9 +20,7 @@ export function PrView({pr, groups, pos, onBack, onStep, tab, setTab, openPalett
                     <Button size="sm" onClick={() => onStep(1)} disabled={pos.n >= pos.total}>Next<Kbd keys="j"/></Button>
                 </span>
             </nav>
-            <div className="grid min-h-0 grid-cols-[minmax(0,1040px)] justify-center">
-                <DetailPane pr={pr} tab={tab} setTab={setTab} openPalette={openPalette}/>
-            </div>
+            <DetailPane pr={pr} stackedOn={stackedOn} tab={tab} setTab={setTab}/>
         </div>
     )
 }

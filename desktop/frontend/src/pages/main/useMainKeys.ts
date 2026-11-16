@@ -1,6 +1,6 @@
 import {useEffect} from 'react'
 import {App} from '../../state/AppState'
-import {NextStep, Row} from '../../lib/pr'
+import {agentCommands, needsYou, NextStep, Row} from '../../lib/pr'
 
 const ORGANIZE_NAMES: Record<string, string> = {pp: 'pin', ps: 'snooze', ph: 'hide', pm: 'move', pa: 'show all', gg: 'top', ga: 'Claude sessions'}
 
@@ -104,6 +104,10 @@ export function useMainKeys(o: Opts): string {
                         if (pr && o.step?.kind === 'command') return o.step.key === 'o' ? app.open(pr.URL) : app.run(o.step.key, pr.Key)
                         return
                 }
+                // In a PR, 1–9 pick the waiting agent's suggested answers, like the buttons.
+                const options = pr && o.viewing && needsYou(app.state?.Jobs[pr.Key]) ? app.state?.Jobs[pr.Key]?.Summary?.Options ?? [] : []
+                const reply = agentCommands(app.state?.Commands ?? []).reply
+                if (pr && reply && /^[1-9]$/.test(k) && options[+k - 1]) return app.run(reply.Key, pr.Key, options[+k - 1])
             }
             if (k.length !== 1) return
             const seq = keySeq + k

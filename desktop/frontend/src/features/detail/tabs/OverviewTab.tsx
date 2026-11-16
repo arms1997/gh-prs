@@ -1,18 +1,14 @@
 import {useMemo, useState} from 'react'
 import {useApp} from '../../../state/AppState'
-import {beforeMerge, Gate, nextStep, PR} from '../../../lib/pr'
+import {beforeMerge, Gate, PR} from '../../../lib/pr'
 import {markdown, markdownInline, taskList} from '../../../lib/markdown'
-import {Badge} from '../../../components/ui/Badge'
-import {Button} from '../../../components/ui/Button'
 import {Icon} from '../../../components/ui/Icon'
-import {Kbd} from '../../../components/ui/Kbd'
 import {Heading} from '../../../components/ui/Heading'
 
 const LINK_BTN = 'cursor-pointer border-0 bg-transparent p-0 text-xs font-medium whitespace-nowrap text-link hover:underline'
 
-export function OverviewTab({pr, showChecks, openPalette}: { pr: PR, showChecks: () => void, openPalette: () => void }) {
+export function OverviewTab({pr, showChecks}: { pr: PR, showChecks: () => void }) {
     const app = useApp()
-    const step = nextStep(pr, app.state?.Jobs[pr.Key], app.state?.Commands ?? [])
     const {tasks, rest} = useMemo(() => taskList(pr.Body), [pr.Body])
     const gates = beforeMerge(pr)
     const done = gates.filter(g => g.state === 'done').length
@@ -36,16 +32,6 @@ export function OverviewTab({pr, showChecks, openPalette}: { pr: PR, showChecks:
                 ))}
             </section>
 
-            <div className="flex flex-wrap gap-2">
-                {step.kind === 'command' && step.key !== 'o' && (
-                    <Button variant="primary" onClick={() => app.run(step.key, pr.Key)}>
-                        <Icon name="terminal" size={14}/>{step.text}<Kbd keys={step.key}/>
-                    </Button>
-                )}
-                <Button onClick={() => app.open(pr.URL)}>Open in browser <Kbd keys="o"/></Button>
-                <Button onClick={openPalette}>All commands <Kbd keys="⌘K"/></Button>
-            </div>
-
             {tasks.length > 0 && (
                 <section>
                     <Heading aside={<span className="text-dim text-xs">{tasks.filter(t => t.done).length} of {tasks.length}</span>}>PR checklist</Heading>
@@ -57,13 +43,6 @@ export function OverviewTab({pr, showChecks, openPalette}: { pr: PR, showChecks:
                             </li>
                         ))}
                     </ul>
-                </section>
-            )}
-
-            {(pr.Labels?.length ?? 0) > 0 && (
-                <section>
-                    <Heading>Labels</Heading>
-                    <div className="flex flex-wrap gap-1.5">{pr.Labels.map(l => <Badge key={l} tone="neutral">{l}</Badge>)}</div>
                 </section>
             )}
 
@@ -80,7 +59,7 @@ function GateIcon({state}: { state: Gate['state'] }) {
 function Description({md}: { md: string }) {
     const [full, setFull] = useState(false)
     const html = useMemo(() => markdown(md), [md])
-    const long = md.length > 1200
+    const long = md.length > 4000
     return (
         <section>
             <Heading>Description</Heading>
