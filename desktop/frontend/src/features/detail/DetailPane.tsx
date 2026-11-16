@@ -1,4 +1,4 @@
-import {DetailTabName, useApp} from '../../state/AppState'
+import {App, DetailTabName, useApp} from '../../state/AppState'
 import {agentCommands, needsYou, nextStep, PR} from '../../lib/pr'
 import {Badge} from '../../components/ui/Badge'
 import {TabDef, Tabs} from '../../components/ui/Tabs'
@@ -17,18 +17,20 @@ export const DETAIL_TABS: DetailTab[] = ['overview', 'brief', 'claude', 'checks'
 // overflow-wrap: long paths, branch names and URLs in agent output wrap instead of running past their box.
 const PANE = 'flex min-h-0 min-w-0 flex-col [overflow-wrap:anywhere]'
 
+// Links clicked inside, including ones in PR descriptions, open in the browser instead of the app.
+export const linkOpener = (app: App) => (e: React.MouseEvent) => {
+    const a = (e.target as HTMLElement).closest('a')
+    if (a) {
+        e.preventDefault()
+        app.open(a.getAttribute('href') ?? '')
+    }
+}
+
 export function DetailPane({pr, stackedOn, tab, setTab}: {
     pr?: PR, stackedOn: number, tab: DetailTab, setTab: (t: DetailTab) => void
 }) {
     const app = useApp()
-    // Links in the pane, including ones in PR descriptions, open in the browser.
-    const onLink = (e: React.MouseEvent) => {
-        const a = (e.target as HTMLElement).closest('a')
-        if (a) {
-            e.preventDefault()
-            app.open(a.getAttribute('href') ?? '')
-        }
-    }
+    const onLink = linkOpener(app)
     if (!pr) return <aside aria-label="Pull request details" className={PANE}><div className="text-dim p-6">Select a PR.</div></aside>
 
     const job = app.state?.Jobs[pr.Key]
