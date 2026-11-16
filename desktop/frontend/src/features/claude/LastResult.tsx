@@ -16,8 +16,8 @@ export function LastResult({job}: { job: Job }) {
                         <ul className="m-0 pl-4.5 text-neutral-fg">{s.Changes.map((c, i) => <li key={i} dangerouslySetInnerHTML={{__html: markdownInline(c)}}/>)}</ul>
                     )}
                     {pushed && (/^no/i.test(pushed)
-                        ? <span className="warn small">Not pushed: {pushed.replace(/^no:?\s*/i, '')}</span>
-                        : <span className="ok small">Pushed {pushed}</span>)}
+                        ? <span className="warn text-xs">Not pushed: {pushed.replace(/^no:?\s*/i, '')}</span>
+                        : <span className="ok text-xs">Pushed {pushed}</span>)}
                 </div>
             ) : (
                 <pre className="m-0 max-h-60 overflow-y-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap">{job.Result || 'No result yet.'}</pre>

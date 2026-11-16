@@ -20,7 +20,7 @@ export function AgentStatus({pr, job}: { pr: PR, job: Job }) {
             <span className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full ${TONE[job.State] ?? 'bg-warn-bg text-warn-fg'}`}><Icon name={ICON[job.State]} size={14} className={job.State === 'running' ? 'animate-spin' : undefined}/></span>
             <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-px">
                 <span className="text-base font-medium">{job.Name} · {JOB_LABEL[job.State]}</span>
-                <span className="dim small">{facts.join(' · ')}</span>
+                <span className="dim text-xs">{facts.join(' · ')}</span>
             </div>
             <div className="ml-9.5 flex flex-wrap gap-1.5">
                 {jobActive(job) && stop && <Button size="sm" onClick={() => app.run(stop.Key, pr.Key)}>Stop <Kbd keys={stop.Key}/></Button>}

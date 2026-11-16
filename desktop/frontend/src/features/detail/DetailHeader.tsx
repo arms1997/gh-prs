@@ -8,7 +8,7 @@ export function DetailHeader({pr}: { pr: PR }) {
         <div className="flex flex-col gap-2 select-text">
             <div className="flex min-w-0 items-center gap-2 text-xs whitespace-nowrap text-dim">
                 <span className="mono">{pr.Repo.split('/')[1]}#{pr.Number}</span>
-                {pr.Project && <><span aria-hidden="true">·</span><span className="ellipsis">{pr.Project}</span></>}
+                {pr.Project && <><span aria-hidden="true">·</span><span className="min-w-0 truncate">{pr.Project}</span></>}
                 <span aria-hidden="true">·</span><DiffStat pr={pr}/>
                 <a href={pr.URL} className="ml-auto inline-flex items-center gap-1 font-medium">GitHub <Icon name="external"/></a>
             </div>
