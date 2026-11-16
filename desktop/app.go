@@ -333,8 +333,11 @@ func (a *App) Run(cmdKey, prKey, input string) (string, error) {
 		return "", err
 	}
 	if c.Confirm {
+		// Wails returns the clicked label only for buttons passed in; without them it's always "". No is the
+		// default, so Enter on a merge or deploy cancels.
 		answer, err := runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{Type: runtime.QuestionDialog,
-			Title: c.Name, Message: fmt.Sprintf("%s #%d (%s)?", c.Name, p.Number, p.Repo)})
+			Title: c.Name, Message: fmt.Sprintf("%s #%d (%s)?", c.Name, p.Number, p.Repo),
+			Buttons: []string{"Yes", "No"}, DefaultButton: "No", CancelButton: "No"})
 		if err != nil || answer != "Yes" {
 			return "cancelled", nil
 		}
