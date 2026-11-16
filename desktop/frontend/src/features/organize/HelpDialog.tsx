@@ -1,7 +1,6 @@
 import {Modal} from '../../components/ui/Modal'
 import {Kbd} from '../../components/ui/Kbd'
 import {Command} from '../../lib/pr'
-import './organize.css'
 
 const KEYS: [string, string][] = [
     ['⌘K', 'command palette'], ['j k ↑ ↓', 'move'], ['g g / G', 'top / bottom'], ['h l', 'collapse / expand a group'],
@@ -10,13 +9,15 @@ const KEYS: [string, string][] = [
     ['?', 'this help'],
 ]
 
+const ROW = 'grid grid-cols-[150px_1fr] items-center gap-3 text-sm'
+
 export function HelpDialog({commands, onClose}: { commands: Command[], onClose: () => void }) {
     return (
         <Modal label="Keys" onClose={onClose}>
-            <div className="dialog">
-                <h3>Keys</h3>
-                {KEYS.map(([k, d]) => <div key={k} className="helprow"><Kbd keys={k}/><span>{d}</span></div>)}
-                {commands.map(c => <div key={c.Key} className="helprow"><span><Kbd keys={c.Key}/></span><span>{c.Name}</span></div>)}
+            <div className="grid gap-2 px-5.5 py-4.5">
+                <h3 className="m-0 mb-1.5 text-lg font-semibold">Keys</h3>
+                {KEYS.map(([k, d]) => <div key={k} className={ROW}><Kbd keys={k}/><span>{d}</span></div>)}
+                {commands.map(c => <div key={c.Key} className={ROW}><span><Kbd keys={c.Key}/></span><span>{c.Name}</span></div>)}
             </div>
         </Modal>
     )

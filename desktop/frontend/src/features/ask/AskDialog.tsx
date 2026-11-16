@@ -2,7 +2,7 @@ import {useState} from 'react'
 import {useApp} from '../../state/AppState'
 import {Modal} from '../../components/ui/Modal'
 import {Kbd} from '../../components/ui/Kbd'
-import './ask.css'
+import {TextArea} from '../../components/ui/Input'
 
 // The text a command's Input question asks for, e.g. a reply to Claude. ⏎ sends, ⇧⏎ adds a line.
 export function AskDialog() {
@@ -18,10 +18,10 @@ export function AskDialog() {
     }
     return (
         <Modal label={cmd.Input} onClose={close}>
-            <form className="ask" onSubmit={e => { e.preventDefault(); send() }}>
-                <h3>{cmd.Input}</h3>
+            <form className="flex w-[520px] flex-col gap-2 px-5.5 py-4.5" onSubmit={e => { e.preventDefault(); send() }}>
+                <h3 className="m-0 text-lg font-semibold">{cmd.Input}</h3>
                 <span className="dim small mono">{prKey.split('/')[1]}</span>
-                <textarea autoFocus rows={4} value={text} placeholder="Type your message"
+                <TextArea autoFocus rows={4} value={text} placeholder="Type your message"
                           onChange={e => setText(e.target.value)}
                           onKeyDown={e => {
                               if (e.key === 'Enter' && !e.shiftKey) {
@@ -29,7 +29,7 @@ export function AskDialog() {
                                   send()
                               }
                           }}/>
-                <div className="ask-foot dim small"><span><Kbd keys="⏎"/> send</span><span>⇧⏎ new line</span><span><Kbd keys="esc"/> cancel</span></div>
+                <div className="dim small flex gap-4 [&>span]:inline-flex [&>span]:items-center [&>span]:gap-1"><span><Kbd keys="⏎"/> send</span><span>⇧⏎ new line</span><span><Kbd keys="esc"/> cancel</span></div>
             </form>
         </Modal>
     )
