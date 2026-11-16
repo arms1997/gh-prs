@@ -14,6 +14,7 @@
         user-select: none;
     }
 
+    p { margin: 0; }
     a { color: var(--link); text-decoration: none; }
     a:hover { text-decoration: underline; }
     code, pre { font-family: var(--font-mono); font-size: 12px; }
