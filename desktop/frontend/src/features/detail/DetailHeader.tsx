@@ -33,6 +33,9 @@ export function DetailHeader({pr, job, step}: { pr: PR, job?: Job, step: NextSte
                 <TurnDot pr={pr}/>
                 <span className={pr.OnMe ? 'font-medium' : 'text-dim'}>{pr.OnMe ? 'Your turn' : 'Their turn'}{pr.TurnWhy && `: ${pr.TurnWhy}`}</span>
             </div>
+            {(pr.Changes?.length ?? 0) > 0 && (
+                <div className="flex items-center gap-2 text-sm text-info-fg"><span aria-hidden="true" className="size-2 rounded-full bg-info-fg"/>Since you last looked: {pr.Changes.join(' · ')}</div>
+            )}
             <div className="flex flex-wrap gap-1.5">
                 {statusBadges(pr).map(b => <Badge key={b.text} tone={b.tone} icon={b.icon}>{b.text}</Badge>)}
                 {pr.LinearURL && <a href={pr.LinearURL} className="hover:no-underline"><Badge tone="info">{pr.Linear}</Badge></a>}

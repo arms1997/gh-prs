@@ -6,6 +6,10 @@ export function Files(arg1) {
   return window['go']['main']['App']['Files'](arg1);
 }
 
+export function MarkSeen(arg1) {
+  return window['go']['main']['App']['MarkSeen'](arg1);
+}
+
 export function OpenURL(arg1) {
   return window['go']['main']['App']['OpenURL'](arg1);
 }

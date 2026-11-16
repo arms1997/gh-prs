@@ -34,10 +34,11 @@ type App struct {
 	isErr   bool
 	kick    chan struct{} // wakes the refresh loop for an immediate refresh
 	briefs  map[string]*Brief
+	seen    core.SeenStore // each PR as of when you last left its page, shared with the terminal UI
 }
 
 func NewApp(cfg core.Config) *App {
-	a := &App{cfg: cfg, jobs: core.LoadJobs(), kick: make(chan struct{}, 1), briefs: map[string]*Brief{}}
+	a := &App{cfg: cfg, jobs: core.LoadJobs(), kick: make(chan struct{}, 1), briefs: map[string]*Brief{}, seen: core.LoadSeen()}
 	org, err := core.LoadOrganize()
 	if err != nil {
 		a.status, a.isErr = err.Error(), true
@@ -101,6 +102,9 @@ func (a *App) fetch() {
 	if a.org.Wake(data) { // snoozed PRs that changed come back
 		_ = a.org.Save()
 	}
+	if a.seen.Baseline(data) {
+		_ = a.seen.Save() // shortcut: if it can't be saved, new PRs just won't show changes next run
+	}
 }
 
 // jobLoop follows agent logs, and refreshes PRs when an agent finishes a run (it may have pushed).
@@ -142,6 +146,7 @@ type PRView struct {
 	Hidden    bool
 	Snoozed   bool
 	LinearURL string
+	Changes   []string // what changed since you last looked at the PR, in plain words
 }
 
 type RowView struct {
@@ -235,6 +240,9 @@ func (a *App) State(filter string, collapsed []string, showAll bool) State {
 			onMe, why := core.TurnOf(*p)
 			rv.PR = &PRView{PR: *p, Key: core.PrKey(p.Repo, p.Number), Status: core.StatusOf(*p).String(), OnMe: onMe, TurnWhy: why,
 				Project: p.Project, Pinned: p.Pinned, Hidden: p.Hidden, Snoozed: p.Snoozed}
+			if prev, ok := a.seen[rv.PR.Key]; ok {
+				rv.PR.Changes = core.Changes(prev, core.SnapOf(*p))
+			}
 			if p.Linear != "" && a.cfg.LinearWorkspace != "" {
 				rv.PR.LinearURL = core.LinearURL(a.cfg.LinearWorkspace, p.Linear)
 			}
@@ -248,6 +256,18 @@ func (a *App) State(filter string, collapsed []string, showAll bool) State {
 		s.Commands = append(s.Commands, CommandView{Key: c.Key, Name: c.Name, Background: c.Background, Confirm: c.Confirm, Builtin: c.Builtin, Input: c.Input, Session: c.Session})
 	}
 	return s
+}
+
+// MarkSeen records the PR as it is now, so what changed since you last looked starts over.
+func (a *App) MarkSeen(prKey string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	p, ok := a.find(prKey)
+	if !ok {
+		return nil
+	}
+	a.seen[prKey] = core.SnapOf(p)
+	return a.seen.Save()
 }
 
 func (a *App) find(key string) (core.PR, bool) {

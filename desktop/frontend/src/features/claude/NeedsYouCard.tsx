@@ -28,7 +28,7 @@ export function NeedsYouCard({pr, question, options}: { pr: PR, question: string
                             ))}
                         </div>
                     )}
-                    <form className="flex items-center gap-2 rounded-md border border-border-200 bg-background px-2.5 focus-within:border-sel-ring h-9" onSubmit={e => {
+                    <form className="relative flex items-center gap-2 rounded-md border border-border-200 bg-background px-2.5 focus-within:border-sel-ring h-9" onSubmit={e => {
                         e.preventDefault()
                         if (text.trim()) answer(text)
                         setText('')

@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {PRBrief, Projects} from '../../../wailsjs/go/main/App'
+import {MarkSeen, PRBrief, Projects} from '../../../wailsjs/go/main/App'
 import {useApp} from '../../state/AppState'
 import {nextStep, PR, QUICK_FILTERS} from '../../lib/pr'
 import {countPRs, groupsOf, nextPR, visibleRows} from '../../lib/rows'
@@ -53,6 +53,11 @@ export function MainPage() {
     const pr = rows[cursor]?.PR
     const step = pr && nextStep(pr, jobs[pr.Key], commands)
     const viewing = open && !!pr
+    // Leaving a PR's page (back to the list, or to another PR) marks it seen: its changes start over.
+    const viewingKey = viewing ? pr.Key : ''
+    useEffect(() => {
+        if (viewingKey) return () => void MarkSeen(viewingKey).catch(e => app.say(String(e), true))
+    }, [viewingKey])
 
     const showTab = (t: DetailTab) => { setTab(t); setOpen(true) }
     const stepPR = (d: 1 | -1) => { const i = nextPR(rows, cursor, d); if (i >= 0) setSel(rows[i].Path) }

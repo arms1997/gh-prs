@@ -16,6 +16,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 - Desktop app: a PR's page puts its title, next step and whose turn it is up top, with what's left
   before merge, its checklist and description on the left, and its agent, checks and details on the
   right. `1`–`9` pick the agent's suggested answers.
+- Desktop app: a PR's page says what changed since you last looked (new commits, comments, CI,
+  reviews, conflicts); leaving the page marks it seen.
 
 ### Fixed
 - Desktop app: commands that ask first (`M` merge, `D` merge + deploy prod, `V` revert) run when you
