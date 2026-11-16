@@ -2,6 +2,7 @@ import {forwardRef} from 'react'
 import {useApp} from '../../state/AppState'
 import {Icon} from '../../components/ui/Icon'
 import {Kbd} from '../../components/ui/Kbd'
+import {Button} from '../../components/ui/Button'
 
 export const TopBar = forwardRef<HTMLInputElement, { total: number, onFocus: () => void, onDone: () => void, onBrief: () => void }>(
     function TopBar({total, onFocus, onDone, onBrief}, ref) {
@@ -22,13 +23,13 @@ export const TopBar = forwardRef<HTMLInputElement, { total: number, onFocus: () 
                            }}/>
                     <Kbd keys="/"/>
                 </label>
-                <button type="button" className="btn secondary md" onClick={onBrief}>
+                <Button onClick={onBrief}>
                     Daily brief <Kbd keys="b"/>
-                </button>
-                <button type="button" className="btn secondary md" aria-label="Refresh" onClick={() => app.refresh()}>
-                    <Icon name="refresh" size={14} className={app.state?.Loading ? 'spin' : undefined}/>
+                </Button>
+                <Button aria-label="Refresh" onClick={() => app.refresh()}>
+                    <Icon name="refresh" size={14} className={app.state?.Loading ? 'animate-spin' : undefined}/>
                     <Kbd keys="r"/>
-                </button>
+                </Button>
             </header>
         )
     })
