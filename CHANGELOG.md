@@ -8,6 +8,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+## v0.4.1 — 2026-11-17
+
 ### Changed
 - Desktop app: a new icon, a white merge symbol on purple, instead of Wails's default.
 
