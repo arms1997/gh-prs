@@ -22,7 +22,9 @@ export function NeedsYouCard({pr, question, options}: { pr: PR, question: string
                     {options.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                             {options.map((o, i) => (
-                                <Button key={o} size="sm" variant={i === 0 ? 'primary' : 'secondary'} onClick={() => answer(o)}>{o}</Button>
+                                <Button key={o} size="sm" variant={i === 0 ? 'primary' : 'secondary'} className="h-auto! min-h-7 py-1 text-left" onClick={() => answer(o)}>
+                                    <span className="whitespace-normal">{o}</span>{i < 9 && <Kbd keys={String(i + 1)}/>}
+                                </Button>
                             ))}
                         </div>
                     )}

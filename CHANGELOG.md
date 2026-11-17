@@ -13,6 +13,9 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
   agent. `e` (or a double-click) opens a PR on the whole page: `j`/`k` step to the next or previous PR,
   `[` `]` switch tabs, and `esc` goes back to the list where you left it. The details pane is gone,
   and in `config.yml`'s `columns:` the `next` and `detail` widths are dropped the next time you resize a column.
+- Desktop app: a PR's page puts its title, next step and whose turn it is up top, with what's left
+  before merge, its checklist and description on the left, and its agent, checks and details on the
+  right. `1`–`9` pick the agent's suggested answers.
 
 ### Fixed
 - Desktop app: commands that ask first (`M` merge, `D` merge + deploy prod, `V` revert) run when you

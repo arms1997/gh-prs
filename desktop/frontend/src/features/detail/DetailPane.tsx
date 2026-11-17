@@ -1,9 +1,10 @@
 import {DetailTabName, useApp} from '../../state/AppState'
-import {agentCommands, needsYou, PR} from '../../lib/pr'
+import {agentCommands, needsYou, nextStep, PR} from '../../lib/pr'
 import {Badge} from '../../components/ui/Badge'
 import {TabDef, Tabs} from '../../components/ui/Tabs'
 import {DetailHeader} from './DetailHeader'
 import {OverviewTab} from './tabs/OverviewTab'
+import {PrRail} from './PrRail'
 import {ClaudeTab} from '../claude/ClaudeTab'
 import {Composer} from '../claude/Composer'
 import {ChecksTab} from './tabs/ChecksTab'
@@ -16,8 +17,8 @@ export const DETAIL_TABS: DetailTab[] = ['overview', 'brief', 'claude', 'checks'
 // overflow-wrap: long paths, branch names and URLs in agent output wrap instead of running past their box.
 const PANE = 'flex min-h-0 min-w-0 flex-col [overflow-wrap:anywhere]'
 
-export function DetailPane({pr, tab, setTab, openPalette}: {
-    pr?: PR, tab: DetailTab, setTab: (t: DetailTab) => void, openPalette: () => void
+export function DetailPane({pr, stackedOn, tab, setTab}: {
+    pr?: PR, stackedOn: number, tab: DetailTab, setTab: (t: DetailTab) => void
 }) {
     const app = useApp()
     // Links in the pane, including ones in PR descriptions, open in the browser.
@@ -42,18 +43,26 @@ export function DetailPane({pr, tab, setTab, openPalette}: {
     ]
     return (
         <aside aria-label="Pull request details" className={PANE} onClick={onLink}>
-            <div className="flex flex-col gap-3 px-6 pt-5">
-                <DetailHeader pr={pr}/>
+            <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-4 px-8 pt-6">
+                <DetailHeader pr={pr} job={job} step={nextStep(pr, job, app.state?.Commands ?? [])}/>
                 <Tabs tabs={tabs} active={tab} onChange={setTab}/>
             </div>
-            <div className="scroll-detail flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto px-6 pt-4 pb-8 select-text">
-                {tab === 'overview' && <OverviewTab pr={pr} showChecks={() => setTab('checks')} openPalette={openPalette}/>}
-                {tab === 'brief' && <BriefTab pr={pr}/>}
-                {tab === 'claude' && <ClaudeTab pr={pr} job={job}/>}
-                {tab === 'checks' && <ChecksTab pr={pr}/>}
-                {tab === 'files' && <FilesTab pr={pr}/>}
+            <div className="scroll-detail min-h-0 flex-1 overflow-x-hidden overflow-y-auto select-text [scrollbar-gutter:stable_both-edges]">
+                {tab === 'overview' ? (
+                    <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)_380px] items-start gap-10 px-8 pt-5 pb-10 narrow:grid-cols-[minmax(0,1fr)_320px] narrow:gap-8">
+                        <div className="flex min-w-0 flex-col gap-6"><OverviewTab pr={pr} showChecks={() => setTab('checks')}/></div>
+                        <PrRail pr={pr} job={job} stackedOn={stackedOn} showTab={setTab}/>
+                    </div>
+                ) : (
+                    <div className="mx-auto flex max-w-[924px] flex-col gap-6 px-8 pt-5 pb-10">
+                        {tab === 'brief' && <BriefTab pr={pr}/>}
+                        {tab === 'claude' && <ClaudeTab pr={pr} job={job}/>}
+                        {tab === 'checks' && <ChecksTab pr={pr}/>}
+                        {tab === 'files' && <FilesTab pr={pr}/>}
+                    </div>
+                )}
             </div>
-            {tab === 'claude' && <Composer pr={pr} job={job} cmds={agentCommands(app.state?.Commands ?? [])}/>}
+            {tab === 'claude' && <div className="mx-auto w-full max-w-[924px]"><Composer pr={pr} job={job} cmds={agentCommands(app.state?.Commands ?? [])}/></div>}
         </aside>
     )
 }
