@@ -204,7 +204,7 @@ cd desktop/frontend && npm ci && cd ..
 wails build && open build/bin/gh-prs.app
 ```
 
-It has the grouped list with quick filters and a "next step" per PR, a detail pane with Overview (what's left before merge, the PR checklist, the description), Claude, Checks and Files tabs, a ⌘K command palette, and the same keys (`j`/`k`, `o`, `r`, `/`, `p…`, command keys; `[` `]` switch tabs). The Claude tab shows what the PR's agent did and its open question with suggested answers; answering or typing in the message box (`i`) runs `cy`, or `ci` when no agent has run yet. `ga` lists every agent session across your PRs. `b` opens the daily brief: what to tackle first across your PRs, ranked from what the app already knows. `B` (or the Brief tab) has Claude write what's left on the selected PR (reviews, open threads, checks, conflicts); it reads only the PR's GitHub data, runs with no tools, and costs a few cents. Commands that need a terminal (`interactive: true`) open in your opener instead. Not there yet: `pc`, failing-check logs (`f`), "changed since you looked", and notifications.
+It has a full-width grouped list with quick filters, whose turn it is and why, and each PR's agent. `e` (or a double-click) opens a PR on the whole page with Overview (what's left before merge, the PR checklist, the description), Brief, Claude, Checks and Files tabs (`[` `]` switch them); there `j`/`k` step through the list's PRs and `esc` goes back to the list where you left it. It has a ⌘K command palette and the same keys (`j`/`k`, `o`, `r`, `/`, `p…`, command keys; ⏎ runs the next step). The Claude tab shows what the PR's agent did and its open question with suggested answers; answering or typing in the message box (`i`) runs `cy`, or `ci` when no agent has run yet. `ga` lists every agent session across your PRs. `b` opens the daily brief: what to tackle first across your PRs, ranked from what the app already knows. `B` (or the Brief tab) has Claude write what's left on the selected PR (reviews, open threads, checks, conflicts); it reads only the PR's GitHub data, runs with no tools, and costs a few cents. Commands that need a terminal (`interactive: true`) open in your opener instead. Not there yet: `pc`, failing-check logs (`f`), "changed since you looked", and notifications.
 
 ## Configuration
 
@@ -217,7 +217,7 @@ repos_dir: ~/augment            # owner/repo is expected at <repos_dir>/repo
 opener: open -na Ghostty.app --args -e
 linear_workspace: go-augment    # Linear links: linear.app/<workspace>/issue/AGT-915
 prompt_context_file: context.md # prepended to every agent prompt
-columns: {repo: 176, attention: 196} # desktop widths in px (repo, diff, attention, next, detail); drag an edge to set, double-click to reset
+columns: {repo: 184, attention: 220} # desktop list widths in px (repo, diff, attention, agent); drag an edge to set, double-click to reset
 
 sections:
   - title: My PRs

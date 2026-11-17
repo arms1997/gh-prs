@@ -4,6 +4,7 @@ const PATHS = {
     refresh: <><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/></>,
     chevronDown: <path d="m6 9 6 6 6-6"/>,
     chevronRight: <path d="m9 18 6-6-6-6"/>,
+    chevronLeft: <path d="m15 18-6-6 6-6"/>,
     check: <path d="M20 6 9 17l-5-5"/>,
     x: <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>,
     spinner: <path d="M21 12a9 9 0 1 1-6.2-8.6"/>,

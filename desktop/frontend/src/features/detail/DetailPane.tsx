@@ -14,7 +14,7 @@ export type DetailTab = DetailTabName
 export const DETAIL_TABS: DetailTab[] = ['overview', 'brief', 'claude', 'checks', 'files']
 
 // overflow-wrap: long paths, branch names and URLs in agent output wrap instead of running past their box.
-const PANE = 'flex min-h-0 min-w-0 flex-col border-l border-border-100 [overflow-wrap:anywhere]'
+const PANE = 'flex min-h-0 min-w-0 flex-col [overflow-wrap:anywhere]'
 
 export function DetailPane({pr, tab, setTab, openPalette}: {
     pr?: PR, tab: DetailTab, setTab: (t: DetailTab) => void, openPalette: () => void
