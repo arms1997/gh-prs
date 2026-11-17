@@ -8,6 +8,11 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+### Fixed
+- Desktop app: commands that ask first (`M` merge, `D` merge + deploy prod, `V` revert) run when you
+  answer Yes. Before, the question had only an OK button and the command was always cancelled. No is
+  the default, so Return cancels.
+
 ## v0.3.3 — 2026-11-16
 
 ### Changed
