@@ -210,6 +210,7 @@ export namespace main {
 	    Hidden: boolean;
 	    Snoozed: boolean;
 	    LinearURL: string;
+	    Changes: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new PRView(source);
@@ -251,6 +252,7 @@ export namespace main {
 	        this.Hidden = source["Hidden"];
 	        this.Snoozed = source["Snoozed"];
 	        this.LinearURL = source["LinearURL"];
+	        this.Changes = source["Changes"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -47,6 +47,21 @@ func (s SeenStore) Save() error {
 	return os.WriteFile(seenPath(), b, 0o600)
 }
 
+// Baseline records PRs not seen before as they are now, so only later changes count. It reports
+// whether it added any.
+func (s SeenStore) Baseline(data []SectionData) bool {
+	added := false
+	for _, sd := range data {
+		for _, p := range sd.PRs {
+			k := PrKey(p.Repo, p.Number)
+			if _, ok := s[k]; !ok {
+				s[k], added = SnapOf(p), true
+			}
+		}
+	}
+	return added
+}
+
 // changes lists, in plain words, how a PR moved from prev to cur.
 func Changes(prev, cur snapshot) []string {
 	var out []string
