@@ -14,6 +14,11 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
   `[` `]` switch tabs, and `esc` goes back to the list where you left it. The details pane is gone,
   and in `config.yml`'s `columns:` the `next` and `detail` widths are dropped the next time you resize a column.
 
+### Fixed
+- Desktop app: commands that ask first (`M` merge, `D` merge + deploy prod, `V` revert) run when you
+  answer Yes. Before, the question had only an OK button and the command was always cancelled. No is
+  the default, so Return cancels.
+
 ## v0.3.3 — 2026-11-16
 
 ### Changed
