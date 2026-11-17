@@ -8,6 +8,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
 
 ## Unreleased
 
+## v0.4.0 — 2026-11-17
+
 ### Changed
 - Desktop app: the PR list fills the window, with columns for whose turn it is and why, and each PR's
   agent. `e` (or a double-click) opens a PR on the whole page: `j`/`k` step to the next or previous PR,
