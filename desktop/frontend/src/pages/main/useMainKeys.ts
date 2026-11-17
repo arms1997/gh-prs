@@ -1,6 +1,7 @@
 import {useEffect} from 'react'
 import {App} from '../../state/AppState'
-import {agentCommands, needsYou, NextStep, Row} from '../../lib/pr'
+import {NextStep, Row} from '../../lib/pr'
+import {answerKey} from '../../features/claude/NeedsYouCard'
 
 const ORGANIZE_NAMES: Record<string, string> = {pp: 'pin', ps: 'snooze', ph: 'hide', pm: 'move', pa: 'show all', gg: 'top', ga: 'Claude sessions'}
 
@@ -15,6 +16,7 @@ type Opts = {
     setKeySeq: (s: string) => void
     select: (path: string) => void
     openPR: () => void
+    peek: () => void
     back: () => void
     stepPR: (d: 1 | -1) => void
     toggleGroup: (path: string, open?: boolean) => void
@@ -70,6 +72,9 @@ export function useMainKeys(o: Opts): string {
                         return o.viewing || move(rows.length - 1)
                     case 'e':
                         return o.openPR()
+                    case ' ':
+                        e.preventDefault()
+                        return pr && !o.viewing && o.peek()
                     case 'o':
                         return pr && app.open(pr.URL)
                     case 'r':
@@ -104,10 +109,7 @@ export function useMainKeys(o: Opts): string {
                         if (pr && o.step?.kind === 'command') return o.step.key === 'o' ? app.open(pr.URL) : app.run(o.step.key, pr.Key)
                         return
                 }
-                // In a PR, 1–9 pick the waiting agent's suggested answers, like the buttons.
-                const options = pr && o.viewing && needsYou(app.state?.Jobs[pr.Key]) ? app.state?.Jobs[pr.Key]?.Summary?.Options ?? [] : []
-                const reply = agentCommands(app.state?.Commands ?? []).reply
-                if (pr && reply && /^[1-9]$/.test(k) && options[+k - 1]) return app.run(reply.Key, pr.Key, options[+k - 1])
+                if (pr && o.viewing && answerKey(app, pr, k)) return
             }
             if (k.length !== 1) return
             const seq = keySeq + k

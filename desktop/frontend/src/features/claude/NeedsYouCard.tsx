@@ -1,10 +1,21 @@
 import {useState} from 'react'
-import {useApp} from '../../state/AppState'
-import {agentCommands, PR} from '../../lib/pr'
+import {App, useApp} from '../../state/AppState'
+import {agentCommands, needsYou, PR} from '../../lib/pr'
 import {markdownInline} from '../../lib/markdown'
 import {Button} from '../../components/ui/Button'
 import {Icon} from '../../components/ui/Icon'
 import {Kbd} from '../../components/ui/Kbd'
+
+// answerKey answers the PR's waiting agent with its suggested answer for key 1–9, like the card's
+// buttons. It reports whether the key was one.
+export function answerKey(app: App, pr: PR, k: string): boolean {
+    const job = app.state?.Jobs[pr.Key]
+    const option = /^[1-9]$/.test(k) && needsYou(job) ? job?.Summary?.Options?.[+k - 1] : undefined
+    const {reply} = agentCommands(app.state?.Commands ?? [])
+    if (!option || !reply) return false
+    app.run(reply.Key, pr.Key, option)
+    return true
+}
 
 // The agent's open question, with its suggested answers as buttons and a box for your own.
 // Answering resumes the agent's session with your reply.

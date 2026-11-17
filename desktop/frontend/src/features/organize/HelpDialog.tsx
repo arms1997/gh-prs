@@ -3,7 +3,7 @@ import {Kbd} from '../../components/ui/Kbd'
 import {Command} from '../../lib/pr'
 
 const KEYS: [string, string][] = [
-    ['⌘K', 'command palette'], ['j k ↑ ↓', 'move; in a PR, next / previous PR'], ['e', 'open the PR'], ['g g / G', 'top / bottom'], ['h l', 'collapse / expand a group'],
+    ['⌘K', 'command palette'], ['j k ↑ ↓', 'move; in a PR, next / previous PR'], ['e', 'open the PR'], ['space', 'peek at the PR'], ['g g / G', 'top / bottom'], ['h l', 'collapse / expand a group'],
     ['⏎', 'run the next step, or toggle a group'], ['[ ]', 'previous / next tab, in a PR'], ['i', 'message Claude about the PR'], ['1–9', 'answer Claude with a suggested reply, in a PR'], ['g a', 'all Claude sessions'], ['b', 'daily brief'], ['B', 'write a brief of this PR (Claude)'], ['o', 'open on GitHub'], ['r', 'refresh'], ['/', 'filter'],
     ['esc', 'back to the list; clear filters, close'], ['pp ps ph', 'pin, snooze, hide'], ['pm', 'move to a project'], ['pa', 'show hidden & snoozed'],
     ['?', 'this help'],

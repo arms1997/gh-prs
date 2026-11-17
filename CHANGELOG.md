@@ -18,6 +18,8 @@ Each line goes under one of: **Added**, **Changed**, **Fixed**, **Removed**, **S
   right. `1`–`9` pick the agent's suggested answers.
 - Desktop app: a PR's page says what changed since you last looked (new commits, comments, CI,
   reviews, conflicts); leaving the page marks it seen.
+- Desktop app: `space` in the list peeks at a PR: its header, agent and open question (`1`–`9` answer it),
+  with `e` for the whole page and `space` or `esc` to close.
 
 ### Fixed
 - Desktop app: commands that ask first (`M` merge, `D` merge + deploy prod, `V` revert) run when you

@@ -6,7 +6,7 @@ export const FOOTER = 'flex items-center gap-4 overflow-hidden border-t border-b
 export const FOOTER_KEY = 'inline-flex items-center gap-1'
 export const FOOTER_STATUS = 'ml-auto overflow-hidden text-ellipsis'
 
-const SHORTCUTS: [string, string][] = [['jk', 'move'], ['e', 'open PR'], ['⏎', 'next step'], ['/', 'filter'], ['cc', 'agent'], ['p', 'organize'], ['⌘K', 'commands'], ['?', 'keys']]
+const SHORTCUTS: [string, string][] = [['jk', 'move'], ['e', 'open PR'], ['space', 'peek'], ['⏎', 'next step'], ['/', 'filter'], ['cc', 'agent'], ['p', 'organize'], ['⌘K', 'commands'], ['?', 'keys']]
 const PR_SHORTCUTS: [string, string][] = [['esc', 'back to list'], ['jk', 'next, previous PR'], ['[ ]', 'tabs'], ['⏎', 'next step'], ['i', 'message Claude'], ['⌘K', 'commands'], ['?', 'keys']]
 
 export function Footer({hint, viewing}: { hint: string, viewing?: boolean }) {

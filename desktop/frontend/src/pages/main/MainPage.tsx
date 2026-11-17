@@ -6,6 +6,7 @@ import {countPRs, groupsOf, nextPR, visibleRows} from '../../lib/rows'
 import {DETAIL_TABS, DetailTab} from '../../features/detail/DetailPane'
 import {CommandPalette, PaletteItem} from '../../features/palette/CommandPalette'
 import {HelpDialog} from '../../features/organize/HelpDialog'
+import {Peek} from '../../features/detail/Peek'
 import {MoveDialog} from '../../features/organize/MoveDialog'
 import {DailyBrief} from '../../features/brief/DailyBrief'
 import {TopBar} from './TopBar'
@@ -24,7 +25,7 @@ export function MainPage() {
     const [filtering, setFiltering] = useState(false)
     const [tab, setTab] = useState<DetailTab>('overview')
     const [open, setOpen] = useState(false) // the selected PR fills the page
-    const [dialog, setDialog] = useState<'help' | 'palette' | 'brief' | { move: PR, projects: string[] }>()
+    const [dialog, setDialog] = useState<'help' | 'palette' | 'brief' | 'peek' | { move: PR, projects: string[] }>()
     const filterRef = useRef<HTMLInputElement>(null)
 
     const all = app.state?.Rows ?? []
@@ -81,6 +82,7 @@ export function MainPage() {
         paused: filtering || !!dialog || !!app.ask,
         select: setSel,
         openPR: () => pr && setOpen(true),
+        peek: () => setDialog('peek'),
         back: () => setOpen(false),
         stepPR,
         focusFilter: () => filterRef.current?.focus(),
@@ -138,6 +140,7 @@ export function MainPage() {
             </>}
             <Footer hint={hint} viewing={viewing}/>
             {dialog === 'brief' && <DailyBrief onClose={() => setDialog(undefined)}/>}
+            {dialog === 'peek' && pr && <Peek pr={pr} onClose={() => setDialog(undefined)} onOpen={() => { setDialog(undefined); setOpen(true) }}/>}
             {dialog === 'help' && <HelpDialog commands={commands} onClose={() => setDialog(undefined)}/>}
             {dialog === 'palette' && <CommandPalette items={paletteItems} onClose={() => setDialog(undefined)}
                                                      context={pr && `${pr.Repo.split('/')[1]}#${pr.Number}`}/>}
